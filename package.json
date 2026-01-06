@@ -9,9 +9,11 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "npx tsx watch server/index.ts"
+    "server": "npx tsx watch server/index.ts",
+    "start": "tsx server/index.ts"
   },
   "dependencies": {
+    "tsx": "^4.21.0",
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "^5.22.0",

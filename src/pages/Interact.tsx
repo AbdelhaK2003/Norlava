@@ -18,7 +18,7 @@ import {
     X,
     Sparkles
 } from "lucide-react";
-import { socket } from "@/lib/api";
+import { socket, api } from "@/lib/api";
 
 interface Message {
     id: string | number;
@@ -45,9 +45,9 @@ const Interact = () => {
 
         // Fetch host profile
         if (username) {
-            fetch(`http://localhost:3000/api/user/username/${username}`)
-                .then(res => res.json())
-                .then(data => setHostName(data.firstName || username))
+            // Use api client to respect base URL
+            api.get(`/user/username/${username}`)
+                .then(res => setHostName(res.data.firstName || username))
                 .catch(() => setHostName(username));
         }
     }, [username]);

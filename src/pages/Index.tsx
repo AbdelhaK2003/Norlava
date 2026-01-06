@@ -139,7 +139,7 @@ const Index = () => {
     },
     {
       question: "How do I share my avatar?",
-      answer: "You'll get a unique link (like norlava.ai/u/yourname) that you can share anywhere - social media, email signatures, business cards, or QR codes.",
+      answer: "You'll get a unique link (like norlava.com/u/yourname) that you can share anywhere - social media, email signatures, business cards, or QR codes.",
     },
   ];
 

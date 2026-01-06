@@ -19,7 +19,7 @@ import {
 const Share = () => {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
-  const profileLink = "https://norlava.ai/u/johndoe";
+  const profileLink = "https://norlava.com/u/johndoe";
 
   const copyLink = () => {
     navigator.clipboard.writeText(profileLink);
@@ -109,7 +109,7 @@ const Share = () => {
                 </p>
                 <div className="glass-card px-4 py-2 text-xs">
                   <span className="gradient-text font-semibold">
-                    norlava.ai/u/johndoe
+                    norlava.com/u/johndoe
                   </span>
                 </div>
               </div>

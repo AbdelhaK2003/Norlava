@@ -12,7 +12,7 @@ const AvatarCreation = () => {
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
-  const profileLink = "norlava.ai/u/johndoe";
+  const profileLink = "norlava.com/u/johndoe";
 
   useEffect(() => {
     if (isCreating) {
