@@ -36,12 +36,11 @@ const Interact = () => {
     const [visitorId, setVisitorId] = useState("");
 
     useEffect(() => {
-        let storedId = sessionStorage.getItem("norlava_visitor_id");
-        if (!storedId) {
-            storedId = uuidv4();
-            sessionStorage.setItem("norlava_visitor_id", storedId);
-        }
-        setVisitorId(storedId);
+        // PERMANENT ISOLATION: Always generate a new ID on mount
+        // This ensures every refresh or new tab is a "new" visitor
+        const newVisitorId = uuidv4();
+        console.log("🆕 New Visitor Session Started:", newVisitorId);
+        setVisitorId(newVisitorId);
 
         // Fetch host profile
         if (username) {
