@@ -12,7 +12,9 @@ const AvatarCreation = () => {
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
-  const profileLink = "norlava.com/u/johndoe";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const username = user.username || "johndoe";
+  const profileLink = `${window.location.host}/u/${username}`;
 
   useEffect(() => {
     if (isCreating) {

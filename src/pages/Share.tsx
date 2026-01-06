@@ -19,7 +19,9 @@ import {
 const Share = () => {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
-  const profileLink = "https://norlava.com/u/johndoe";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const username = user.username || "johndoe";
+  const profileLink = `${window.location.origin}/u/${username}`;
 
   const copyLink = () => {
     navigator.clipboard.writeText(profileLink);
@@ -103,13 +105,13 @@ const Share = () => {
                 <div className="mb-4">
                   <Avatar3D size="lg" />
                 </div>
-                <h2 className="text-xl font-bold mb-2">John Doe</h2>
+                <h2 className="text-xl font-bold mb-2">{user.firstName || "John Doe"}</h2>
                 <p className="text-sm text-muted-foreground mb-4">
                   Chat with my AI avatar
                 </p>
                 <div className="glass-card px-4 py-2 text-xs">
                   <span className="gradient-text font-semibold">
-                    norlava.com/u/johndoe
+                    {profileLink.replace("https://", "")}
                   </span>
                 </div>
               </div>
@@ -119,7 +121,7 @@ const Share = () => {
                 <div className="w-8 h-8 rounded-full bg-gradient-neon p-0.5">
                   <div className="w-full h-full rounded-full bg-card" />
                 </div>
-                <span className="text-xs font-medium">johndoe</span>
+                <span className="text-xs font-medium">{username}</span>
               </div>
             </motion.div>
           </div>
