@@ -98,7 +98,8 @@ router.post('/forgot-password', async (req, res) => {
 
         // Generate 6-digit code
         const code = Math.floor(100000 + Math.random() * 900000).toString();
-        const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
         // Save to DB
         await db.setResetCode(email, code, expires);
@@ -107,7 +108,7 @@ router.post('/forgot-password', async (req, res) => {
         const emailResult = await sendEmail({
             to: email,
             subject: 'Your Norlava Reset Code',
-            html: `<p>Your password reset code is: <strong>${code}</strong></p><p>It expires in 15 minutes.</p>`
+            html: `<p>Your password reset code is: <strong>${code}</strong></p><p>It expires in 5 minutes.</p>`
         });
 
         if (!emailResult.success) {

@@ -105,7 +105,7 @@ const ForgotPassword = () => {
                 {step === 2 && (
                     <div className="space-y-6">
                         <p className="text-muted-foreground text-sm">
-                            Enter the 6-digit code sent to <strong>{email}</strong>. It expires in 15 minutes.
+                            Enter the 6-digit code sent to <strong>{email}</strong>. It expires in 5 minutes.
                         </p>
                         <div className="flex justify-center">
                             <InputOTP
