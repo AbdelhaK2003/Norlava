@@ -236,7 +236,8 @@ class Database {
 
         return {
             totalMessages,
-            totalVisitors: uniqueVisitors.length
+            totalVisitors: uniqueVisitors.length,
+            debug: { hostId, visitorCountRaw: uniqueVisitors.length }
         };
     }
 
