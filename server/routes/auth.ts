@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { SECRET_KEY } from '../middleware/auth';
 import { db } from '../db';
+import { sendEmail } from '../email';
 
 const router = Router();
 
