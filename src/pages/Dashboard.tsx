@@ -53,7 +53,7 @@ const Dashboard = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const { data } = await api.get('/user/stats');
+            const { data } = await api.get('/user/dashboard-stats');
             setStats(data);
         } catch (err: any) {
             console.error("Failed to fetch stats", err);

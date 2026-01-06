@@ -107,7 +107,7 @@ router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
 });
 
 // Get Dashboard Stats (Protected)
-router.get('/stats', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/dashboard-stats', authenticateToken, async (req: AuthRequest, res) => {
     try {
         const userId = req.user!.id;
         console.log("🔍 Stats request for user ID:", userId);
