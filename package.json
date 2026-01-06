@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "npx tsx watch server/index.ts",
-    "start": "tsx server/index.ts"
+    "start": "tsx server/index.ts",
+    "postinstall": "npx prisma generate --schema=server/prisma/schema.prisma"
   },
   "dependencies": {
     "tsx": "^4.21.0",
