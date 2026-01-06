@@ -330,8 +330,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`🚀 Voxterna Backend running on http://localhost:${PORT}`);
-    console.log('📦 Using DATABASE persistence (Fixed Path)');
+    console.log(`🚀 Voxterna Backend running on port ${PORT}`);
 });
 
 export { app, io };
