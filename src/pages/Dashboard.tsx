@@ -22,7 +22,8 @@ import {
     LogOut,
     Brain,
     Check,
-    X
+    X,
+    RefreshCw
 } from "lucide-react";
 
 // Mock data removed. Real stats fetched from backend.
@@ -32,6 +33,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
     const [stats, setStats] = useState<any>({ totalVisitors: 0, totalMessages: 0 });
+    const [isLoading, setIsLoading] = useState(false);
     const [memories, setMemories] = useState<{ facts: any[], questions: any[] }>({ facts: [], questions: [] });
     const [answerInput, setAnswerInput] = useState<{ [key: string]: string }>({});
     const [copied, setCopied] = useState(false);
@@ -46,11 +48,14 @@ const Dashboard = () => {
     };
 
     const fetchStats = async () => {
+        setIsLoading(true);
         try {
             const { data } = await api.get('/user/stats');
             setStats(data);
         } catch (err) {
             console.error("Failed to fetch stats", err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -134,6 +139,10 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" className="gap-2" onClick={fetchStats}>
+                            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
+                            <span className="hidden md:inline">Refresh Stats</span>
+                        </Button>
                         <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/onboarding")}>
                             <Settings size={16} />
                             <span className="hidden md:inline">{t('dashboard.settings')}</span>
