@@ -87,26 +87,6 @@ router.get('/username/:username', async (req, res) => {
     }
 });
 
-// Public Profile Fetch by User ID
-router.get('/:userId', async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const userData = await db.getUserWithProfile(userId);
-
-        if (!userData) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Return safe public data (excluding password)
-        res.json({
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            profile: userData.profile
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch profile' });
-    }
-});
 
 // Get My Profile (Protected)
 router.get('/me', authenticateToken, async (req: AuthRequest, res) => {
@@ -227,6 +207,27 @@ router.delete('/memories/:id', authenticateToken, async (req: AuthRequest, res) 
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete memory' });
+    }
+});
+
+// Public Profile Fetch by User ID
+router.get('/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const userData = await db.getUserWithProfile(userId);
+
+        if (!userData) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Return safe public data (excluding password)
+        res.json({
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            profile: userData.profile
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch profile' });
     }
 });
 

@@ -47,13 +47,17 @@ const Dashboard = () => {
         }
     };
 
+    const [error, setError] = useState<string | null>(null);
+
     const fetchStats = async () => {
         setIsLoading(true);
+        setError(null);
         try {
             const { data } = await api.get('/user/stats');
             setStats(data);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch stats", err);
+            setError(err.message || "Failed to load stats");
         } finally {
             setIsLoading(false);
         }
@@ -209,6 +213,12 @@ const Dashboard = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {error && (
+                    <div className="mb-4 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500">
+                        Error loading stats: {error}
+                    </div>
+                )}
 
                 {/* DEBUG SECTION - TEMPORARY */}
                 {stats.debug && (
