@@ -21,12 +21,26 @@ import {
   Check,
   Star,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Index = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+    navigate("/");
+  };
+
 
   const features = [
     {
@@ -179,12 +193,25 @@ const Index = () => {
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:flex">
-              Sign In
-            </Button>
-            <Button variant="outline" onClick={() => navigate("/register")}>
-              Get Started
-            </Button>
+            {isLoggedIn ? (
+              <>
+                <Button variant="ghost" onClick={handleLogout} className="hidden sm:flex">
+                  Sign Out
+                </Button>
+                <Button variant="neon" onClick={() => navigate("/dashboard")}>
+                  Dashboard
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:flex">
+                  Sign In
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/register")}>
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -218,11 +245,11 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Button
                 variant="hero"
-                onClick={() => navigate("/register")}
+                onClick={() => navigate(isLoggedIn ? "/dashboard" : "/register")}
                 className="gap-2"
               >
                 <Sparkles size={20} />
-                {t('landing.cta')}
+                {isLoggedIn ? "Go to Dashboard" : t('landing.cta')}
                 <ArrowRight size={20} />
               </Button>
               <Button
