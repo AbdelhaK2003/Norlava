@@ -38,6 +38,56 @@ class Database {
         });
     }
 
+    // Password Reset Methods
+    async setResetCode(email: string, code: string, expires: Date) {
+        return await prisma.user.update({
+            where: { email },
+            data: {
+                resetCode: code,
+                resetCodeExpires: expires,
+                failedResetAttempts: 0,
+                lockedUntil: null
+            }
+        });
+    }
+
+    async getResetData(email: string) {
+        return await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                resetCode: true,
+                resetCodeExpires: true,
+                failedResetAttempts: true,
+                lockedUntil: true
+            }
+        });
+    }
+
+    async incrementResetAttempts(email: string, lock: boolean = false) {
+        const data: any = { failedResetAttempts: { increment: 1 } };
+        if (lock) {
+            data.lockedUntil = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        }
+        return await prisma.user.update({
+            where: { email },
+            data
+        });
+    }
+
+    async updatePassword(email: string, passwordHash: string) {
+        return await prisma.user.update({
+            where: { email },
+            data: {
+                password: passwordHash,
+                resetCode: null,
+                resetCodeExpires: null,
+                failedResetAttempts: 0,
+                lockedUntil: null
+            }
+        });
+    }
+
     // Profile Methods
     async createProfile(profile: { userId: string; interests: string; personality: string; funFacts: string; aiContext?: string }) {
         return await prisma.profile.create({

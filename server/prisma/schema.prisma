@@ -25,6 +25,12 @@ model User {
   profile   Profile?
   messages  Message[] // Messages where this user is the host
   
+  // Password Reset & Security
+  resetCode           String?
+  resetCodeExpires    DateTime?
+  failedResetAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  
   @@index([username])
 }
 
