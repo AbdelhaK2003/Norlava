@@ -35,7 +35,9 @@
         "createAccount": "Créez Votre Compte",
         "loginSubtitle": "Connectez-vous pour accéder à votre profil IA",
         "registerSubtitle": "Rejoignez Norlava et créez votre jumeau numérique",
-        "createAvatar": "Créer Mon Avatar"
+        "createAvatar": "Créer Mon Avatar",
+        "confirmPassword": "Confirmer le mot de passe",
+        "passwordMismatch": "Les mots de passe ne correspondent pas"
     },
     "onboarding": {
         "title": "Créons votre Avatar IA",

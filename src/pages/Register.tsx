@@ -20,6 +20,7 @@ const Register = () => {
     email: "",
     birthday: "",
     password: "",
+    confirmPassword: "",
   });
   const navigate = useNavigate();
 
@@ -33,6 +34,16 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: t('auth.registrationFailed'),
+        description: t('auth.passwordMismatch'),
+      });
+      return;
+    }
+
     try {
       // Call Backend API
       const { data } = await api.post('/auth/register', formData);
@@ -176,6 +187,21 @@ const Register = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                {t('auth.confirmPassword')}
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => updateField("confirmPassword", e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
             <Button type="submit" className="w-full" variant="neon" size="lg">
               <Sparkles size={18} />
               {t('auth.createAvatar')}
@@ -196,7 +222,7 @@ const Register = () => {
           </div>
         </GlassCard>
       </div>
-    </div>
+    </div >
   );
 };
 

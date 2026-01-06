@@ -35,7 +35,9 @@
         "createAccount": "Create Your Account",
         "loginSubtitle": "Log in to access your AI profile",
         "registerSubtitle": "Join Norlava and create your digital twin",
-        "createAvatar": "Create My Avatar"
+        "createAvatar": "Create My Avatar",
+        "confirmPassword": "Confirm Password",
+        "passwordMismatch": "Passwords do not match"
     },
     "onboarding": {
         "title": "Let's create your AI Avatar",
