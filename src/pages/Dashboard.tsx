@@ -31,7 +31,7 @@ const Dashboard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
-    const [stats, setStats] = useState({ totalVisitors: 0, totalMessages: 0 });
+    const [stats, setStats] = useState<any>({ totalVisitors: 0, totalMessages: 0 });
     const [memories, setMemories] = useState<{ facts: any[], questions: any[] }>({ facts: [], questions: [] });
     const [answerInput, setAnswerInput] = useState<{ [key: string]: string }>({});
     const [copied, setCopied] = useState(false);
@@ -200,6 +200,17 @@ const Dashboard = () => {
                         </motion.div>
                     ))}
                 </div>
+
+                {/* DEBUG SECTION - TEMPORARY */}
+                {stats.debug && (
+                    <div className="mb-8 p-4 bg-black/50 border border-yellow-500/50 rounded-lg font-mono text-xs text-yellow-500">
+                        <p className="font-bold">🛠️ DEBUG INFO:</p>
+                        <p>User ID (from token): {stats.debug.hostId}</p>
+                        <p>Raw Visitor Count: {stats.debug.visitorCountRaw}</p>
+                        <p>Raw Total Messages: {stats.totalMessages}</p>
+                        <p>Frontend User: {user?.username} ({user?.id})</p>
+                    </div>
+                )}
 
                 {/* Memory Management Section (New Findings) */}
                 {(memories.facts.length > 0 || memories.questions.length > 0) && (
