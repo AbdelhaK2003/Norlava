@@ -1,0 +1,32 @@
+🔑 API Key: Present
+
+🔍 Fetching available models...
+
+❌ Error listing models:
+genAI.listModels is not a function
+
+🔧 Trying alternative models...
+
+Testing: gemini-pro...
+  ❌ gemini-pro failed
+     [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/mod
+
+Testing: gemini-1.5-pro...
+  ❌ gemini-1.5-pro failed
+     [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/mod
+
+Testing: gemini-1.5-flash...
+  ❌ gemini-1.5-flash failed
+     [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/mod
+
+Testing: gemini-1.0-pro...
+  ❌ gemini-1.0-pro failed
+     [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/mod
+
+Testing: models/gemini-pro...
+  ❌ models/gemini-pro failed
+     [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/mod
+
+Testing: models/gemini-1.5-flash...
+  ❌ models/gemini-1.5-flash failed
+     [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/mod

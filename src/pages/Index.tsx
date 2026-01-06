@@ -1,0 +1,653 @@
+import { motion } from "framer-motion";
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from "react-router-dom";
+import { Logo } from "@/components/Logo";
+import { Avatar3D } from "@/components/Avatar3D";
+import { GlassCard } from "@/components/GlassCard";
+import { Button } from "@/components/ui/button";
+import {
+  Sparkles,
+  MessageCircle,
+  Share2,
+  Brain,
+  ArrowRight,
+  Play,
+  Mic,
+  Globe,
+  Shield,
+  Zap,
+  Users,
+  ChevronDown,
+  Check,
+  Star,
+} from "lucide-react";
+import { useState } from "react";
+
+const Index = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  const features = [
+    {
+      icon: Brain,
+      title: "AI-Powered Learning",
+      description:
+        "Your avatar learns your personality, interests, and communication style to represent you authentically.",
+    },
+    {
+      icon: MessageCircle,
+      title: "Natural Conversations",
+      description:
+        "Visitors can chat with your AI avatar 24/7, getting genuine responses that sound just like you.",
+    },
+    {
+      icon: Share2,
+      title: "Easy Sharing",
+      description:
+        "Share your unique profile link on social media and let your AI introduce you to the world.",
+    },
+  ];
+
+  const howItWorks = [
+    {
+      step: 1,
+      title: "Create Your Profile",
+      description: "Sign up and tell us about yourself - your interests, expertise, and how you like to communicate.",
+      icon: Users,
+    },
+    {
+      step: 2,
+      title: "Train Your Avatar",
+      description: "Add sample Q&A pairs to teach your AI how you'd respond to common questions.",
+      icon: Brain,
+    },
+    {
+      step: 3,
+      title: "Customize Your Style",
+      description: "Choose your avatar's look and fine-tune its personality settings.",
+      icon: Sparkles,
+    },
+    {
+      step: 4,
+      title: "Share & Connect",
+      description: "Get your unique link and let visitors interact with your AI avatar instantly.",
+      icon: Globe,
+    },
+  ];
+
+  const useCases = [
+    {
+      title: "Content Creators",
+      description: "Let fans interact with your AI 24/7. Answer FAQs automatically while you focus on creating.",
+      emoji: "🎬",
+    },
+    {
+      title: "Professionals",
+      description: "Create a digital business card that actually talks. Perfect for networking events.",
+      emoji: "💼",
+    },
+    {
+      title: "Developers",
+      description: "Showcase your skills interactively. Let your AI discuss your projects and tech stack.",
+      emoji: "👨‍💻",
+    },
+    {
+      title: "Artists",
+      description: "Let your AI share your creative process, inspirations, and available commissions.",
+      emoji: "🎨",
+    },
+  ];
+
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      role: "YouTuber",
+      avatar: "S",
+      text: "My fans love chatting with my AI! It handles hundreds of messages while I'm editing videos.",
+    },
+    {
+      name: "Marcus Rodriguez",
+      role: "Software Engineer",
+      avatar: "M",
+      text: "Added my Norlava link to my portfolio. Recruiters say it's the most unique thing they've seen.",
+    },
+    {
+      name: "Emma Thompson",
+      role: "Life Coach",
+      avatar: "E",
+      text: "My AI avatar handles initial consultations perfectly. It's like having a 24/7 receptionist.",
+    },
+  ];
+
+  const faqs = [
+    {
+      question: "How does the AI learn to sound like me?",
+      answer: "During onboarding, you'll set your communication style preferences and provide sample Q&A pairs. The more examples you give, the more accurate your avatar becomes. You can always refine it later!",
+    },
+    {
+      question: "Is my data secure?",
+      answer: "Absolutely. We use industry-standard encryption and never share your personal information. Your training data stays private and is only used to power YOUR avatar.",
+    },
+    {
+      question: "Can I try it before signing up?",
+      answer: "Yes! Click 'See Demo' to interact with a sample avatar. You'll get a feel for how natural the conversations can be.",
+    },
+    {
+      question: "Does it support voice conversations?",
+      answer: "Yes! Visitors can speak to your avatar using their microphone, and your AI will respond with synthesized speech - no typing required.",
+    },
+    {
+      question: "How do I share my avatar?",
+      answer: "You'll get a unique link (like norlava.ai/u/yourname) that you can share anywhere - social media, email signatures, business cards, or QR codes.",
+    },
+  ];
+
+  const stats = [
+    { value: "50K+", label: "Avatars Created" },
+    { value: "2M+", label: "Conversations" },
+    { value: "99%", label: "Uptime" },
+    { value: "4.9★", label: "User Rating" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-grid relative overflow-hidden">
+      {/* Animated background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute w-[800px] h-[800px] bg-neon-cyan/5 rounded-full blur-3xl"
+          animate={{ x: [0, 100, 0], y: [0, -50, 0] }}
+          transition={{ duration: 20, repeat: Infinity }}
+          style={{ top: "-20%", left: "-10%" }}
+        />
+        <motion.div
+          className="absolute w-[600px] h-[600px] bg-neon-purple/5 rounded-full blur-3xl"
+          animate={{ x: [0, -80, 0], y: [0, 60, 0] }}
+          transition={{ duration: 15, repeat: Infinity }}
+          style={{ bottom: "-10%", right: "-10%" }}
+        />
+      </div>
+
+      {/* Navigation */}
+      <nav className="relative z-20 p-6 border-b border-glass-border/50 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Logo size="md" />
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+            <a href="#use-cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Use Cases</a>
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:flex">
+              Sign In
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/register")}>
+              Get Started
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-12 pb-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.div
+              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Sparkles size={16} />
+              {t('landing.heroBadge')}
+            </motion.div>
+
+            <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
+              {t('landing.heroTitle')} <span className="gradient-text">{t('landing.heroTitleHighlight')}</span> {t('landing.heroTitleSuffix')}
+            </h1>
+
+            <p className="text-xl text-muted-foreground mb-8 max-w-lg">
+              {t('landing.heroDesc')}
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <Button
+                variant="hero"
+                onClick={() => navigate("/register")}
+                className="gap-2"
+              >
+                <Sparkles size={20} />
+                {t('landing.cta')}
+                <ArrowRight size={20} />
+              </Button>
+              <Button
+                variant="glass"
+                size="xl"
+                onClick={() => navigate("/interact/demo")}
+                className="gap-2"
+              >
+                <Play size={18} />
+                {t('landing.seeDemo')}
+              </Button>
+            </div>
+
+            {/* Mini stats */}
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Check size={16} className="text-green-500" />
+                {t('landing.freeToStart')}
+              </div>
+              <div className="flex items-center gap-2">
+                <Check size={16} className="text-green-500" />
+                {t('landing.noCreditCard')}
+              </div>
+              <div className="flex items-center gap-2">
+                <Check size={16} className="text-green-500" />
+                {t('landing.setupTime')}
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="relative flex justify-center"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            {/* Decorative rings */}
+            <motion.div
+              className="absolute w-80 h-80 border border-primary/20 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="absolute w-96 h-96 border border-secondary/10 rounded-full"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            />
+
+            {/* Main avatar */}
+            <div className="relative">
+              <Avatar3D size="xl" />
+
+              {/* Floating elements */}
+              <motion.div
+                className="absolute -top-4 -right-8 glass-card px-3 py-2 text-xs font-medium"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                <span className="text-primary">Hey! 👋</span>
+              </motion.div>
+
+              <motion.div
+                className="absolute -bottom-4 -left-8 glass-card px-3 py-2 text-xs font-medium"
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+              >
+                <span className="text-secondary">Always online</span>
+              </motion.div>
+
+              <motion.div
+                className="absolute top-1/2 -right-16 glass-card px-3 py-2 text-xs font-medium"
+                animate={{ x: [0, 5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+              >
+                <Mic size={14} className="text-primary inline mr-1" />
+                <span>Voice enabled</span>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats Bar */}
+      <section className="relative z-10 border-y border-glass-border bg-card/30 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <div className="text-3xl md:text-4xl font-bold gradient-text mb-1">{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-4xl font-bold text-center mb-12">
+            How <span className="gradient-text">Norlava</span> Works
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Creating your AI avatar is simple. Follow these steps and you'll be up and running in minutes.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {howItWorks.map((item, index) => (
+            <motion.div
+              key={item.step}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <GlassCard className="h-full p-6 relative overflow-hidden">
+                {/* Step number */}
+                <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">{item.step}</span>
+                </div>
+
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
+                  <item.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.description}</p>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-4xl font-bold mb-4">
+            Powerful <span className="gradient-text">Features</span>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Everything you need to create an AI that truly represents you.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <GlassCard className="h-full p-8" neonBorder>
+                <feature.icon className="w-12 h-12 text-primary mb-4" />
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Additional features grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { icon: Mic, title: "Voice Chat", desc: "Talk, don't type" },
+            { icon: Shield, title: "Privacy First", desc: "Your data, secured" },
+            { icon: Zap, title: "Instant Setup", desc: "Ready in minutes" },
+            { icon: Globe, title: "Always Online", desc: "24/7 availability" },
+          ].map((item, index) => (
+            <motion.div
+              key={item.title}
+              className="glass-card p-4 flex items-center gap-3"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <item.icon size={20} className="text-primary" />
+              </div>
+              <div>
+                <div className="font-medium text-sm">{item.title}</div>
+                <div className="text-xs text-muted-foreground">{item.desc}</div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Use Cases Section */}
+      <section id="use-cases" className="relative z-10 bg-card/30 border-y border-glass-border">
+        <div className="max-w-6xl mx-auto px-6 py-24">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl font-bold mb-4">
+              Perfect For <span className="gradient-text">Everyone</span>
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Whether you're a creator, professional, or just want a fun digital presence.
+            </p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {useCases.map((useCase, index) => (
+              <motion.div
+                key={useCase.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <GlassCard className="h-full p-6 text-center hover:border-primary/50 transition-colors">
+                  <div className="text-4xl mb-4">{useCase.emoji}</div>
+                  <h3 className="text-lg font-bold mb-2">{useCase.title}</h3>
+                  <p className="text-sm text-muted-foreground">{useCase.description}</p>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-4xl font-bold mb-4">
+            Loved by <span className="gradient-text">Users</span>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            See what our community is saying about their AI avatars.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {testimonials.map((testimonial, index) => (
+            <motion.div
+              key={testimonial.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <GlassCard className="h-full p-6">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
+                  ))}
+                </div>
+                <p className="text-muted-foreground mb-6 italic">"{testimonial.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <div className="font-medium">{testimonial.name}</div>
+                    <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                  </div>
+                </div>
+              </GlassCard>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="relative z-10 bg-card/30 border-y border-glass-border">
+        <div className="max-w-3xl mx-auto px-6 py-24">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl font-bold mb-4">
+              Frequently Asked <span className="gradient-text">Questions</span>
+            </h2>
+            <p className="text-muted-foreground">
+              Everything you need to know about Norlava.
+            </p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <GlassCard className="overflow-hidden">
+                  <button
+                    className="w-full p-4 flex items-center justify-between text-left"
+                    onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  >
+                    <span className="font-medium pr-4">{faq.question}</span>
+                    <ChevronDown
+                      size={20}
+                      className={`text-muted-foreground transition-transform flex-shrink-0 ${openFaq === index ? "rotate-180" : ""
+                        }`}
+                    />
+                  </button>
+                  <motion.div
+                    initial={false}
+                    animate={{ height: openFaq === index ? "auto" : 0 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-4 pb-4 text-muted-foreground">{faq.answer}</p>
+                  </motion.div>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative z-10 max-w-4xl mx-auto px-6 py-24">
+        <GlassCard className="p-12 text-center" glow neonBorder>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl font-bold mb-4">
+              Ready to Meet Your <span className="gradient-text">Digital Self</span>?
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
+              Join thousands of users who have already created their personal AI
+              avatar. Start your journey today.
+            </p>
+            <Button
+              variant="hero"
+              onClick={() => navigate("/register")}
+              className="gap-2"
+            >
+              <Sparkles size={20} />
+              Create Your Avatar Now
+              <ArrowRight size={20} />
+            </Button>
+            <p className="text-sm text-muted-foreground mt-4">
+              Free to start • No credit card required
+            </p>
+          </motion.div>
+        </GlassCard>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-glass-border py-12">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <Logo size="sm" />
+              <p className="text-sm text-muted-foreground mt-3">
+                Your AI-powered digital identity platform.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-foreground transition-colors">How It Works</a></li>
+                <li><a href="#use-cases" className="hover:text-foreground transition-colors">Use Cases</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Support</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#faq" className="hover:text-foreground transition-colors">FAQ</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3">Legal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-glass-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              <p>© 2026 Norlava. Your digital legacy starts here.</p>
+            </p>
+            <div className="flex items-center gap-4">
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
+              </a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" /></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Index;

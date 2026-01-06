@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// PostgreSQL for production-ready deployment
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique @default(cuid()) // Unique handle for profile links
+  password  String
+  firstName String
+  lastName  String
+  birthday  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile?
+  messages  Message[] // Messages where this user is the host
+  
+  @@index([username])
+}
+
+model Profile {
+  id          String @id @default(uuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  
+  // Structured data for UI
+  interests   String // Stored as JSON string
+  personality String // Stored as JSON string
+  funFacts    String
+  
+  // Single-parameter AI Context (The "Brain")
+  // This aggregates all user info into one prompt-ready string/JSON for the LLM
+  aiContext   String? 
+  
+  avatar      Avatar?
+  memories    Memory[]
+}
+
+model Memory {
+  id        String   @id @default(uuid())
+  profileId String
+  profile   Profile  @relation(fields: [profileId], references: [id])
+  
+  type      String   // "QUESTION", "FREE_TEXT", "BIOGRAPHY"
+  prompt    String   // The question asked (or "Free Thought")
+  content   String   // The user's answer
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Avatar {
+  id        String @id @default(uuid())
+  profileId String @unique
+  profile   Profile @relation(fields: [profileId], references: [id])
+  
+  gender    String // "male", "female", "neutral"
+  baseColor String?
+  eyeColor  String?
+  // Add other visual traits here
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  isUser    Boolean  // true if from visitor, false if from AI
+  
+  // Link to the User/Profile being visited (the "Host")
+  hostId    String
+  host      User     @relation(fields: [hostId], references: [id])
+  
+  // Optional: sender info if we track accumulation of visitors
+  senderId  String?
+  
+  // Session tracking
+  visitorId String?
+
+  createdAt DateTime @default(now())
+}

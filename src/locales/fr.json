@@ -1,0 +1,165 @@
+{
+    "landing": {
+        "title": "Votre Jumeau IA",
+        "subtitle": "Créez une version numérique de vous-même alimentée par l'IA qui discute, apprend et vous représente 24h/24 et 7j/7",
+        "cta": "Commencer",
+        "heroBadge": "Votre Identité Numérique Vous Attend",
+        "heroTitle": "Créez Votre",
+        "heroTitleHighlight": "Avatar IA",
+        "heroTitleSuffix": "Qui Vous Représente",
+        "heroDesc": "Norlava crée une IA personnelle qui apprend de vous et interagit avec les visiteurs dans votre style unique. Votre moi numérique, toujours en ligne.",
+        "seeDemo": "Voir la Démo",
+        "freeToStart": "Gratuit pour commencer",
+        "noCreditCard": "Pas de carte requise",
+        "setupTime": "Config en 2 min",
+        "features": {
+            "personalized": "IA Personnalisée",
+            "personalizedDesc": "Entraînez votre IA à parler et penser comme vous",
+            "learns": "Apprentissage Continu",
+            "learnsDesc": "Votre IA devient plus intelligente à chaque conversation",
+            "3d": "Avatar 3D",
+            "3dDesc": "Magnifique avatar animé qui parle"
+        }
+    },
+    "auth": {
+        "login": "Connexion",
+        "register": "S'inscrire",
+        "email": "Email",
+        "password": "Mot de passe",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "birthday": "Date de naissance",
+        "alreadyHaveAccount": "Vous avez déjà un compte ?",
+        "dontHaveAccount": "Vous n'avez pas de compte ?",
+        "welcomeBack": "Bon Retour",
+        "createAccount": "Créez Votre Compte",
+        "loginSubtitle": "Connectez-vous pour accéder à votre profil IA",
+        "registerSubtitle": "Rejoignez Norlava et créez votre jumeau numérique",
+        "createAvatar": "Créer Mon Avatar"
+    },
+    "onboarding": {
+        "title": "Créons votre Avatar IA",
+        "subtitle": "Parlez-nous de vous pour que nous puissions créer votre jumeau numérique parfait",
+        "digitalIdentity": "Votre Identité Numérique",
+        "step1Desc": "Ces informations aident votre avatar à interagir naturellement avec les visiteurs.",
+        "nickname": "Comment les gens devraient-ils appeler votre avatar ?",
+        "nicknamePlaceholder": "ex: Alex, Professeur Smith, Le Gourou Tech...",
+        "tagline": "Slogan de votre avatar",
+        "taglinePlaceholder": "ex: Passionné de tech qui adore le café ☕",
+        "taglineDesc": "Ceci apparaît sur votre profil",
+        "step2Title": "Style de Communication",
+        "step2Heading": "Comment votre avatar doit-il parler ?",
+        "step2Desc": "Définissez la personnalité de votre IA",
+        "formality": "Niveau de Formalité",
+        "humor": "Style d'Humour",
+        "responseLength": "Longueur de Réponse",
+        "step3Title": "Domaines de Connaissance",
+        "step3Heading": "En quoi êtes-vous expert ?",
+        "step3Desc": "Votre avatar discutera avec assurance de ces sujets",
+        "expertise": "Domaines d'Expertise",
+        "expertisePlaceholder": "ex: Développement Web, Marketing...",
+        "hobbies": "Loisirs & Intérêts",
+        "hobbiesPlaceholder": "ex: Jeux vidéo, Photographie, Voyage...",
+        "step4Title": "Entraînez Votre Avatar",
+        "step4Heading": "Apprenez à votre avatar comment répondre",
+        "step4Desc": "Ajoutez des exemples de Q&R pour entraîner votre IA",
+        "questionPlaceholder": "Question que les visiteurs pourraient poser...",
+        "answerPlaceholder": "Comment vous répondriez...",
+        "addExample": "Ajouter l'Exemple",
+        "noExamples": "Pas encore d'exemples. Ajoutez-en pour entraîner votre avatar !",
+        "step5Title": "Choisissez Votre Apparence",
+        "step5Heading": "Choisissez le style de votre avatar",
+        "step5Desc": "Sélectionnez un style qui vous représente",
+        "createAvatar": "Créer Mon Avatar",
+        "styles": {
+            "casual": {
+                "label": "😎 Décontracté",
+                "desc": "Salut ! Quoi de neuf ?"
+            },
+            "balanced": {
+                "label": "🙂 Équilibré",
+                "desc": "Bonjour ! Comment puis-je aider ?"
+            },
+            "formal": {
+                "label": "🎩 Formel",
+                "desc": "Bonjour. Comment puis-je vous assister ?"
+            },
+            "playful": {
+                "label": "🎉 Joueur",
+                "desc": "Adore les blagues et le fun"
+            },
+            "witty": {
+                "label": "💡 Spirituel",
+                "desc": "Malin et vif"
+            },
+            "serious": {
+                "label": "📚 Sérieux",
+                "desc": "Professionnel et concentré"
+            },
+            "brief": {
+                "label": "⚡ Bref",
+                "desc": "Court et efficace"
+            },
+            "detailed": {
+                "label": "📖 Détaillé",
+                "desc": "Explications approfondies"
+            },
+            "conversational": {
+                "label": "💬 Conversationnel",
+                "desc": "Flux naturel"
+            }
+        },
+        "gender": {
+            "male": "Homme",
+            "female": "Femme",
+            "neutral": "Neutre"
+        },
+        "continue": "Continuer",
+        "next": "Suivant",
+        "back": "Retour",
+        "finish": "Terminer",
+        "skip": "Passer",
+        "step1": "Infos de Base",
+        "step2": "Personnalité",
+        "step3": "Expertise",
+        "step4": "Intérêts",
+        "step5": "Avatar",
+        "step6": "Formation"
+    },
+    "dashboard": {
+        "title": "Tableau de Bord",
+        "welcome": "Bon retour",
+        "visitors": "Visiteurs Totaux",
+        "messages": "Messages",
+        "shareProfile": "Partagez Votre Profil",
+        "copyLink": "Copier le Lien",
+        "copied": "Copié !",
+        "settings": "Paramètres",
+        "logout": "Déconnexion",
+        "newFacts": "Nouveaux Faits Appris",
+        "questions": "Questions des Visiteurs",
+        "keep": "Garder",
+        "delete": "Supprimer",
+        "answer": "Répondre",
+        "yourAnswer": "Votre réponse...",
+        "noFacts": "Aucun nouveau fait pour le moment",
+        "noQuestions": "Aucune question pour le moment"
+    },
+    "interact": {
+        "listening": "Écoute en cours...",
+        "speaking": "En train de parler...",
+        "tapToSpeak": "Appuyez sur le micro pour parler",
+        "chatWith": "Discuter avec",
+        "online": "En ligne",
+        "typeMessage": "Écrivez un message...",
+        "greeting": "Salut ! 👋 Je suis prêt à discuter. Vous pouvez me parler directement ou taper un message."
+    },
+    "common": {
+        "loading": "Chargement...",
+        "error": "Une erreur s'est produite",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "close": "Fermer",
+        "submit": "Soumettre"
+    }
+}

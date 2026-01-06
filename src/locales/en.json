@@ -1,0 +1,166 @@
+{
+    "landing": {
+        "title": "Your AI Twin",
+        "subtitle": "Create an AI-powered digital version of yourself that chats, learns, and represents you 24/7",
+        "cta": "Get Started",
+        "heroBadge": "Your Digital Identity Awaits",
+        "heroTitle": "Create Your",
+        "heroTitleHighlight": "AI Avatar",
+        "heroTitleSuffix": "That Represents You",
+        "heroDesc": "Norlava creates a personal AI that learns about you and interacts with visitors in your unique style. Your digital self, always online.",
+        "seeDemo": "See Demo",
+        "freeToStart": "Free to start",
+        "noCreditCard": "No credit card",
+        "setupTime": "Setup in 2 mins",
+        "features": {
+            "personalized": "Personalized AI",
+            "personalizedDesc": "Train your AI to speak and think like you",
+            "learns": "Continuous Learning",
+            "learnsDesc": "Your AI gets smarter with every conversation",
+            "3d": "3D Avatar",
+            "3dDesc": "Beautiful animated avatar that speaks"
+        }
+    },
+    "auth": {
+        "login": "Login",
+        "register": "Sign Up",
+        "email": "Email",
+        "password": "Password",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "birthday": "Birthday",
+        "alreadyHaveAccount": "Already have an account?",
+        "dontHaveAccount": "Don't have an account?",
+        "welcomeBack": "Welcome Back",
+        "createAccount": "Create Your Account",
+        "loginSubtitle": "Log in to access your AI profile",
+        "registerSubtitle": "Join Norlava and create your digital twin",
+        "createAvatar": "Create My Avatar"
+    },
+    "onboarding": {
+        "title": "Let's create your AI Avatar",
+        "subtitle": "Tell us about yourself so we can create your perfect digital twin",
+        "digitalIdentity": "Your Digital Identity",
+        "heroDesc": "Norlava creates a personal AI that learns about you and interacts with visitors in your unique style. Your digital self, always online.",
+        "step1Desc": "This information helps your avatar interact naturally with visitors.",
+        "nickname": "What should people call your avatar?",
+        "nicknamePlaceholder": "e.g., Alex, Professor Smith, The Tech Guru...",
+        "tagline": "Your avatar's tagline",
+        "taglinePlaceholder": "e.g., Tech enthusiast who loves coffee ☕",
+        "taglineDesc": "This appears on your profile",
+        "step2Title": "Communication Style",
+        "step2Heading": "How should your avatar talk?",
+        "step2Desc": "Define the personality of your AI",
+        "formality": "Formality Level",
+        "humor": "Humor Style",
+        "responseLength": "Response Length",
+        "step3Title": "Knowledge Areas",
+        "step3Heading": "What are you an expert in?",
+        "step3Desc": "Your avatar will confidently discuss these topics",
+        "expertise": "Areas of Expertise",
+        "expertisePlaceholder": "e.g., Web Development, Marketing...",
+        "hobbies": "Hobbies & Interests",
+        "hobbiesPlaceholder": "e.g., Gaming, Photography, Travel...",
+        "step4Title": "Train Your Avatar",
+        "step4Heading": "Teach your avatar how to respond",
+        "step4Desc": "Add example Q&A pairs to train your AI",
+        "questionPlaceholder": "Question visitors might ask...",
+        "answerPlaceholder": "How you would respond...",
+        "addExample": "Add Example",
+        "noExamples": "No examples yet. Add some to help train your avatar!",
+        "step5Title": "Choose Your Look",
+        "step5Heading": "Pick your avatar style",
+        "step5Desc": "Select a style that represents you",
+        "createAvatar": "Create My Avatar",
+        "styles": {
+            "casual": {
+                "label": "😎 Casual",
+                "desc": "Hey! What's up?"
+            },
+            "balanced": {
+                "label": "🙂 Balanced",
+                "desc": "Hi there! How can I help?"
+            },
+            "formal": {
+                "label": "🎩 Formal",
+                "desc": "Good day. How may I assist you?"
+            },
+            "playful": {
+                "label": "🎉 Playful",
+                "desc": "Loves jokes and fun"
+            },
+            "witty": {
+                "label": "💡 Witty",
+                "desc": "Clever and sharp"
+            },
+            "serious": {
+                "label": "📚 Serious",
+                "desc": "Professional and focused"
+            },
+            "brief": {
+                "label": "⚡ Brief",
+                "desc": "Short and sweet"
+            },
+            "detailed": {
+                "label": "📖 Detailed",
+                "desc": "Thorough explanations"
+            },
+            "conversational": {
+                "label": "💬 Conversational",
+                "desc": "Natural flow"
+            }
+        },
+        "gender": {
+            "male": "Male",
+            "female": "Female",
+            "neutral": "Neutral"
+        },
+        "continue": "Continue",
+        "next": "Next",
+        "back": "Back",
+        "finish": "Finish",
+        "skip": "Skip",
+        "step1": "Basic Info",
+        "step2": "Personality",
+        "step3": "Expertise",
+        "step4": "Interests",
+        "step5": "Avatar",
+        "step6": "Training"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome back",
+        "visitors": "Total Visitors",
+        "messages": "Messages",
+        "shareProfile": "Share Your Profile",
+        "copyLink": "Copy Link",
+        "copied": "Copied!",
+        "settings": "Settings",
+        "logout": "Logout",
+        "newFacts": "New Facts Learned",
+        "questions": "Visitor Questions",
+        "keep": "Keep",
+        "delete": "Delete",
+        "answer": "Answer",
+        "yourAnswer": "Your answer...",
+        "noFacts": "No new facts yet",
+        "noQuestions": "No questions yet"
+    },
+    "interact": {
+        "listening": "Listening...",
+        "speaking": "Speaking...",
+        "tapToSpeak": "Tap mic to speak",
+        "chatWith": "Chat with",
+        "online": "Online",
+        "typeMessage": "Type a message...",
+        "greeting": "Hey there! 👋 I'm ready to chat. You can talk to me directly or type a message."
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "save": "Save",
+        "cancel": "Cancel",
+        "close": "Close",
+        "submit": "Submit"
+    }
+}
