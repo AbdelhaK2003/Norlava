@@ -358,11 +358,11 @@ const Interact = () => {
                                         key={messages.length}
                                         className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
                                     >
-                                        <p className={`font-mono text-sm max-w-sm truncate ${messages[messages.length - 1].isUser ? "text-white" : "text-neon-cyan"
+                                        <p className={`font-mono text-sm max-w-sm truncate ${messages[messages.length - 1].isUser ? "text-neon-purple" : "text-neon-cyan"
                                             }`}>
                                             {messages[messages.length - 1].isUser
-                                                ? `USER: ${messages[messages.length - 1].text}`
-                                                : messages[messages.length - 1].text}
+                                                ? `YOU: ${messages[messages.length - 1].text}`
+                                                : `${(hostName || "AI").toUpperCase()}: ${messages[messages.length - 1].text}`}
                                         </p>
                                     </motion.div>
                                 )}
