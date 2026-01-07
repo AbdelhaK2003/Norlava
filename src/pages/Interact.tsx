@@ -280,9 +280,22 @@ const Interact = () => {
 
             await audio.play();
             // Store ref if needed, but for now fire-and-forget logic works for single turn
-        } catch (error) {
+        } catch (error: any) {
             console.error("❌ Failed to play ElevenLabs voice:", error);
             setIsAvatarSpeaking(false);
+
+            // Try to read the error message from the blob if possible
+            if (error.response?.data instanceof Blob) {
+                const errorText = await error.response.data.text();
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    console.error("🛑 Server Error Details:", errorJson);
+                    // Alert the user so they see it immediately
+                    alert(`Voice Error: ${errorJson.details || errorJson.error || 'Unknown Error'}`);
+                } catch (e) {
+                    console.error("🛑 Raw Error Text:", errorText);
+                }
+            }
         }
     };
 
