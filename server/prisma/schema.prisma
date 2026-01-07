@@ -48,6 +48,9 @@ model Profile {
   // This aggregates all user info into one prompt-ready string/JSON for the LLM
   aiContext   String? 
   
+  // Voice Cloning
+  voiceId     String? // ElevenLabs Voice ID
+
   avatar      Avatar?
   memories    Memory[]
 }

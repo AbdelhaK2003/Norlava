@@ -31,25 +31,10 @@ const Interact = () => {
     const { username } = useParams();
     const [showChat, setShowChat] = useState(false);
     const [hostName, setHostName] = useState("");
+    const [hostVoiceId, setHostVoiceId] = useState<string | null>(null);
 
     // Visitor Identity
     const [visitorId, setVisitorId] = useState("");
-
-    useEffect(() => {
-        // PERMANENT ISOLATION: Always generate a new ID on mount
-        // This ensures every refresh or new tab is a "new" visitor
-        const newVisitorId = uuidv4();
-        console.log("🆕 New Visitor Session Started:", newVisitorId);
-        setVisitorId(newVisitorId);
-
-        // Fetch host profile
-        if (username) {
-            // Use api client to respect base URL
-            api.get(`/user/username/${username}`)
-                .then(res => setHostName(res.data.firstName || username))
-                .catch(() => setHostName(username));
-        }
-    }, [username]);
 
     const [messages, setMessages] = useState<Message[]>([
 
@@ -69,141 +54,64 @@ const Interact = () => {
         scrollToBottom();
     }, [messages, isTyping, showChat]);
 
-
-
     const recognitionRef = useRef<any>(null);
     const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
     // Initialize Speech Recognition
     useEffect(() => {
-        // Broad browser support check
-        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        // PERMANENT ISOLATION: Always generate a new ID on mount
+        // This ensures every refresh or new tab is a "new" visitor
+        const newVisitorId = uuidv4();
+        console.log("🆕 New Visitor Session Started:", newVisitorId);
+        setVisitorId(newVisitorId);
 
-        if (SpeechRecognition) {
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
-            // Dynamic Language Support based on i18n
-            recognitionRef.current.lang = t('languageCode') || 'en-US';
-
-            recognitionRef.current.onstart = () => {
-                console.log("🎙️ Voice: Listening started");
-                setIsListening(true);
-            };
-
-            recognitionRef.current.onresult = (event: any) => {
-                let finalTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
+        // Fetch host profile
+        if (username) {
+            // Use api client to respect base URL
+            api.get(`/user/username/${username}`)
+                .then(res => {
+                    setHostName(res.data.firstName || username);
+                    if (res.data.profile?.voiceId) {
+                        setHostVoiceId(res.data.profile.voiceId);
+                        console.log("🎙️ Host has cloned voice:", res.data.profile.voiceId);
                     }
-                }
-
-                if (finalTranscript.trim()) {
-                    console.log("🎙️ Voice Input:", finalTranscript);
-                    handleSendMessage(finalTranscript, 'voice');
-                }
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error("🎙️ Voice Error:", event.error);
-                if (event.error === 'not-allowed') {
-                    alert("Please allow microphone access to talk to the avatar.");
-                    setIsListening(false);
-                }
-            };
-
-            recognitionRef.current.onend = () => {
-                // Only restart if we intend to keep listening
-                if (isListening) {
-                    try {
-                        recognitionRef.current.start();
-                    } catch (e) {
-                        // Ignore already started errors
-                    }
-                }
-            };
-        } else {
-            console.warn("⚠️ Speech Recognition not supported in this browser.");
+                })
+                .catch(() => setHostName(username));
         }
-    }, [t]); // Re-run if language changes
+    }, [username]);
 
-    // Socket connection
-    useEffect(() => {
-        if (!visitorId) return;
+    // ... (State definitions) ...
 
-
-        socket.connect();
-        socket.emit('join-profile', { username, visitorId });
-
-
-        socket.on('ai-token', (data: { text: string }) => {
-            setMessages((prev) => {
-                const lastMsg = prev[prev.length - 1];
-                // If last message is AI and temporary (streaming), append to it
-                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                    return [
-                        ...prev.slice(0, -1),
-                        { ...lastMsg, text: lastMsg.text + data.text }
-                    ];
-                }
-                // Start a new temporary AI message
-                return [...prev, { id: -1, text: data.text, isUser: false }];
-            });
-        });
-
-        socket.on('receive-message', (msg: any) => {
-            // Only add if it's NOT a completion of the current stream to avoid duplicates
-            // OR if it's a user message
-            if (msg.isUser) {
-
-                setMessages((prev) => [...prev, {
-                    id: msg.id,
-                    text: msg.text,
-                    isUser: msg.isUser
-                }]);
-            } else {
-                // Finalize the streaming message (update ID from -1 to real ID)
-                setMessages((prev) => {
-                    const lastMsg = prev[prev.length - 1];
-                    if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                        return [
-                            ...prev.slice(0, -1),
-                            { ...lastMsg, id: msg.id, text: msg.text } // Ensure final text matches
-                        ];
-                    }
-                    return prev;
+    const speakText = async (text: string) => {
+        if (hostVoiceId) {
+            // Use Server-Side Cloned Voice
+            try {
+                console.log("🗣️ Generating Cloned Voice...");
+                setIsAvatarSpeaking(true);
+                const response = await api.post('/voice/speak', {
+                    text,
+                    voiceId: hostVoiceId
+                }, {
+                    responseType: 'blob'
                 });
+
+                const audioUrl = URL.createObjectURL(response.data);
+                const audio = new Audio(audioUrl);
+
+                audio.onended = () => {
+                    setIsAvatarSpeaking(false);
+                    URL.revokeObjectURL(audioUrl);
+                };
+
+                audio.play();
+                return; // Skip browser TTS
+            } catch (err) {
+                console.error("❌ Cloned Voice Failed, falling back to browser:", err);
+                setIsAvatarSpeaking(false);
+                // Fallthrough to browser TTS
             }
-        });
+        }
 
-        socket.on('bot-speak', (data: { text: string }) => {
-            if (!isMuted) {
-
-                speakText(data.text);
-            }
-        });
-
-        socket.on('bot-typing', (status: boolean) => {
-            setIsTyping(status);
-        });
-
-        // Removed bot-speak listener to rely on local TTS events for better sync
-        // socket.on('bot-speak', (data: { duration: number }) => {
-        //     setIsAvatarSpeaking(true);
-        //     setTimeout(() => setIsAvatarSpeaking(false), data.duration);
-        // });
-
-        return () => {
-            socket.off('receive-message');
-            socket.off('ai-token');
-            socket.off('bot-typing');
-            socket.off('bot-speak');
-            socket.disconnect();
-        };
-    }, [username, isMuted, visitorId]);
-
-    const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel(); // Stop any previous speech
 

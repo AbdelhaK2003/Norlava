@@ -7,41 +7,31 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
+import voiceRoutes from './routes/voice';
 import { db } from './db';
-
-// Initialize Google Gemini AI (SDK automatically uses appropriate API version)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
 const io = new Server(server, {
     cors: {
-        origin: process.env.NODE_ENV === 'production'
-            ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
-            : ["http://localhost:5173", "http://localhost:8080"],
-        methods: ["GET", "POST"],
-        credentials: true
+        origin: "*",
+        methods: ["GET", "POST"]
     }
 });
 
-const PORT = 3000;
-
-console.log("🔍 Server Starting...");
-console.log("📂 Current Working Directory:", process.cwd());
-console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
-
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
-        : ["http://localhost:5173", "http://localhost:8080"],
-    credentials: true
-}));
-app.use(express.json());
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
