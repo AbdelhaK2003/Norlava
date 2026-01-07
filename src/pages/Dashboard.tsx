@@ -22,8 +22,7 @@ import {
     LogOut,
     Brain,
     Check,
-    X,
-    RefreshCw
+    X
 } from "lucide-react";
 
 // Mock data removed. Real stats fetched from backend.
@@ -143,10 +142,6 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" className="gap-2" onClick={fetchStats}>
-                            <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
-                            <span className="hidden md:inline">Refresh Stats</span>
-                        </Button>
                         <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/onboarding")}>
                             <Settings size={16} />
                             <span className="hidden md:inline">{t('dashboard.settings')}</span>
