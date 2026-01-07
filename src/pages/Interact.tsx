@@ -123,6 +123,7 @@ const Interact = () => {
         });
 
         socket.on('receive-message', (msg: any) => {
+            setProcessing(false); // Ensure processing stops
             if (msg.isUser) {
                 setMessages((prev) => [...prev, { id: msg.id, text: msg.text, isUser: msg.isUser }]);
             } else {
@@ -142,6 +143,7 @@ const Interact = () => {
 
         socket.on('bot-typing', (status: boolean) => {
             setIsTyping(status);
+            if (!status) setProcessing(false); // Safety net
         });
 
         return () => {
@@ -311,6 +313,12 @@ const Interact = () => {
                         {/* Live Grid Background */}
                         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)] pointer-events-none"></div>
 
+                        {/* DEBUG STATUS */}
+                        <div className="absolute top-4 left-4 font-mono text-[10px] text-white/30 z-50 text-left">
+                            <p>STATUS: {socket.connected ? "CONNECTED" : "DISCONNECTED"}</p>
+                            <p>VISITOR: {visitorId.slice(0, 8)}...</p>
+                        </div>
+
                         {/* Close Button */}
                         <div className="absolute top-8 right-8 z-50">
                             <Button
@@ -343,20 +351,21 @@ const Interact = () => {
 
                             {/* Live Transcript Log (Simulating HUD Data) */}
                             <div className="absolute -bottom-24 w-full text-center space-y-2">
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    key={messages.length} // Re-animate on new message
-                                    className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
-                                >
-                                    <p className="text-neon-cyan font-mono text-sm max-w-sm truncate animate-pulse">
-                                        {processing ? "/// AI PROCESSING DATA..." :
-                                            isAvatarSpeaking ? "/// AUDIO OUTPUT ACTIVE" :
-                                                messages.length > 0 && messages[messages.length - 1].isUser ? `YOU: ${messages[messages.length - 1].text}` :
-                                                    "/// LISTENING FOR INPUT"
-                                        }
-                                    </p>
-                                </motion.div>
+                                {messages.length > 0 && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        key={messages.length}
+                                        className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
+                                    >
+                                        <p className={`font-mono text-sm max-w-sm truncate ${messages[messages.length - 1].isUser ? "text-white" : "text-neon-cyan"
+                                            }`}>
+                                            {messages[messages.length - 1].isUser
+                                                ? `USER: ${messages[messages.length - 1].text}`
+                                                : messages[messages.length - 1].text}
+                                        </p>
+                                    </motion.div>
+                                )}
                             </div>
                         </div>
                     </motion.div>
