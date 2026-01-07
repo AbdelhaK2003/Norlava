@@ -21,6 +21,10 @@ import {
 import { io } from "socket.io-client";
 import { api, socket as chatSocket } from "@/lib/api";
 
+// Debug Chat Socket
+chatSocket.on('connect', () => console.log("✅ CHAT SOCKET CONNECTED:", chatSocket.id));
+chatSocket.on('connect_error', (e) => console.error("❌ CHAT SOCKET ERROR:", e));
+
 // Audio Configuration
 const AUDIO_CONTEXT_OPTIONS = { sampleRate: 16000 }; // Gemini expects 16kHz
 const CHUNK_SIZE = 4096;
@@ -92,8 +96,8 @@ const Interact = () => {
         // Connect to LIVE Namespace
         const liveNs = io(`${backendUrl}/live`, {
             path: '/socket.io',
-            withCredentials: true,
-            transports: ['websocket', 'polling']
+            withCredentials: true
+            // transports: ['websocket', 'polling'] // Removed to let client negotiate
         });
 
         socketRef.current = liveNs;
