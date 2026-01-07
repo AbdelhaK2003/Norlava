@@ -34,6 +34,8 @@ const Interact = () => {
 
     // Visitor Identity
     const [visitorId, setVisitorId] = useState("");
+    // Use ref to access current visitorId inside frozen closures (like SpeechRecognition)
+    const visitorIdRef = useRef("");
 
     useEffect(() => {
         // PERMANENT ISOLATION: Always generate a new ID on mount
@@ -41,6 +43,7 @@ const Interact = () => {
         const newVisitorId = uuidv4();
         console.log("🆕 New Visitor Session Started:", newVisitorId);
         setVisitorId(newVisitorId);
+        visitorIdRef.current = newVisitorId;
 
         // Fetch host profile
         if (username) {
@@ -275,12 +278,16 @@ const Interact = () => {
     const handleSendMessage = (text: string, inputType: 'voice' | 'text' = 'text') => {
         if (!text.trim()) return;
 
+        // Use Ref to ensure we get the latest ID even if called from a stale closure
+        const currentVisitorId = visitorIdRef.current || visitorId;
+
+        console.log(`📤 Sending ${inputType}:`, { text, visitorId: currentVisitorId });
 
         socket.emit('send-message', {
             profileId: username,
             message: text,
             senderIsUser: true,
-            visitorId,
+            visitorId: currentVisitorId,
             inputType // 'voice' or 'text'
         });
 
