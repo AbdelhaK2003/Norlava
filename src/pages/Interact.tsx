@@ -237,47 +237,52 @@ const Interact = () => {
         return cleaned;
     };
 
-    const speakText = (text: string) => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Stop any previous speech
+    const speakText = async (text: string) => {
+        // Stop any existing audio
+        if (synthesisRef.current) {
+            // Cancel legacy
+            window.speechSynthesis.cancel();
+        }
 
-            const safeText = cleanTextForSpeech(text);
-            if (!safeText) return;
+        // Stop global audio if playing (simple primitive for now, better to use a specific ref)
+        const existingAudio = document.getElementById('ai-voice-player') as HTMLAudioElement;
+        if (existingAudio) {
+            existingAudio.pause();
+            existingAudio.currentTime = 0;
+        }
 
-            const utterance = new SpeechSynthesisUtterance(safeText);
-            utterance.rate = 1.0; // Slightly faster for flow
-            utterance.pitch = 1.0;
+        const safeText = cleanTextForSpeech(text);
+        if (!safeText) return;
 
-            // Dynamic Language Support from i18n
-            const langCode = t('languageCode') || 'en-US';
-            utterance.lang = langCode;
+        try {
+            console.log("🗣️ Requesting ElevenLabs Audio...");
+            setIsAvatarSpeaking(true);
 
-            // Voice Selection Strategy:
-            // 1. Look for "Google" voices (usually better quality on Chrome/Android)
-            // 2. Look for "Natural" or "Enhanced" (Edge/iOS)
-            // 3. Fallback to default match for language
-            const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v =>
-                v.lang.startsWith(langCode) && (
-                    v.name.includes("Google") ||
-                    v.name.includes("Natural") ||
-                    v.name.includes("Enhanced")
-                )
-            ) || voices.find(v => v.lang.startsWith(langCode));
+            // Fetch audio blob
+            const response = await api.post('/voice/speak', { text: safeText }, {
+                responseType: 'blob' // Important for audio handling
+            });
 
-            if (preferredVoice) {
-                console.log("🗣️ Using Voice:", preferredVoice.name);
-                utterance.voice = preferredVoice;
-            }
+            // Create URL
+            const audioUrl = URL.createObjectURL(response.data);
+            const audio = new Audio(audioUrl);
+            audio.id = 'ai-voice-player';
 
-            utterance.onstart = () => setIsAvatarSpeaking(true);
-            utterance.onend = () => setIsAvatarSpeaking(false);
-            utterance.onerror = (e) => {
-                console.error("🗣️ TTS Error:", e);
+            audio.onended = () => {
+                setIsAvatarSpeaking(false);
+                URL.revokeObjectURL(audioUrl); // Cleanup
+            };
+
+            audio.onerror = (e) => {
+                console.error("Audio Playback Error", e);
                 setIsAvatarSpeaking(false);
             };
 
-            window.speechSynthesis.speak(utterance);
+            await audio.play();
+            // Store ref if needed, but for now fire-and-forget logic works for single turn
+        } catch (error) {
+            console.error("❌ Failed to play ElevenLabs voice:", error);
+            setIsAvatarSpeaking(false);
         }
     };
 

@@ -8,6 +8,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
+import voiceRoutes from './routes/voice';
 import { db } from './db';
 
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
@@ -65,6 +66,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
