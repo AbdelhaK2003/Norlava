@@ -286,6 +286,8 @@ const Interact = () => {
                                 <CyberTyping />
                             </div>
                         </motion.div>
+                    )}
+                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input */}
