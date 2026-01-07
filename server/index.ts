@@ -44,8 +44,8 @@ app.use((req, res, next) => {
 });
 
 app.use(cors(corsOptions));
-// Explicitly handle pre-flight requests
-app.options('*', cors(corsOptions));
+// Explicitly handle pre-flight requests (Express 5 require (.*) for wildcard)
+app.options('(.*)', cors(corsOptions));
 
 app.use(express.json());
 
