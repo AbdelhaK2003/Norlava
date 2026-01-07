@@ -146,6 +146,11 @@ const Interact = () => {
             if (!status) setProcessing(false); // Safety net
         });
 
+        socket.on('debug-step', (step: string) => {
+            const el = document.getElementById('trace-step');
+            if (el) el.innerText = step;
+        });
+
         socket.on('debug-ack', (data: any) => {
             console.log("📡 SERVER ACK:", data);
             const el = document.getElementById('ack-status');
@@ -327,6 +332,7 @@ const Interact = () => {
                             <p>STATUS: {socket.connected ? "CONNECTED" : "DISCONNECTED"}</p>
                             <p>VISITOR: {visitorId.slice(0, 8)}...</p>
                             <p>SERVER ACK: <span id="ack-status">WAITING...</span></p>
+                            <p>TRACE: <span id="trace-step" className="text-neon-cyan/50">IDLE</span></p>
                         </div>
 
                         {/* Close Button */}
