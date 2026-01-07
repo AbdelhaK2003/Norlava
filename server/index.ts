@@ -5,7 +5,6 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { setupLiveSocket } from './live-socket';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
@@ -16,33 +15,14 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const app = express();
 const server = http.createServer(app);
-// Allowed Origins
-const allowedOrigins = [
-    process.env.FRONTEND_URL || "https://your-app.vercel.app",
-    "https://norlava.com",
-    "https://www.norlava.com",
-    "https://voxterna.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:3000"
-];
-
-const corsOptions = {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.some(domain => origin.startsWith(domain) || domain.includes(origin))) {
-            callback(null, true);
-        } else {
-            console.warn("⚠️ Blocked by CORS:", origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true
-};
-
 const io = new Server(server, {
-    cors: corsOptions
+    cors: {
+        origin: process.env.NODE_ENV === 'production'
+            ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
+            : ["http://localhost:5173", "http://localhost:8080"],
+        methods: ["GET", "POST"],
+        credentials: true
+    }
 });
 
 const PORT = 3000;
@@ -51,7 +31,12 @@ console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
 
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+        ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
+        : ["http://localhost:5173", "http://localhost:8080"],
+    credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -65,8 +50,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // Socket.io Connection
-setupLiveSocket(io);
-
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
@@ -191,8 +174,8 @@ io.on('connection', (socket) => {
 
                 console.log("🤖 Asking Gemini (Streaming)...");
 
-                // Fallback to Gemini Pro (Legacy Stable)
-                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+                // Get the Gemini model (gemini-pro is stable in v1 API)
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                 // Create the prompt with AI context AND History
                 const prompt = `${aiBrain}\n\n[CONVERSATION HISTORY]\n${history}\n\n[CURRENT INTERACTION]\nUser: ${message}\nAssistant:`;
@@ -237,7 +220,7 @@ io.on('connection', (socket) => {
                 // We don't await this, let it run in background to keep chat fast
                 (async () => {
                     try {
-                        const learningModel = genAI.getGenerativeModel({ model: "gemini-pro" });
+                        const learningModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                         // A: Check for Facts
                         console.log("🧠 Adaptive Learning: Analyzing message for new facts...");

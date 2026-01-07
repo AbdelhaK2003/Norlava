@@ -18,16 +18,7 @@ import {
     X,
     Sparkles
 } from "lucide-react";
-import { io } from "socket.io-client";
-import { api, socket as chatSocket } from "@/lib/api";
-
-// Debug Chat Socket
-chatSocket.on('connect', () => console.log("✅ CHAT SOCKET CONNECTED:", chatSocket.id));
-chatSocket.on('connect_error', (e) => console.error("❌ CHAT SOCKET ERROR:", e));
-
-// Audio Configuration
-const AUDIO_CONTEXT_OPTIONS = { sampleRate: 16000 }; // Gemini expects 16kHz
-const CHUNK_SIZE = 4096;
+import { socket, api } from "@/lib/api";
 
 interface Message {
     id: string | number;
@@ -43,22 +34,32 @@ const Interact = () => {
 
     // Visitor Identity
     const [visitorId, setVisitorId] = useState("");
-    const [messages, setMessages] = useState<Message[]>([]);
+
+    useEffect(() => {
+        // PERMANENT ISOLATION: Always generate a new ID on mount
+        // This ensures every refresh or new tab is a "new" visitor
+        const newVisitorId = uuidv4();
+        console.log("🆕 New Visitor Session Started:", newVisitorId);
+        setVisitorId(newVisitorId);
+
+        // Fetch host profile
+        if (username) {
+            // Use api client to respect base URL
+            api.get(`/user/username/${username}`)
+                .then(res => setHostName(res.data.firstName || username))
+                .catch(() => setHostName(username));
+        }
+    }, [username]);
+
+    const [messages, setMessages] = useState<Message[]>([
+
+    ]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
-
-    // Live Voice State
-    const [isConnected, setIsConnected] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
-
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const socketRef = useRef<any>(null);
-    const audioContextRef = useRef<AudioContext | null>(null);
-    const workletNodeRef = useRef<AudioWorkletNode | null>(null);
-    const streamRef = useRef<MediaStream | null>(null);
-    const nextStartTimeRef = useRef<number>(0);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,269 +69,199 @@ const Interact = () => {
         scrollToBottom();
     }, [messages, isTyping, showChat]);
 
+
+
+    const recognitionRef = useRef<any>(null);
+    const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+    // Initialize Speech Recognition
     useEffect(() => {
-        const newVisitorId = uuidv4();
-        console.log("🆕 New Visitor Session Started:", newVisitorId);
-        setVisitorId(newVisitorId);
+        // Broad browser support check
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
-        if (username) {
-            api.get(`/user/username/${username}`)
-                .then(res => setHostName(res.data.firstName || username))
-                .catch(() => setHostName(username));
-        }
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+            // Dynamic Language Support based on i18n
+            recognitionRef.current.lang = t('languageCode') || 'en-US';
 
-        // Determine Backend URL
-        let backendUrl = "http://localhost:3000";
-        if (import.meta.env.VITE_API_URL) {
-            // Strip '/api' from the end of VITE_API_URL to get the root domain
-            backendUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "");
-        } else if (process.env.NODE_ENV === 'production') {
-            backendUrl = window.location.origin; // Fallback
-        }
-
-        console.log("🔌 Connecting to Socket Backend at:", backendUrl);
-
-        // Connect to Main Namespace (for chat/auth)
-        // chatSocket.io.uri = backendUrl; // If we needed to reconfigure global socket
-
-        // Connect to LIVE Namespace
-        const liveNs = io(`${backendUrl}/live`, {
-            path: '/socket.io',
-            withCredentials: true
-            // transports: ['websocket', 'polling'] // Removed to let client negotiate
-        });
-
-        socketRef.current = liveNs;
-
-        liveNs.on('connect', () => {
-            console.log("✅ LIVE SOCKET CONNECTED! ID:", liveNs.id);
-            setIsConnected(true);
-        });
-
-        liveNs.on('connect_error', (err) => {
-            console.error("❌ LIVE SOCKET CONNECTION ERROR:", err.message);
-        });
-
-        liveNs.on('audio-chunk', async (base64Audio: string) => {
-            if (isMuted) return;
-            await playAudioChunk(base64Audio);
-        });
-
-        liveNs.on('turn-complete', () => {
-            // Optional: Handle interaction markers
-        });
-
-        return () => {
-            stopRecording();
-            liveNs.disconnect();
-            if (audioContextRef.current) audioContextRef.current.close();
-        };
-    }, [username, isMuted]);
-
-    // --- Audio Playback Logic ---
-    const playAudioChunk = async (base64String: string) => {
-        if (!audioContextRef.current) {
-            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        }
-
-        const ctx = audioContextRef.current;
-        if (ctx.state === 'suspended') await ctx.resume();
-
-        // Decode Base64
-        const binaryString = window.atob(base64String);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-
-        // Decode Audio Data (PCM 24kHz or similar from Gemini)
-        // Note: Gemini Live sends PCM. If it's pure PCM, we might need a custom raw player.
-        // However, the current setup assumes Gemini sends WAV or decodable chunks OR we use a raw buffer.
-        // Let's assume raw PCM (16-bit, 24kHz usually). audioContext.decodeAudioData usually expects headers.
-        // If raw, we need to manually float it.
-        // For simplicity v1: Try decodeAudioData (assuming server wraps it or sends header).
-        // If fails, we implement raw PCM player.
-
-        // Actually, for real-time PCM without headers, decodeAudioData fails.
-        // We will create a Float32Array from Int16Array (standard PCM)
-        const pcm16 = new Int16Array(bytes.buffer);
-        const float32 = new Float32Array(pcm16.length);
-        for (let i = 0; i < pcm16.length; i++) {
-            float32[i] = pcm16[i] / 32768; // Convert to -1..1 range
-        }
-
-        const buffer = ctx.createBuffer(1, float32.length, 24000); // Gemini usually 24kHz output
-        buffer.getChannelData(0).set(float32);
-
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(ctx.destination);
-
-        // Schedule smoothness
-        const now = ctx.currentTime;
-        // If next start time is in the past, reset it to now
-        const startTime = Math.max(now, nextStartTimeRef.current);
-
-        source.start(startTime);
-        nextStartTimeRef.current = startTime + buffer.duration;
-
-        setIsAvatarSpeaking(true);
-        source.onended = () => {
-            if (ctx.currentTime >= nextStartTimeRef.current || nextStartTimeRef.current - ctx.currentTime < 0.1) {
-                setIsAvatarSpeaking(false);
-            }
-        };
-    };
-
-    // --- Audio Capture Logic (ScriptProcessor for simplicity in React) ---
-    const startRecording = async () => {
-        try {
-            if (!audioContextRef.current) {
-                audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-            }
-            const ctx = audioContextRef.current;
-            if (ctx.state === 'suspended') await ctx.resume();
-
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    sampleRate: 16000,
-                    channelCount: 1,
-                    echoCancellation: true,
-                    autoGainControl: true,
-                    noiseSuppression: true
-                }
-            });
-            streamRef.current = stream;
-
-            const source = ctx.createMediaStreamSource(stream);
-
-            // Join the Live Room
-            socketRef.current?.emit('join-live', { profileId: username });
-
-            // Use ScriptProcessor (Legacy but works everywhere without external worklet files)
-            const processor = ctx.createScriptProcessor(4096, 1, 1);
-
-            processor.onaudioprocess = (e) => {
-                if (!isListening) return;
-
-                const inputData = e.inputBuffer.getChannelData(0);
-
-                // Convert Float32 (-1..1) to Int16 PCM
-                const pcmData = new Int16Array(inputData.length);
-                for (let i = 0; i < inputData.length; i++) {
-                    const s = Math.max(-1, Math.min(1, inputData[i]));
-                    pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                }
-
-                // Convert to Base64
-                const binary = String.fromCharCode(...new Uint8Array(pcmData.buffer));
-                const base64 = window.btoa(binary);
-
-                socketRef.current?.emit('audio-input', base64);
+            recognitionRef.current.onstart = () => {
+                console.log("🎙️ Voice: Listening started");
+                setIsListening(true);
             };
 
-            source.connect(processor);
-            processor.connect(ctx.destination); // Destination is strictly for keeping the node alive in some browsers
+            recognitionRef.current.onresult = (event: any) => {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
 
-            setIsListening(true);
-            console.log("🎙️ Live Recording Started");
+                if (finalTranscript.trim()) {
+                    console.log("🎙️ Voice Input:", finalTranscript);
+                    handleSendMessage(finalTranscript, 'voice');
+                }
+            };
 
-        } catch (err) {
-            console.error("Mic Error:", err);
-            alert("Could not access microphone.");
-        }
-    };
+            recognitionRef.current.onerror = (event: any) => {
+                console.error("🎙️ Voice Error:", event.error);
+                if (event.error === 'not-allowed') {
+                    alert("Please allow microphone access to talk to the avatar.");
+                    setIsListening(false);
+                }
+            };
 
-    const stopRecording = () => {
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(t => t.stop());
-            streamRef.current = null;
-        }
-        setIsListening(false);
-        console.log("mic stopped");
-    };
-
-    const toggleListening = () => {
-        if (isListening) {
-            stopRecording();
+            recognitionRef.current.onend = () => {
+                // Only restart if we intend to keep listening
+                if (isListening) {
+                    try {
+                        recognitionRef.current.start();
+                    } catch (e) {
+                        // Ignore already started errors
+                    }
+                }
+            };
         } else {
-            startRecording();
+            console.warn("⚠️ Speech Recognition not supported in this browser.");
+        }
+    }, [t]); // Re-run if language changes
+
+    // Socket connection
+    useEffect(() => {
+        if (!visitorId) return;
+
+
+        socket.connect();
+        socket.emit('join-profile', { username, visitorId });
+
+
+        socket.on('ai-token', (data: { text: string }) => {
+            setMessages((prev) => {
+                const lastMsg = prev[prev.length - 1];
+                // If last message is AI and temporary (streaming), append to it
+                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
+                    return [
+                        ...prev.slice(0, -1),
+                        { ...lastMsg, text: lastMsg.text + data.text }
+                    ];
+                }
+                // Start a new temporary AI message
+                return [...prev, { id: -1, text: data.text, isUser: false }];
+            });
+        });
+
+        socket.on('receive-message', (msg: any) => {
+            // Only add if it's NOT a completion of the current stream to avoid duplicates
+            // OR if it's a user message
+            if (msg.isUser) {
+
+                setMessages((prev) => [...prev, {
+                    id: msg.id,
+                    text: msg.text,
+                    isUser: msg.isUser
+                }]);
+            } else {
+                // Finalize the streaming message (update ID from -1 to real ID)
+                setMessages((prev) => {
+                    const lastMsg = prev[prev.length - 1];
+                    if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
+                        return [
+                            ...prev.slice(0, -1),
+                            { ...lastMsg, id: msg.id, text: msg.text } // Ensure final text matches
+                        ];
+                    }
+                    return prev;
+                });
+            }
+        });
+
+        socket.on('bot-speak', (data: { text: string }) => {
+            if (!isMuted) {
+
+                speakText(data.text);
+            }
+        });
+
+        socket.on('bot-typing', (status: boolean) => {
+            setIsTyping(status);
+        });
+
+        // Removed bot-speak listener to rely on local TTS events for better sync
+        // socket.on('bot-speak', (data: { duration: number }) => {
+        //     setIsAvatarSpeaking(true);
+        //     setTimeout(() => setIsAvatarSpeaking(false), data.duration);
+        // });
+
+        return () => {
+            socket.off('receive-message');
+            socket.off('ai-token');
+            socket.off('bot-typing');
+            socket.off('bot-speak');
+            socket.disconnect();
+        };
+    }, [username, isMuted, visitorId]);
+
+    const speakText = (text: string) => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop any previous speech
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            // Use current UI language for speech
+            utterance.lang = t('languageCode') || 'en-US';
+
+            // Find a good voice (optional, but helps quality)
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang));
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            utterance.onstart = () => setIsAvatarSpeaking(true);
+            utterance.onend = () => setIsAvatarSpeaking(false);
+            utterance.onerror = (e) => console.error("🗣️ TTS Error:", e);
+
+            window.speechSynthesis.speak(utterance);
         }
     };
 
-    // Keep Chat Functionality for Text Fallback
-    const handleSendMessage = (text: string) => {
+    const handleSendMessage = (text: string, inputType: 'voice' | 'text' = 'text') => {
         if (!text.trim()) return;
-        // ... (Keep existing chat logic if mixed, but user said voice focused)
-        // For simplicity, we just clear input for now as focus is Voice
-        setInputValue("");
-        chatSocket.emit('send-message', {
+
+
+        socket.emit('send-message', {
             profileId: username,
             message: text,
             senderIsUser: true,
             visitorId,
-            inputType: 'text'
+            inputType // 'voice' or 'text'
         });
+
+        setInputValue("");
     };
 
-    // --- Restore Chat Socket Logic ---
-    useEffect(() => {
-        if (!visitorId || !username) return;
-
-        console.log("🔌 Connecting Chat Socket for:", visitorId);
-
-        if (!chatSocket.connected) {
-            chatSocket.connect();
+    const toggleListening = () => {
+        if (!recognitionRef.current) {
+            alert("Speech recognition is not supported in your browser");
+            return;
         }
 
-        chatSocket.emit('join-profile', { username, visitorId });
+        if (isListening) {
+            setIsListening(false); // This flag prevents auto-restart in onend
+            recognitionRef.current.stop();
+        } else {
+            setIsListening(true); // This flag enables auto-restart
+            recognitionRef.current.start();
+        }
+    };
 
-        const handleAiToken = (data: { text: string }) => {
-            setMessages((prev) => {
-                const lastMsg = prev[prev.length - 1];
-                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                    return [...prev.slice(0, -1), { ...lastMsg, text: lastMsg.text + data.text }];
-                }
-                return [...prev, { id: -1, text: data.text, isUser: false }];
-            });
-        };
-
-        const handleReceiveMessage = (msg: any) => {
-            if (msg.isUser) {
-                setMessages((prev) => [...prev, { id: msg.id, text: msg.text, isUser: msg.isUser }]);
-            } else {
-                setMessages((prev) => {
-                    const lastMsg = prev[prev.length - 1];
-                    if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                        return [...prev.slice(0, -1), { ...lastMsg, id: msg.id, text: msg.text }];
-                    }
-                    return [...prev, { id: msg.id, text: msg.text, isUser: false }];
-                });
-            }
-        };
-
-        const handleBotTyping = (status: boolean) => setIsTyping(status);
-
-        chatSocket.on('ai-token', handleAiToken);
-        chatSocket.on('receive-message', handleReceiveMessage);
-        chatSocket.on('bot-typing', handleBotTyping);
-
-        chatSocket.on('bot-speak', (data: { text: string }) => {
-            if (!isMuted && !isConnected) {
-                const utterance = new SpeechSynthesisUtterance(data.text);
-                utterance.lang = t('languageCode') || 'en-US';
-                window.speechSynthesis.speak(utterance);
-            }
-        });
-
-        return () => {
-            chatSocket.off('ai-token', handleAiToken);
-            chatSocket.off('receive-message', handleReceiveMessage);
-            chatSocket.off('bot-typing', handleBotTyping);
-            chatSocket.off('bot-speak');
-        };
-    }, [visitorId, username, isMuted, isConnected]);
+    const stopSpeaking = () => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            setIsAvatarSpeaking(false);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-grid relative overflow-hidden flex flex-col items-center justify-center">
@@ -352,6 +283,7 @@ const Interact = () => {
                     transition={{ duration: 1 }}
                     className="relative"
                 >
+                    {/* Avatar takes up significant space */}
                     <div className="scale-110 md:scale-150 transform transition-transform duration-700">
                         <Avatar3D size="xl" isSpeaking={isAvatarSpeaking} />
                     </div>
@@ -364,13 +296,11 @@ const Interact = () => {
                         transition={{ delay: 0.5 }}
                     >
                         {isListening ? (
-                            <span className="text-xl font-medium text-red-500 animate-pulse uppercase tracking-widest">Listening...</span>
+                            <span className="text-xl font-medium text-primary animate-pulse">{t('interact.listening')}</span>
                         ) : isAvatarSpeaking ? (
-                            <span className="text-xl font-medium gradient-text uppercase tracking-widest">Speaking...</span>
+                            <span className="text-xl font-medium gradient-text">{t('interact.speaking')}</span>
                         ) : (
-                            <span className="text-muted-foreground text-sm uppercase tracking-widest">
-                                {isConnected ? "Tap Mic to Chat" : "Connecting..."}
-                            </span>
+                            <span className="text-muted-foreground text-sm">{t('interact.tapToSpeak')}</span>
                         )}
                     </motion.div>
                 </motion.div>
@@ -416,7 +346,7 @@ const Interact = () => {
                 </Button>
             </motion.div>
 
-            {/* Chat Overlay (Preserved for text fallback) */}
+            {/* Chat Overlay */}
             <AnimatePresence>
                 {showChat && (
                     <motion.div
@@ -435,6 +365,7 @@ const Interact = () => {
                             exit={{ scale: 0.9, y: 20 }}
                         >
                             <GlassCard className="h-[600px] flex flex-col p-0 overflow-hidden" glow>
+                                {/* Chat Header */}
                                 <div className="p-4 border-b border-glass-border flex items-center justify-between bg-black/20">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
@@ -444,7 +375,7 @@ const Interact = () => {
                                             <h3 className="font-semibold text-sm">{hostName}</h3>
                                             <div className="flex items-center gap-1.5">
                                                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                                <span className="text-[10px] text-muted-foreground">Live</span>
+                                                <span className="text-[10px] text-muted-foreground">{t('interact.online')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -458,25 +389,34 @@ const Interact = () => {
                                     </Button>
                                 </div>
 
+                                {/* Messages */}
                                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                    <div className="text-center text-muted-foreground text-sm mt-10">
-                                        Use the microphone for real-time voice chat.
-                                    </div>
+                                    {messages.map((message) => (
+                                        <ChatBubble
+                                            key={message.id}
+                                            message={message.text}
+                                            isUser={message.isUser}
+                                        />
+                                    ))}
+                                    {isTyping && <ChatBubble message="" isTyping />}
+                                    <div ref={messagesEndRef} />
                                 </div>
 
+                                {/* Input */}
                                 <div className="p-4 border-t border-glass-border bg-black/20">
                                     <form
                                         onSubmit={(e) => {
                                             e.preventDefault();
-                                            handleSendMessage(inputValue);
+                                            handleSendMessage(inputValue, 'text');
                                         }}
                                         className="flex gap-2"
                                     >
                                         <Input
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
-                                            placeholder="Type a message..."
+                                            placeholder={t('interact.typeMessage')}
                                             className="flex-1 bg-black/20 border-glass-border focus-visible:ring-primary/50"
+                                            autoFocus
                                         />
                                         <Button type="submit" variant="neon" size="icon">
                                             <Send size={18} />
@@ -488,6 +428,8 @@ const Interact = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
+
+
         </div >
     );
 };
