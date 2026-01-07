@@ -219,14 +219,14 @@ const Interact = () => {
     };
 
     return (
-        <div className="h-screen w-screen bg-black overflow-hidden relative font-outfit">
+        <div className="h-screen w-screen overflow-hidden relative font-outfit">
             {/* Global Background */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
 
             {/* ==================== 1. CHAT MODE (DEFAULT) ==================== */}
-            <div className={`relative z-10 flex flex-col h-full bg-gradient-to-b from-black/80 to-black transition-all duration-700 ${isListening ? 'scale-95 opacity-0 blur-sm pointer-events-none' : 'scale-100 opacity-100'}`}>
+            <div className={`relative z-10 flex flex-col h-full transition-all duration-700 ${isListening ? 'scale-95 opacity-0 blur-sm pointer-events-none' : 'scale-100 opacity-100'}`}>
                 {/* Header */}
-                <div className="p-4 border-b border-white/5 flex items-center justify-between backdrop-blur-md sticky top-0 z-20">
+                <div className="p-4 border-b border-white/5 flex items-center justify-between backdrop-blur-md sticky top-0 z-20 bg-background/50">
                     <div className="flex items-center gap-4">
                         <div className="relative">
                             <div className="w-10 h-10 rounded-full bg-gradient-neon p-[2px]">
@@ -286,12 +286,10 @@ const Interact = () => {
                                 <CyberTyping />
                             </div>
                         </motion.div>
-                    )}
-                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input */}
-                <div className="p-4 md:p-6 pb-8 bg-gradient-to-t from-black via-black/90 to-transparent sticky bottom-0 z-20">
+                <div className="p-4 md:p-6 pb-8 backdrop-blur-sm sticky bottom-0 z-20">
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue, 'text'); }}
                         className="max-w-4xl mx-auto relative group"
