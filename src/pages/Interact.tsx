@@ -134,6 +134,19 @@ const Interact = () => {
 
 
         socket.connect();
+
+        socket.on('connect', () => {
+            console.log("✅ Socket Connected! ID:", socket.id);
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error("❌ Socket Connection Error:", err);
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.log("⚠️ Socket Disconnected:", reason);
+        });
+
         socket.emit('join-profile', { username, visitorId });
 
 
