@@ -124,17 +124,18 @@ const Interact = () => {
 
         socket.on('receive-message', (msg: any) => {
             setProcessing(false); // Ensure processing stops
-            if (msg.isUser) {
-                setMessages((prev) => [...prev, { id: msg.id, text: msg.text, isUser: msg.isUser }]);
-            } else {
-                setMessages((prev) => {
-                    const lastMsg = prev[prev.length - 1];
-                    if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                        return [...prev.slice(0, -1), { ...lastMsg, id: msg.id, text: msg.text }];
-                    }
-                    return prev;
-                });
-            }
+
+            // Fix: Ignore user messages from socket to prevent "Double Message" bug
+            // (Since we already added it optimistically)
+            if (msg.isUser) return;
+
+            setMessages((prev) => {
+                const lastMsg = prev[prev.length - 1];
+                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
+                    return [...prev.slice(0, -1), { ...lastMsg, id: msg.id, text: msg.text }];
+                }
+                return prev;
+            });
         });
 
         socket.on('bot-speak', (data: { text: string }) => {
