@@ -191,8 +191,8 @@ io.on('connection', (socket) => {
 
                 console.log("🤖 Asking Gemini (Streaming)...");
 
-                // Get the Gemini model (using specific version 001 for stability)
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+                // Fallback to Gemini Pro (Legacy Stable)
+                const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
                 // Create the prompt with AI context AND History
                 const prompt = `${aiBrain}\n\n[CONVERSATION HISTORY]\n${history}\n\n[CURRENT INTERACTION]\nUser: ${message}\nAssistant:`;
@@ -237,7 +237,7 @@ io.on('connection', (socket) => {
                 // We don't await this, let it run in background to keep chat fast
                 (async () => {
                     try {
-                        const learningModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+                        const learningModel = genAI.getGenerativeModel({ model: "gemini-pro" });
 
                         // A: Check for Facts
                         console.log("🧠 Adaptive Learning: Analyzing message for new facts...");
