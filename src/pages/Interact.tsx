@@ -34,8 +34,6 @@ const Interact = () => {
 
     // Visitor Identity
     const [visitorId, setVisitorId] = useState("");
-    // Use ref to access current visitorId inside frozen closures (like SpeechRecognition)
-    const visitorIdRef = useRef("");
 
     useEffect(() => {
         // PERMANENT ISOLATION: Always generate a new ID on mount
@@ -43,7 +41,6 @@ const Interact = () => {
         const newVisitorId = uuidv4();
         console.log("🆕 New Visitor Session Started:", newVisitorId);
         setVisitorId(newVisitorId);
-        visitorIdRef.current = newVisitorId;
 
         // Fetch host profile
         if (username) {
@@ -137,21 +134,6 @@ const Interact = () => {
 
 
         socket.connect();
-
-        socket.on('connect', () => {
-            console.log("✅ Socket Connected! ID:", socket.id);
-            console.log("➡️ Joining Room:", { username, visitorId });
-            socket.emit('join-profile', { username, visitorId });
-        });
-
-        socket.on('connect_error', (err) => {
-            console.error("❌ Socket Connection Error:", err);
-        });
-
-        socket.on('disconnect', (reason) => {
-            console.log("⚠️ Socket Disconnected:", reason);
-        });
-
         socket.emit('join-profile', { username, visitorId });
 
 
@@ -221,97 +203,38 @@ const Interact = () => {
         };
     }, [username, isMuted, visitorId]);
 
-    // Helper to remove markdown and system artifacts for smoother speech
-    const cleanTextForSpeech = (text: string) => {
-        const cleaned = text
-            .replace(/[*#_`~]/g, '') // Remove markdown symbols
-            .replace(/\[.*?\]\(.*?\)/g, '') // Remove links
-            .replace(/(https?:\/\/[^\s]+)/g, 'link') // Replace URLs
-            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove Emojis
-            .replace(/\n/g, '. ') // Pause on newlines
-            .replace(/\s+/g, ' ') // Collapse extra spaces
-            .trim();
+    const speakText = (text: string) => {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel(); // Stop any previous speech
 
-        console.log("🗣️ Raw for Speech:", text);
-        console.log("🗣️ Cleaned for Speech:", cleaned);
-        return cleaned;
-    };
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            // Use current UI language for speech
+            utterance.lang = t('languageCode') || 'en-US';
 
-    const speakText = async (text: string) => {
-        // Stop any existing audio
-        if (synthesisRef.current) {
-            // Cancel legacy
-            window.speechSynthesis.cancel();
-        }
+            // Find a good voice (optional, but helps quality)
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang));
+            if (preferredVoice) utterance.voice = preferredVoice;
 
-        // Stop global audio if playing (simple primitive for now, better to use a specific ref)
-        const existingAudio = document.getElementById('ai-voice-player') as HTMLAudioElement;
-        if (existingAudio) {
-            existingAudio.pause();
-            existingAudio.currentTime = 0;
-        }
+            utterance.onstart = () => setIsAvatarSpeaking(true);
+            utterance.onend = () => setIsAvatarSpeaking(false);
+            utterance.onerror = (e) => console.error("🗣️ TTS Error:", e);
 
-        const safeText = cleanTextForSpeech(text);
-        if (!safeText) return;
-
-        try {
-            console.log("🗣️ Requesting ElevenLabs Audio...");
-            setIsAvatarSpeaking(true);
-
-            // Fetch audio blob
-            const response = await api.post('/voice/speak', { text: safeText }, {
-                responseType: 'blob' // Important for audio handling
-            });
-
-            // Create URL
-            const audioUrl = URL.createObjectURL(response.data);
-            const audio = new Audio(audioUrl);
-            audio.id = 'ai-voice-player';
-
-            audio.onended = () => {
-                setIsAvatarSpeaking(false);
-                URL.revokeObjectURL(audioUrl); // Cleanup
-            };
-
-            audio.onerror = (e) => {
-                console.error("Audio Playback Error", e);
-                setIsAvatarSpeaking(false);
-            };
-
-            await audio.play();
-            // Store ref if needed, but for now fire-and-forget logic works for single turn
-        } catch (error: any) {
-            console.error("❌ Failed to play ElevenLabs voice:", error);
-            setIsAvatarSpeaking(false);
-
-            // Try to read the error message from the blob if possible
-            if (error.response?.data instanceof Blob) {
-                const errorText = await error.response.data.text();
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    console.error("🛑 Server Error Details:", errorJson);
-                    // Alert the user so they see it immediately
-                    alert(`Voice Error: ${errorJson.details || errorJson.error || 'Unknown Error'}`);
-                } catch (e) {
-                    console.error("🛑 Raw Error Text:", errorText);
-                }
-            }
+            window.speechSynthesis.speak(utterance);
         }
     };
 
     const handleSendMessage = (text: string, inputType: 'voice' | 'text' = 'text') => {
         if (!text.trim()) return;
 
-        // Use Ref to ensure we get the latest ID even if called from a stale closure
-        const currentVisitorId = visitorIdRef.current || visitorId;
-
-        console.log(`📤 Sending ${inputType}:`, { text, visitorId: currentVisitorId });
 
         socket.emit('send-message', {
             profileId: username,
             message: text,
             senderIsUser: true,
-            visitorId: currentVisitorId,
+            visitorId,
             inputType // 'voice' or 'text'
         });
 
