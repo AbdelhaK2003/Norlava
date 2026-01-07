@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 export const CyberTyping = () => {
     return (
         <div className="flex items-center gap-1 h-6">
-            <span className="text-xs text-neon-cyan/80 font-mono mr-2 animate-pulse">AI PROCESSING</span>
             {[0, 1, 2, 3, 4].map((i) => (
                 <motion.div
                     key={i}

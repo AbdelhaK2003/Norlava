@@ -14,7 +14,8 @@ import {
     Mic,
     MicOff,
     Sparkles,
-    Zap
+    Zap,
+    X
 } from "lucide-react";
 import { socket, api } from "@/lib/api";
 
@@ -193,89 +194,59 @@ const Interact = () => {
     };
 
     return (
-        <div className="h-screen w-screen bg-black overflow-hidden flex flex-col md:flex-row relative">
-            {/* Background Texture */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-0"></div>
+        <div className="h-screen w-screen bg-black overflow-hidden relative font-outfit">
+            {/* Global Background */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
 
-            {/* LEFT SIDE: AVATAR HUD */}
-            <div className="relative flex-1 h-1/2 md:h-full flex items-center justify-center p-4">
-                {/* HUD Circle Background */}
-                <motion.div
-                    className="absolute w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full border border-neon-cyan/20"
-                    animate={isListening ? { scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] } : {}}
-                    transition={{ duration: 2, repeat: Infinity }}
-                />
-
-                {/* 3D Avatar */}
-                <motion.div
-                    className="relative z-10"
-                    animate={isListening ? { scale: 1.2, filter: "drop-shadow(0 0 20px #00f3ff)" } : { scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <div className="scale-125 md:scale-150">
-                        <Avatar3D size="xl" isSpeaking={isAvatarSpeaking} />
-                    </div>
-                </motion.div>
-
-                {/* Call Button (Floating in HUD) */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
-                    <motion.button
-                        className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-full backdrop-blur-md border border-white/10 transition-all ${isListening ? "bg-red-500/20 border-red-500/50" : "bg-neon-cyan/10 border-neon-cyan/30 hover:bg-neon-cyan/20"
-                            }`}
-                        onClick={toggleListening}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        {isListening ? (
-                            <>
-                                <MicOff className="w-6 h-6 text-red-400" />
-                                <span className="font-mono text-red-400 tracking-wider">END CALL</span>
-                            </>
-                        ) : (
-                            <>
-                                <Zap className="w-6 h-6 text-neon-cyan group-hover:animate-pulse" />
-                                <span className="font-mono text-neon-cyan tracking-wider">INITIATE CALL</span>
-                            </>
-                        )}
-                    </motion.button>
-                </div>
-            </div>
-
-            {/* RIGHT SIDE: CHAT TERMINAL */}
-            <div className="flex-1 h-1/2 md:h-full bg-black/40 backdrop-blur-xl border-t md:border-t-0 md:border-l border-white/10 flex flex-col relative z-10">
+            {/* ==================== 1. CHAT MODE (DEFAULT) ==================== */}
+            <div className={`relative z-10 flex flex-col h-full bg-gradient-to-b from-black/80 to-black transition-all duration-700 ${isListening ? 'scale-95 opacity-0 blur-sm pointer-events-none' : 'scale-100 opacity-100'}`}>
                 {/* Header */}
-                <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/60">
-                    <div className="flex items-center gap-3">
-                        <Sparkles size={16} className="text-neon-purple animate-pulse" />
+                <div className="p-4 border-b border-white/5 flex items-center justify-between backdrop-blur-md sticky top-0 z-20">
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <div className="w-10 h-10 rounded-full bg-gradient-neon p-[2px]">
+                                <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+                                    <Sparkles size={16} className="text-neon-cyan" />
+                                </div>
+                            </div>
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
+                        </div>
                         <div>
-                            <h3 className="font-mono text-sm text-neon-cyan tracking-widest uppercase">{hostName || "SYSTEM"}</h3>
-                            <div className="text-[10px] text-muted-foreground font-mono">ONLINE // V 2.5.0</div>
+                            <h3 className="font-semibold text-lg text-white tracking-wide">{hostName}</h3>
+                            <div className="text-xs text-neon-cyan/60 font-mono tracking-widest">ONLINE</div>
                         </div>
                     </div>
-                    <div className="h-2 w-2 rounded-full bg-green-500 animate-ping"></div>
+
+                    <Button
+                        onClick={toggleListening}
+                        className="bg-neon-cyan/10 hover:bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 rounded-full px-6 gap-2 transition-all hover:shadow-[0_0_20px_rgba(0,243,255,0.3)]"
+                    >
+                        <Zap size={16} />
+                        <span className="font-mono text-xs tracking-wider">INITIATE CALL</span>
+                    </Button>
                 </div>
 
-                {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {/* Messages */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                     {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-full text-center opacity-30 mt-10">
-                            <Sparkles size={48} className="mb-4" />
-                            <p className="font-mono text-sm">INITIALIZING CONVERSATION PROTOCOL...</p>
+                        <div className="flex flex-col items-center justify-center h-[50vh] text-center opacity-30">
+                            <Sparkles size={64} className="mb-6 text-neon-purple animate-pulse" />
+                            <p className="font-mono text-sm tracking-widest">SYSTEM READY</p>
                         </div>
                     )}
 
                     {messages.map((message) => (
                         <motion.div
                             key={message.id}
-                            initial={{ opacity: 0, x: message.isUser ? 20 : -20 }}
-                            animate={{ opacity: 1, x: 0 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
                             className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                         >
-                            <div className={`max-w-[85%] p-4 rounded-xl backdrop-blur-sm border ${message.isUser
-                                    ? 'bg-neon-purple/10 border-neon-purple/30 text-white rounded-br-none'
-                                    : 'bg-white/5 border-white/10 text-gray-200 rounded-bl-none'
+                            <div className={`max-w-[85%] md:max-w-[60%] p-4 rounded-2xl backdrop-blur-sm border transition-all duration-300 hover:scale-[1.01] ${message.isUser
+                                ? 'bg-neon-purple/5 border-neon-purple/20 text-white rounded-br-none shadow-[0_0_15px_rgba(188,19,254,0.05)]'
+                                : 'bg-white/5 border-white/10 text-gray-200 rounded-bl-none shadow-[0_0_15px_rgba(255,255,255,0.02)]'
                                 }`}>
-                                <p className="text-sm leading-relaxed">{message.text}</p>
+                                <p className="text-base leading-relaxed tracking-wide">{message.text}</p>
                             </div>
                         </motion.div>
                     ))}
@@ -286,7 +257,7 @@ const Interact = () => {
                             animate={{ opacity: 1 }}
                             className="flex justify-start"
                         >
-                            <div className="bg-neon-cyan/5 border border-neon-cyan/20 p-3 rounded-xl rounded-bl-none">
+                            <div className="bg-neon-cyan/5 border border-neon-cyan/10 p-4 rounded-2xl rounded-bl-none">
                                 <CyberTyping />
                             </div>
                         </motion.div>
@@ -294,28 +265,89 @@ const Interact = () => {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input Area */}
-                <div className="p-4 border-t border-white/10 bg-black/60">
+                {/* Input */}
+                <div className="p-4 md:p-6 pb-8 bg-gradient-to-t from-black via-black/90 to-transparent sticky bottom-0 z-20">
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue, 'text'); }}
-                        className="flex gap-4 relative"
+                        className="max-w-4xl mx-auto relative group"
                     >
                         <Input
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            placeholder="TRANSMIT MESSAGE..."
-                            className="bg-white/5 border-white/10 focus-visible:ring-neon-cyan/50 font-mono text-sm pl-4 pr-12 h-12 rounded-lg"
+                            placeholder="Broadcast message..."
+                            className="bg-white/5 border-white/10 focus-visible:ring-neon-cyan/30 text-base pl-6 pr-14 h-14 rounded-full shadow-lg backdrop-blur-xl transition-all group-hover:bg-white/10 group-hover:border-white/20"
                         />
                         <Button
                             type="submit"
                             size="icon"
-                            className="absolute right-1 top-1 h-10 w-10 bg-transparent hover:bg-neon-cyan/20 text-neon-cyan"
+                            className="absolute right-2 top-2 h-10 w-10 bg-neon-cyan text-black hover:bg-white transition-colors rounded-full shadow-lg"
                         >
                             <Send size={18} />
                         </Button>
                     </form>
                 </div>
             </div>
+
+            {/* ==================== 2. CALL MODE (OVERLAY) ==================== */}
+            <AnimatePresence>
+                {isListening && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 1.1 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+                        transition={{ duration: 0.5, ease: "anticipate" }}
+                        className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center p-4"
+                    >
+                        {/* Live Grid Background */}
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_100%)] pointer-events-none"></div>
+
+                        {/* Close Button */}
+                        <div className="absolute top-8 right-8 z-50">
+                            <Button
+                                onClick={toggleListening}
+                                variant="ghost"
+                                className="text-white/50 hover:text-red-400 hover:bg-white/5 rounded-full p-4 h-auto border border-transparent hover:border-red-400/30 transition-all font-mono text-xs tracking-widest gap-2"
+                            >
+                                <X size={20} /> END CONNECTION
+                            </Button>
+                        </div>
+
+                        {/* Avatar HUD */}
+                        <div className="relative w-full max-w-lg aspect-square flex items-center justify-center">
+                            {/* Spinning Rings */}
+                            <motion.div
+                                className="absolute inset-0 rounded-full border border-neon-cyan/20 border-t-neon-cyan/60"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                            />
+                            <motion.div
+                                className="absolute inset-4 rounded-full border border-neon-purple/20 border-b-neon-purple/60"
+                                animate={{ rotate: -360 }}
+                                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                            />
+
+                            {/* Avatar */}
+                            <div className="relative z-10 scale-150">
+                                <Avatar3D size="xl" isSpeaking={isAvatarSpeaking} />
+                            </div>
+
+                            {/* Live Transcript Log (Simulating HUD Data) */}
+                            <div className="absolute -bottom-24 w-full text-center space-y-2">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    key={messages.length} // Re-animate on new message
+                                    className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
+                                >
+                                    <p className="text-neon-cyan font-mono text-sm max-w-sm truncate">
+                                        {isAvatarSpeaking ? "/// AUDIO OUTPUT ACTIVE" : messages[messages.length - 1]?.text || "/// STANDBY"}
+                                    </p>
+                                </motion.div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

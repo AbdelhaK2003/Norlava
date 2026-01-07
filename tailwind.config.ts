@@ -66,9 +66,9 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
         neon: {
-          cyan: "hsl(var(--neon-cyan))",
-          purple: "hsl(var(--neon-purple))",
-          blue: "hsl(var(--neon-blue))",
+          cyan: "hsl(var(--neon-cyan) / <alpha-value>)",
+          purple: "hsl(var(--neon-purple) / <alpha-value>)",
+          blue: "hsl(var(--neon-blue) / <alpha-value>)",
         },
         glass: {
           DEFAULT: "hsl(var(--glass-bg))",
