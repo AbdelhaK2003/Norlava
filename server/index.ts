@@ -76,14 +76,10 @@ io.on('connection', (socket) => {
 
     socket.on('send-message', async (data: any) => {
         console.log("📩 Messaging Event Triggered");
+        // console.log("📦 Data:", JSON.stringify(data, null, 2));
+
         const { profileId, message, senderIsUser, inputType, visitorId } = data;
-        const roomName = `${profileId}:${visitorId}`;
-
-        // DEBUG: Ack immediately to client (skipping room)
-        socket.emit('debug-ack', { status: 'received', step: 'server-entry' });
-
-        console.log(`🔍 DEBUG: Processing msg for Room: ${roomName}`);
-        console.log(`🔍 DEBUG: OpenAI/Gemini Key Status: ${process.env.GEMINI_API_KEY ? 'Present' : 'MISSING'}`);
+        const roomName = `${profileId}:${visitorId}`; // The unique room
 
         // 1. Save message to DB
         const hostUser = await db.findUserByUsername(profileId);
@@ -169,10 +165,7 @@ io.on('connection', (socket) => {
             }
 
             // Fetch profile for AI context
-            socket.emit('debug-step', 'db_lookup_start');
             const profile = await db.findProfileByUserId(hostUser.id);
-            socket.emit('debug-step', 'db_lookup_done');
-
             try {
                 // 3.1 Fetch Conversation History (ISOLATED)
                 const rawHistory = await db.getMessagesForVisitor(hostUser.id, visitorId);
@@ -190,18 +183,15 @@ io.on('connection', (socket) => {
                 io.to(roomName).emit('bot-typing', true);
 
                 console.log("🤖 Asking Gemini (Streaming)...");
-                socket.emit('debug-step', 'ai_generation_start');
 
-                // Get the Gemini model (gemini-1.5-flash is stable)
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                // Get the Gemini model (gemini-pro is stable in v1 API)
+                const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                 // Create the prompt with AI context AND History
                 const prompt = `${aiBrain}\n\n[CONVERSATION HISTORY]\n${history}\n\n[CURRENT INTERACTION]\nUser: ${message}\nAssistant:`;
 
                 // Stream the response
                 const result = await model.generateContentStream(prompt);
-
-                socket.emit('debug-step', 'ai_streaming_started');
 
                 let fullResponse = "";
 

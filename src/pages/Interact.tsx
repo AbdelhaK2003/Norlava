@@ -146,20 +146,6 @@ const Interact = () => {
             if (!status) setProcessing(false); // Safety net
         });
 
-        socket.on('debug-step', (step: string) => {
-            const el = document.getElementById('trace-step');
-            if (el) el.innerText = step;
-        });
-
-        socket.on('debug-ack', (data: any) => {
-            console.log("📡 SERVER ACK:", data);
-            const el = document.getElementById('ack-status');
-            if (el) {
-                el.innerText = "RECEIVED ✅";
-                el.className = "text-green-400";
-            }
-        });
-
         return () => {
             socket.off('receive-message');
             socket.off('ai-token');
@@ -331,8 +317,6 @@ const Interact = () => {
                         <div className="absolute top-4 left-4 font-mono text-[10px] text-white/30 z-50 text-left">
                             <p>STATUS: {socket.connected ? "CONNECTED" : "DISCONNECTED"}</p>
                             <p>VISITOR: {visitorId.slice(0, 8)}...</p>
-                            <p>SERVER ACK: <span id="ack-status">WAITING...</span></p>
-                            <p>TRACE: <span id="trace-step" className="text-neon-cyan/50">IDLE</span></p>
                         </div>
 
                         {/* Close Button */}
@@ -374,11 +358,11 @@ const Interact = () => {
                                         key={messages.length}
                                         className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
                                     >
-                                        <p className={`font-mono text-sm max-w-sm truncate ${messages[messages.length - 1].isUser ? "text-neon-purple" : "text-neon-cyan"
+                                        <p className={`font-mono text-sm max-w-sm truncate ${messages[messages.length - 1].isUser ? "text-white" : "text-neon-cyan"
                                             }`}>
                                             {messages[messages.length - 1].isUser
                                                 ? `YOU: ${messages[messages.length - 1].text}`
-                                                : `${(hostName || "AI").toUpperCase()}: ${messages[messages.length - 1].text}`}
+                                                : `${(hostName || 'AI').toUpperCase()}: ${messages[messages.length - 1].text}`}
                                         </p>
                                     </motion.div>
                                 )}
