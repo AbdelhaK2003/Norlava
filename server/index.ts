@@ -18,7 +18,12 @@ const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production'
-            ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
+            ? [
+                "https://norlava.com",
+                "https://www.norlava.com",
+                "https://norlava.vercel.app",
+                process.env.FRONTEND_URL || "https://norlava.com"
+            ]
             : ["http://localhost:5173", "http://localhost:8080"],
         methods: ["GET", "POST"],
         credentials: true
@@ -33,7 +38,12 @@ console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
 
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
+        ? [
+            "https://norlava.com",
+            "https://www.norlava.com",
+            "https://norlava.vercel.app",
+            process.env.FRONTEND_URL || "https://norlava.com"
+        ]
         : ["http://localhost:5173", "http://localhost:8080"],
     credentials: true
 }));
