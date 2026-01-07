@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import axios from 'axios';
-import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
