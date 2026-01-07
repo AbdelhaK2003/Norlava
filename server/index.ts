@@ -147,9 +147,8 @@ io.on('connection', (socket) => {
                         completed: true
                     });
 
-                    if (inputType === 'voice') {
-                        io.to(roomName).emit('bot-speak', { text: fullSimResponse.trim() });
-                    }
+                    // Always emit speech event
+                    io.to(roomName).emit('bot-speak', { text: fullSimResponse.trim() });
                 })();
                 return;
             }
@@ -212,9 +211,8 @@ io.on('connection', (socket) => {
                     completed: true
                 });
 
-                if (inputType === 'voice') {
-                    io.to(roomName).emit('bot-speak', { text: fullResponse });
-                }
+                // Always emit speech event - frontend decides whether to play it based on Mute status
+                io.to(roomName).emit('bot-speak', { text: fullResponse });
 
                 // --- 4. ADAPTIVE LEARNING LOOP (Background) ---
                 // We don't await this, let it run in background to keep chat fast
