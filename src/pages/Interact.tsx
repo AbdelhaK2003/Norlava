@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useParams } from "react-router-dom";
 import { Avatar3D } from "@/components/Avatar3D";
 import { ChatBubble } from "@/components/ChatBubble";
+import { CyberTyping } from "@/components/CyberTyping";
 import { GlassCard } from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,11 +13,8 @@ import {
     Send,
     Mic,
     MicOff,
-    MessageCircle,
-    Volume2,
-    VolumeX,
-    X,
-    Sparkles
+    Sparkles,
+    Zap
 } from "lucide-react";
 import { socket, api } from "@/lib/api";
 
@@ -29,61 +27,47 @@ interface Message {
 const Interact = () => {
     const { t } = useTranslation();
     const { username } = useParams();
-    const [showChat, setShowChat] = useState(false);
     const [hostName, setHostName] = useState("");
-
-    // Visitor Identity
     const [visitorId, setVisitorId] = useState("");
 
     useEffect(() => {
-        // PERMANENT ISOLATION: Always generate a new ID on mount
-        // This ensures every refresh or new tab is a "new" visitor
         const newVisitorId = uuidv4();
         console.log("🆕 New Visitor Session Started:", newVisitorId);
         setVisitorId(newVisitorId);
 
-        // Fetch host profile
         if (username) {
-            // Use api client to respect base URL
             api.get(`/user/username/${username}`)
                 .then(res => setHostName(res.data.firstName || username))
                 .catch(() => setHostName(username));
         }
     }, [username]);
 
-    const [messages, setMessages] = useState<Message[]>([
-
-    ]);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
     const [isListening, setIsListening] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Auto-scroll logic
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, isTyping, showChat]);
-
-
+    }, [messages, isTyping]);
 
     const recognitionRef = useRef<any>(null);
-    const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
 
     // Initialize Speech Recognition
     useEffect(() => {
-        // Broad browser support check
         const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
         if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
             recognitionRef.current.continuous = true;
             recognitionRef.current.interimResults = true;
-            // Dynamic Language Support based on i18n
             recognitionRef.current.lang = t('languageCode') || 'en-US';
 
             recognitionRef.current.onstart = () => {
@@ -98,9 +82,7 @@ const Interact = () => {
                         finalTranscript += event.results[i][0].transcript;
                     }
                 }
-
                 if (finalTranscript.trim()) {
-                    console.log("🎙️ Voice Input:", finalTranscript);
                     handleSendMessage(finalTranscript, 'voice');
                 }
             };
@@ -108,69 +90,44 @@ const Interact = () => {
             recognitionRef.current.onerror = (event: any) => {
                 console.error("🎙️ Voice Error:", event.error);
                 if (event.error === 'not-allowed') {
-                    alert("Please allow microphone access to talk to the avatar.");
+                    alert("Allow microphone access to use voice mode.");
                     setIsListening(false);
                 }
             };
 
             recognitionRef.current.onend = () => {
-                // Only restart if we intend to keep listening
                 if (isListening) {
-                    try {
-                        recognitionRef.current.start();
-                    } catch (e) {
-                        // Ignore already started errors
-                    }
+                    try { recognitionRef.current.start(); } catch (e) { /* ignore */ }
                 }
             };
-        } else {
-            console.warn("⚠️ Speech Recognition not supported in this browser.");
         }
-    }, [t]); // Re-run if language changes
+    }, [t]);
 
     // Socket connection
     useEffect(() => {
         if (!visitorId) return;
 
-
         socket.connect();
         socket.emit('join-profile', { username, visitorId });
-
 
         socket.on('ai-token', (data: { text: string }) => {
             setMessages((prev) => {
                 const lastMsg = prev[prev.length - 1];
-                // If last message is AI and temporary (streaming), append to it
                 if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                    return [
-                        ...prev.slice(0, -1),
-                        { ...lastMsg, text: lastMsg.text + data.text }
-                    ];
+                    return [...prev.slice(0, -1), { ...lastMsg, text: lastMsg.text + data.text }];
                 }
-                // Start a new temporary AI message
                 return [...prev, { id: -1, text: data.text, isUser: false }];
             });
         });
 
         socket.on('receive-message', (msg: any) => {
-            // Only add if it's NOT a completion of the current stream to avoid duplicates
-            // OR if it's a user message
             if (msg.isUser) {
-
-                setMessages((prev) => [...prev, {
-                    id: msg.id,
-                    text: msg.text,
-                    isUser: msg.isUser
-                }]);
+                setMessages((prev) => [...prev, { id: msg.id, text: msg.text, isUser: msg.isUser }]);
             } else {
-                // Finalize the streaming message (update ID from -1 to real ID)
                 setMessages((prev) => {
                     const lastMsg = prev[prev.length - 1];
                     if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                        return [
-                            ...prev.slice(0, -1),
-                            { ...lastMsg, id: msg.id, text: msg.text } // Ensure final text matches
-                        ];
+                        return [...prev.slice(0, -1), { ...lastMsg, id: msg.id, text: msg.text }];
                     }
                     return prev;
                 });
@@ -178,21 +135,12 @@ const Interact = () => {
         });
 
         socket.on('bot-speak', (data: { text: string }) => {
-            if (!isMuted) {
-
-                speakText(data.text);
-            }
+            speakText(data.text);
         });
 
         socket.on('bot-typing', (status: boolean) => {
             setIsTyping(status);
         });
-
-        // Removed bot-speak listener to rely on local TTS events for better sync
-        // socket.on('bot-speak', (data: { duration: number }) => {
-        //     setIsAvatarSpeaking(true);
-        //     setTimeout(() => setIsAvatarSpeaking(false), data.duration);
-        // });
 
         return () => {
             socket.off('receive-message');
@@ -201,236 +149,174 @@ const Interact = () => {
             socket.off('bot-speak');
             socket.disconnect();
         };
-    }, [username, isMuted, visitorId]);
+    }, [username, visitorId]);
 
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel(); // Stop any previous speech
-
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 1;
             utterance.pitch = 1;
-            // Use current UI language for speech
             utterance.lang = t('languageCode') || 'en-US';
 
-            // Find a good voice (optional, but helps quality)
             const voices = window.speechSynthesis.getVoices();
             const preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang));
             if (preferredVoice) utterance.voice = preferredVoice;
 
             utterance.onstart = () => setIsAvatarSpeaking(true);
             utterance.onend = () => setIsAvatarSpeaking(false);
-            utterance.onerror = (e) => console.error("🗣️ TTS Error:", e);
-
             window.speechSynthesis.speak(utterance);
         }
     };
 
     const handleSendMessage = (text: string, inputType: 'voice' | 'text' = 'text') => {
         if (!text.trim()) return;
-
-
         socket.emit('send-message', {
             profileId: username,
             message: text,
             senderIsUser: true,
             visitorId,
-            inputType // 'voice' or 'text'
+            inputType
         });
-
         setInputValue("");
     };
 
     const toggleListening = () => {
-        if (!recognitionRef.current) {
-            alert("Speech recognition is not supported in your browser");
-            return;
-        }
-
+        if (!recognitionRef.current) return;
         if (isListening) {
-            setIsListening(false); // This flag prevents auto-restart in onend
+            setIsListening(false);
             recognitionRef.current.stop();
         } else {
-            setIsListening(true); // This flag enables auto-restart
+            setIsListening(true);
             recognitionRef.current.start();
         }
     };
 
-    const stopSpeaking = () => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            setIsAvatarSpeaking(false);
-        }
-    };
-
     return (
-        <div className="min-h-screen bg-grid relative overflow-hidden flex flex-col items-center justify-center">
-            {/* Background effects */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div
-                    className="absolute w-[800px] h-[800px] bg-neon-cyan/5 rounded-full blur-3xl"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 10, repeat: Infinity }}
-                    style={{ top: "10%", left: "50%", transform: "translateX(-50%)" }}
-                />
-            </div>
+        <div className="h-screen w-screen bg-black overflow-hidden flex flex-col md:flex-row relative">
+            {/* Background Texture */}
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-0"></div>
 
-            {/* Main Full-Screen Avatar */}
-            <div className="relative z-0 flex-1 flex items-center justify-center w-full">
+            {/* LEFT SIDE: AVATAR HUD */}
+            <div className="relative flex-1 h-1/2 md:h-full flex items-center justify-center p-4">
+                {/* HUD Circle Background */}
                 <motion.div
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 1 }}
-                    className="relative"
+                    className="absolute w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full border border-neon-cyan/20"
+                    animate={isListening ? { scale: [1, 1.05, 1], opacity: [0.5, 0.8, 0.5] } : {}}
+                    transition={{ duration: 2, repeat: Infinity }}
+                />
+
+                {/* 3D Avatar */}
+                <motion.div
+                    className="relative z-10"
+                    animate={isListening ? { scale: 1.2, filter: "drop-shadow(0 0 20px #00f3ff)" } : { scale: 1 }}
+                    transition={{ duration: 0.5 }}
                 >
-                    {/* Avatar takes up significant space */}
-                    <div className="scale-110 md:scale-150 transform transition-transform duration-700">
+                    <div className="scale-125 md:scale-150">
                         <Avatar3D size="xl" isSpeaking={isAvatarSpeaking} />
                     </div>
+                </motion.div>
 
-                    {/* Status Indicator */}
-                    <motion.div
-                        className="absolute -bottom-16 left-1/2 -translate-x-1/2 text-center w-full whitespace-nowrap"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.5 }}
+                {/* Call Button (Floating in HUD) */}
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
+                    <motion.button
+                        className={`group relative flex items-center justify-center gap-3 px-8 py-4 rounded-full backdrop-blur-md border border-white/10 transition-all ${isListening ? "bg-red-500/20 border-red-500/50" : "bg-neon-cyan/10 border-neon-cyan/30 hover:bg-neon-cyan/20"
+                            }`}
+                        onClick={toggleListening}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                     >
                         {isListening ? (
-                            <span className="text-xl font-medium text-primary animate-pulse">{t('interact.listening')}</span>
-                        ) : isAvatarSpeaking ? (
-                            <span className="text-xl font-medium gradient-text">{t('interact.speaking')}</span>
+                            <>
+                                <MicOff className="w-6 h-6 text-red-400" />
+                                <span className="font-mono text-red-400 tracking-wider">END CALL</span>
+                            </>
                         ) : (
-                            <span className="text-muted-foreground text-sm">{t('interact.tapToSpeak')}</span>
+                            <>
+                                <Zap className="w-6 h-6 text-neon-cyan group-hover:animate-pulse" />
+                                <span className="font-mono text-neon-cyan tracking-wider">INITIATE CALL</span>
+                            </>
                         )}
-                    </motion.div>
-                </motion.div>
+                    </motion.button>
+                </div>
             </div>
 
-            {/* Floating Controls Bar */}
-            <motion.div
-                className="relative z-20 mb-24 md:mb-12 flex items-center gap-6"
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-            >
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-12 h-12 rounded-full border-glass-border bg-black/20 backdrop-blur-md"
-                    onClick={() => setIsMuted(!isMuted)}
-                >
-                    {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                </Button>
+            {/* RIGHT SIDE: CHAT TERMINAL */}
+            <div className="flex-1 h-1/2 md:h-full bg-black/40 backdrop-blur-xl border-t md:border-t-0 md:border-l border-white/10 flex flex-col relative z-10">
+                {/* Header */}
+                <div className="p-4 border-b border-white/10 flex items-center justify-between bg-black/60">
+                    <div className="flex items-center gap-3">
+                        <Sparkles size={16} className="text-neon-purple animate-pulse" />
+                        <div>
+                            <h3 className="font-mono text-sm text-neon-cyan tracking-widest uppercase">{hostName || "SYSTEM"}</h3>
+                            <div className="text-[10px] text-muted-foreground font-mono">ONLINE // V 2.5.0</div>
+                        </div>
+                    </div>
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-ping"></div>
+                </div>
 
-                <motion.button
-                    className={`w-24 h-24 rounded-full flex items-center justify-center transition-all bg-gradient-to-br shadow-lg ${isListening
-                        ? "from-red-500 to-red-600 shadow-red-500/20"
-                        : "from-primary to-secondary shadow-primary/20"
-                        }`}
-                    onClick={toggleListening}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={isListening ? { boxShadow: ["0 0 0 0 rgba(255,50,50,0.4)", "0 0 0 20px rgba(255,50,50,0)"] } : {}}
-                    transition={isListening ? { duration: 1.5, repeat: Infinity } : {}}
-                >
-                    {isListening ? <MicOff size={36} className="text-white" /> : <Mic size={36} className="text-black" />}
-                </motion.button>
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                    {messages.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full text-center opacity-30 mt-10">
+                            <Sparkles size={48} className="mb-4" />
+                            <p className="font-mono text-sm">INITIALIZING CONVERSATION PROTOCOL...</p>
+                        </div>
+                    )}
 
-                <Button
-                    variant="outline"
-                    size="icon"
-                    className="w-12 h-12 rounded-full border-glass-border bg-black/20 backdrop-blur-md"
-                    onClick={() => setShowChat(true)}
-                >
-                    <MessageCircle size={20} />
-                </Button>
-            </motion.div>
-
-            {/* Chat Overlay */}
-            <AnimatePresence>
-                {showChat && (
-                    <motion.div
-                        className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={(e) => {
-                            if (e.target === e.currentTarget) setShowChat(false);
-                        }}
-                    >
+                    {messages.map((message) => (
                         <motion.div
-                            className="w-full max-w-md"
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
+                            key={message.id}
+                            initial={{ opacity: 0, x: message.isUser ? 20 : -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
                         >
-                            <GlassCard className="h-[600px] flex flex-col p-0 overflow-hidden" glow>
-                                {/* Chat Header */}
-                                <div className="p-4 border-b border-glass-border flex items-center justify-between bg-black/20">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                                            <Sparkles size={14} className="text-primary" />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-sm">{hostName}</h3>
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                                <span className="text-[10px] text-muted-foreground">{t('interact.online')}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => setShowChat(false)}
-                                        className="h-8 w-8 hover:bg-white/10"
-                                    >
-                                        <X size={16} />
-                                    </Button>
-                                </div>
-
-                                {/* Messages */}
-                                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                                    {messages.map((message) => (
-                                        <ChatBubble
-                                            key={message.id}
-                                            message={message.text}
-                                            isUser={message.isUser}
-                                        />
-                                    ))}
-                                    {isTyping && <ChatBubble message="" isTyping />}
-                                    <div ref={messagesEndRef} />
-                                </div>
-
-                                {/* Input */}
-                                <div className="p-4 border-t border-glass-border bg-black/20">
-                                    <form
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            handleSendMessage(inputValue, 'text');
-                                        }}
-                                        className="flex gap-2"
-                                    >
-                                        <Input
-                                            value={inputValue}
-                                            onChange={(e) => setInputValue(e.target.value)}
-                                            placeholder={t('interact.typeMessage')}
-                                            className="flex-1 bg-black/20 border-glass-border focus-visible:ring-primary/50"
-                                            autoFocus
-                                        />
-                                        <Button type="submit" variant="neon" size="icon">
-                                            <Send size={18} />
-                                        </Button>
-                                    </form>
-                                </div>
-                            </GlassCard>
+                            <div className={`max-w-[85%] p-4 rounded-xl backdrop-blur-sm border ${message.isUser
+                                    ? 'bg-neon-purple/10 border-neon-purple/30 text-white rounded-br-none'
+                                    : 'bg-white/5 border-white/10 text-gray-200 rounded-bl-none'
+                                }`}>
+                                <p className="text-sm leading-relaxed">{message.text}</p>
+                            </div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    ))}
 
+                    {isTyping && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex justify-start"
+                        >
+                            <div className="bg-neon-cyan/5 border border-neon-cyan/20 p-3 rounded-xl rounded-bl-none">
+                                <CyberTyping />
+                            </div>
+                        </motion.div>
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
 
-        </div >
+                {/* Input Area */}
+                <div className="p-4 border-t border-white/10 bg-black/60">
+                    <form
+                        onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue, 'text'); }}
+                        className="flex gap-4 relative"
+                    >
+                        <Input
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="TRANSMIT MESSAGE..."
+                            className="bg-white/5 border-white/10 focus-visible:ring-neon-cyan/50 font-mono text-sm pl-4 pr-12 h-12 rounded-lg"
+                        />
+                        <Button
+                            type="submit"
+                            size="icon"
+                            className="absolute right-1 top-1 h-10 w-10 bg-transparent hover:bg-neon-cyan/20 text-neon-cyan"
+                        >
+                            <Send size={18} />
+                        </Button>
+                    </form>
+                </div>
+            </div>
+        </div>
     );
 };
 
