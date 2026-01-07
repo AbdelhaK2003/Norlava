@@ -16,14 +16,33 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const app = express();
 const server = http.createServer(app);
+// Allowed Origins
+const allowedOrigins = [
+    process.env.FRONTEND_URL || "https://your-app.vercel.app",
+    "https://norlava.com",
+    "https://www.norlava.com",
+    "https://voxterna.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000"
+];
+
+const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.some(domain => origin.startsWith(domain) || domain.includes(origin))) {
+            callback(null, true);
+        } else {
+            console.warn("⚠️ Blocked by CORS:", origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+};
+
 const io = new Server(server, {
-    cors: {
-        origin: process.env.NODE_ENV === 'production'
-            ? [process.env.FRONTEND_URL || "https://your-app.vercel.app", "https://norlava.com", "https://www.norlava.com"]
-            : ["http://localhost:5173", "http://localhost:8080"],
-        methods: ["GET", "POST"],
-        credentials: true
-    }
+    cors: corsOptions
 });
 
 const PORT = 3000;
@@ -32,12 +51,7 @@ console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
 
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? [process.env.FRONTEND_URL || "https://your-app.vercel.app", "https://norlava.com", "https://www.norlava.com"]
-        : ["http://localhost:5173", "http://localhost:8080"],
-    credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
