@@ -57,7 +57,9 @@ export const setupLiveSocket = (io: any) => {
 
             geminiWs.on('message', (data: Buffer) => {
                 try {
-                    const response = JSON.parse(data.toString());
+                    const str = data.toString();
+                    // console.log("Gemini Raw Msg:", str.substring(0, 100)); // Debug truncate
+                    const response = JSON.parse(str);
 
                     // Handle Audio
                     if (response.serverContent?.modelTurn?.parts?.[0]?.inlineData) {
@@ -90,6 +92,7 @@ export const setupLiveSocket = (io: any) => {
         // Client sends audio (PCM/Base64)
         socket.on('audio-input', (base64Audio: string) => {
             if (geminiWs && geminiWs.readyState === WebSocket.OPEN) {
+                // console.log("🎤 Audio chunk received from client, size:", base64Audio.length);
                 const msg = {
                     realtimeInput: {
                         mediaChunks: [{
@@ -99,6 +102,8 @@ export const setupLiveSocket = (io: any) => {
                     }
                 };
                 geminiWs.send(JSON.stringify(msg));
+            } else {
+                console.warn("⚠️ Audio received but Gemini WS not open. State:", geminiWs?.readyState);
             }
         });
 
