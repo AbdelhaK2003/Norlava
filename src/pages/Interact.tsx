@@ -75,27 +75,36 @@ const Interact = () => {
                 .catch(() => setHostName(username));
         }
 
-        // Initialize Live Socket
-        const liveSocket = io(
-            process.env.NODE_ENV === 'production'
-                ? (import.meta.env.VITE_BACKEND_URL || window.location.origin)
-                : "http://localhost:3000",
-            { path: '/socket.io', withCredentials: true }
-        ).connect();
+        // Determine Backend URL
+        let backendUrl = "http://localhost:3000";
+        if (import.meta.env.VITE_API_URL) {
+            // Strip '/api' from the end of VITE_API_URL to get the root domain
+            backendUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, "");
+        } else if (process.env.NODE_ENV === 'production') {
+            backendUrl = window.location.origin; // Fallback
+        }
 
-        // Connect to namespace manually if needed, but standard socket.io client handles namespace by string
-        const liveNs = io(
-            (process.env.NODE_ENV === 'production'
-                ? (import.meta.env.VITE_BACKEND_URL || window.location.origin)
-                : "http://localhost:3000") + "/live",
-            { withCredentials: true }
-        );
+        console.log("🔌 Connecting to Socket Backend at:", backendUrl);
+
+        // Connect to Main Namespace (for chat/auth)
+        // chatSocket.io.uri = backendUrl; // If we needed to reconfigure global socket
+
+        // Connect to LIVE Namespace
+        const liveNs = io(`${backendUrl}/live`, {
+            path: '/socket.io',
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
 
         socketRef.current = liveNs;
 
         liveNs.on('connect', () => {
-            console.log("🔌 Connected to Live Voice Backend");
+            console.log("✅ LIVE SOCKET CONNECTED! ID:", liveNs.id);
             setIsConnected(true);
+        });
+
+        liveNs.on('connect_error', (err) => {
+            console.error("❌ LIVE SOCKET CONNECTION ERROR:", err.message);
         });
 
         liveNs.on('audio-chunk', async (base64Audio: string) => {
