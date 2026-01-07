@@ -284,7 +284,7 @@ const Interact = () => {
                     className="relative"
                 >
                     {/* Avatar takes up significant space */}
-                    <div className="scale-150 transform transition-transform duration-700">
+                    <div className="scale-110 md:scale-150 transform transition-transform duration-700">
                         <Avatar3D size="xl" isSpeaking={isAvatarSpeaking} />
                     </div>
 
@@ -308,7 +308,7 @@ const Interact = () => {
 
             {/* Floating Controls Bar */}
             <motion.div
-                className="relative z-20 mb-12 flex items-center gap-6"
+                className="relative z-20 mb-24 md:mb-12 flex items-center gap-6"
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
