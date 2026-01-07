@@ -5,6 +5,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { setupLiveSocket } from './live-socket';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
@@ -50,6 +51,8 @@ app.get('/api/health', (req, res) => {
 });
 
 // Socket.io Connection
+setupLiveSocket(io);
+
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
