@@ -23,6 +23,7 @@ interface Message {
     id: string | number;
     text: string;
     isUser: boolean;
+    isStreaming?: boolean;
 }
 
 const Interact = () => {
@@ -115,26 +116,37 @@ const Interact = () => {
             setProcessing(false);
             setMessages((prev) => {
                 const lastMsg = prev[prev.length - 1];
-                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
+                // Check if last message is our streaming AI message
+                if (lastMsg && !lastMsg.isUser && lastMsg.isStreaming) {
                     return [...prev.slice(0, -1), { ...lastMsg, text: lastMsg.text + data.text }];
                 }
-                return [...prev, { id: -1, text: data.text, isUser: false }];
+                // Start new streaming message with STABLE ID (timestamp) prevents flicker
+                return [...prev, {
+                    id: Date.now(),
+                    text: data.text,
+                    isUser: false,
+                    isStreaming: true
+                }];
             });
         });
 
         socket.on('receive-message', (msg: any) => {
-            setProcessing(false); // Ensure processing stops
-
-            // Fix: Ignore user messages from socket to prevent "Double Message" bug
-            // (Since we already added it optimistically)
-            if (msg.isUser) return;
+            setProcessing(false);
+            if (msg.isUser) return; // Ignore user loopback
 
             setMessages((prev) => {
                 const lastMsg = prev[prev.length - 1];
-                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
-                    return [...prev.slice(0, -1), { ...lastMsg, id: msg.id, text: msg.text }];
+                // If we have a streaming message, just finalize text and stop streaming.
+                // KEY FIX: WE KEEP THE LOCAL ID (lastMsg.id) to prevent React re-mount/flicker.
+                if (lastMsg && !lastMsg.isUser && lastMsg.isStreaming) {
+                    return [...prev.slice(0, -1), {
+                        ...lastMsg,
+                        text: msg.text,
+                        isStreaming: false
+                    }];
                 }
-                return prev;
+                // Fallback: If no stream existed, append new message
+                return [...prev, { id: msg.id, text: msg.text, isUser: false }];
             });
         });
 
