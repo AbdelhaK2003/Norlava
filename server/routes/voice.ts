@@ -45,11 +45,18 @@ router.post('/speak', async (req, res) => {
             responseType: 'stream'
         });
 
-        // Set headers for audio streaming
+        // Set headers for audio streaming AND CORS
         res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
 
         // Pipe the audio stream directly to the client
         response.data.pipe(res);
+
+        response.data.on('error', (err: any) => {
+            console.error("Stream Error:", err);
+            res.end();
+        });
 
     } catch (error: any) {
         console.error('🔥 ElevenLabs Error:', error.response?.data || error.message);
