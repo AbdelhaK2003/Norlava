@@ -112,6 +112,7 @@ const Interact = () => {
         socket.emit('join-profile', { username, visitorId });
 
         socket.on('ai-token', (data: { text: string }) => {
+            setProcessing(false);
             setMessages((prev) => {
                 const lastMsg = prev[prev.length - 1];
                 if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
@@ -170,8 +171,17 @@ const Interact = () => {
         }
     };
 
+    const [processing, setProcessing] = useState(false);
+
     const handleSendMessage = (text: string, inputType: 'voice' | 'text' = 'text') => {
         if (!text.trim()) return;
+
+        // Optimistic UI Update
+        const tempId = Date.now();
+        setMessages(prev => [...prev, { id: tempId, text: text, isUser: true }]);
+
+        setProcessing(true);
+
         socket.emit('send-message', {
             profileId: username,
             message: text,
@@ -339,8 +349,12 @@ const Interact = () => {
                                     key={messages.length} // Re-animate on new message
                                     className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
                                 >
-                                    <p className="text-neon-cyan font-mono text-sm max-w-sm truncate">
-                                        {isAvatarSpeaking ? "/// AUDIO OUTPUT ACTIVE" : messages[messages.length - 1]?.text || "/// STANDBY"}
+                                    <p className="text-neon-cyan font-mono text-sm max-w-sm truncate animate-pulse">
+                                        {processing ? "/// AI PROCESSING DATA..." :
+                                            isAvatarSpeaking ? "/// AUDIO OUTPUT ACTIVE" :
+                                                messages.length > 0 && messages[messages.length - 1].isUser ? `YOU: ${messages[messages.length - 1].text}` :
+                                                    "/// LISTENING FOR INPUT"
+                                        }
                                     </p>
                                 </motion.div>
                             </div>
