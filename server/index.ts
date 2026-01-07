@@ -11,9 +11,6 @@ import voiceRoutes from './routes/voice';
 import { db } from './db';
 
 const app = express();
-const server = http.createServer(app);
-const PORT = process.env.PORT || 3000;
-
 const allowedOrigins = [
     "https://norlava.com",
     "https://www.norlava.com",
@@ -21,11 +18,32 @@ const allowedOrigins = [
     "http://localhost:5173"
 ];
 
-app.use(cors({
-    origin: allowedOrigins,
+const corsOptions = {
+    origin: (origin: any, callback: any) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith("web.app") || origin.endsWith("firebaseapp.com")) {
+            callback(null, true);
+        } else {
+            console.log("Blocked by CORS:", origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'xi-api-key']
+};
+
+// Logging middleware to debug requests
+app.use((req, res, next) => {
+    console.log(`📡 [${req.method}] ${req.path} | Origin: ${req.headers.origin || 'No Origin'}`);
+    next();
+});
+
+app.use(cors(corsOptions));
+// Explicitly handle pre-flight requests
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
