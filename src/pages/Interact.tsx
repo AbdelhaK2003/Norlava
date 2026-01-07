@@ -76,22 +76,23 @@ const Interact = () => {
 
     // Initialize Speech Recognition
     useEffect(() => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        // Broad browser support check
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+
+        if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.continuous = true; // KEEP LISTENING
+            recognitionRef.current.continuous = true;
             recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = 'en-US';
+            // Dynamic Language Support based on i18n
+            recognitionRef.current.lang = t('languageCode') || 'en-US';
 
             recognitionRef.current.onstart = () => {
-
+                console.log("🎙️ Voice: Listening started");
                 setIsListening(true);
             };
 
             recognitionRef.current.onresult = (event: any) => {
                 let finalTranscript = '';
-
-                // Iterate through results to find final ones
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                         finalTranscript += event.results[i][0].transcript;
@@ -99,40 +100,33 @@ const Interact = () => {
                 }
 
                 if (finalTranscript.trim()) {
-
+                    console.log("🎙️ Voice Input:", finalTranscript);
                     handleSendMessage(finalTranscript, 'voice');
                 }
             };
 
             recognitionRef.current.onerror = (event: any) => {
-
-                console.error("Voice Error", event);
-                // Only stop on fatal errors
-                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                console.error("🎙️ Voice Error:", event.error);
+                if (event.error === 'not-allowed') {
+                    alert("Please allow microphone access to talk to the avatar.");
                     setIsListening(false);
                 }
             };
 
             recognitionRef.current.onend = () => {
-
-                // Auto-restart if we think we should still be listening
+                // Only restart if we intend to keep listening
                 if (isListening) {
-
                     try {
                         recognitionRef.current.start();
                     } catch (e) {
-                        setIsListening(false);
+                        // Ignore already started errors
                     }
-                } else {
-                    setIsListening(false);
                 }
             };
-
-
         } else {
-            console.error("Speech API missing");
+            console.warn("⚠️ Speech Recognition not supported in this browser.");
         }
-    }, []);
+    }, [t]); // Re-run if language changes
 
     // Socket connection
     useEffect(() => {
@@ -211,16 +205,24 @@ const Interact = () => {
 
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            synthesisRef.current = new SpeechSynthesisUtterance(text);
-            synthesisRef.current.rate = 1;
-            synthesisRef.current.pitch = 1;
-            synthesisRef.current.lang = 'en-US'; // Force English accent
+            window.speechSynthesis.cancel(); // Stop any previous speech
 
-            synthesisRef.current.onstart = () => setIsAvatarSpeaking(true);
-            synthesisRef.current.onend = () => setIsAvatarSpeaking(false);
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            // Use current UI language for speech
+            utterance.lang = t('languageCode') || 'en-US';
 
-            window.speechSynthesis.speak(synthesisRef.current);
+            // Find a good voice (optional, but helps quality)
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang));
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            utterance.onstart = () => setIsAvatarSpeaking(true);
+            utterance.onend = () => setIsAvatarSpeaking(false);
+            utterance.onerror = (e) => console.error("🗣️ TTS Error:", e);
+
+            window.speechSynthesis.speak(utterance);
         }
     };
 
