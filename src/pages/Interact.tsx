@@ -274,6 +274,64 @@ const Interact = () => {
         });
     };
 
+    // --- Restore Chat Socket Logic ---
+    useEffect(() => {
+        if (!visitorId || !username) return;
+
+        console.log("🔌 Connecting Chat Socket for:", visitorId);
+
+        if (!chatSocket.connected) {
+            chatSocket.connect();
+        }
+
+        chatSocket.emit('join-profile', { username, visitorId });
+
+        const handleAiToken = (data: { text: string }) => {
+            setMessages((prev) => {
+                const lastMsg = prev[prev.length - 1];
+                if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
+                    return [...prev.slice(0, -1), { ...lastMsg, text: lastMsg.text + data.text }];
+                }
+                return [...prev, { id: -1, text: data.text, isUser: false }];
+            });
+        };
+
+        const handleReceiveMessage = (msg: any) => {
+            if (msg.isUser) {
+                setMessages((prev) => [...prev, { id: msg.id, text: msg.text, isUser: msg.isUser }]);
+            } else {
+                setMessages((prev) => {
+                    const lastMsg = prev[prev.length - 1];
+                    if (lastMsg && !lastMsg.isUser && lastMsg.id === -1) {
+                        return [...prev.slice(0, -1), { ...lastMsg, id: msg.id, text: msg.text }];
+                    }
+                    return [...prev, { id: msg.id, text: msg.text, isUser: false }];
+                });
+            }
+        };
+
+        const handleBotTyping = (status: boolean) => setIsTyping(status);
+
+        chatSocket.on('ai-token', handleAiToken);
+        chatSocket.on('receive-message', handleReceiveMessage);
+        chatSocket.on('bot-typing', handleBotTyping);
+
+        chatSocket.on('bot-speak', (data: { text: string }) => {
+            if (!isMuted && !isConnected) {
+                const utterance = new SpeechSynthesisUtterance(data.text);
+                utterance.lang = t('languageCode') || 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        });
+
+        return () => {
+            chatSocket.off('ai-token', handleAiToken);
+            chatSocket.off('receive-message', handleReceiveMessage);
+            chatSocket.off('bot-typing', handleBotTyping);
+            chatSocket.off('bot-speak');
+        };
+    }, [visitorId, username, isMuted, isConnected]);
+
     return (
         <div className="min-h-screen bg-grid relative overflow-hidden flex flex-col items-center justify-center">
             {/* Background effects */}
