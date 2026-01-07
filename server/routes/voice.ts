@@ -22,7 +22,9 @@ router.post('/speak', async (req, res) => {
             });
         }
 
-        console.log(`🎙️ Generating Voice for: "${text.substring(0, 20)}..."`);
+        // Debug: Check if key is loaded correctly
+        const keyStatus = ELEVENLABS_API_KEY ? `Present (Starts with ${ELEVENLABS_API_KEY.substring(0, 4)}...)` : 'Missing';
+        console.log(`🎙️ Generating Voice for: "${text.substring(0, 20)}..." | Key Status: ${keyStatus}`);
 
         const response = await axios({
             method: 'POST',
