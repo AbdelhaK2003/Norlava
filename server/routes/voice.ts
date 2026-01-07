@@ -37,7 +37,7 @@ router.post('/speak', async (req, res) => {
             },
             headers: {
                 'Accept': 'audio/mpeg',
-                'xi-api-key': ELEVENLABS_API_KEY,
+                'xi-api-key': ELEVENLABS_API_KEY.trim(), // Trim to handle accidental spaces
                 'Content-Type': 'application/json',
             },
             responseType: 'stream'
