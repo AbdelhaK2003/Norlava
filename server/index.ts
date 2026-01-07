@@ -65,20 +65,17 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-message', async (data: any) => {
-        console.log("📩 Messaging Event Triggered");
-        // console.log("📦 Data:", JSON.stringify(data, null, 2));
-
-        const { profileId, message, senderIsUser, inputType, visitorId } = data;
-        const roomName = `${profileId}:${visitorId}`; // The unique room
+        console.log(`📩 [${socket.id}] Message Received from ${visitorId}: ${message?.substring(0, 50)}...`);
 
         // 1. Save message to DB
         const hostUser = await db.findUserByUsername(profileId);
 
         if (!hostUser) {
             console.error(`❌ Host user NOT FOUND for username: ${profileId}`);
-            io.to(roomName).emit('receive-message', {
+            // Use socket.emit to reply directly to sender, in case room join failed
+            socket.emit('receive-message', {
                 id: "error-404",
-                text: "Error: Host User not found in database.",
+                text: "Error: Host User not found. Please check the URL.",
                 isUser: false
             });
             return; // Stop processing

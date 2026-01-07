@@ -137,6 +137,8 @@ const Interact = () => {
 
         socket.on('connect', () => {
             console.log("✅ Socket Connected! ID:", socket.id);
+            console.log("➡️ Joining Room:", { username, visitorId });
+            socket.emit('join-profile', { username, visitorId });
         });
 
         socket.on('connect_error', (err) => {
