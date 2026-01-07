@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
 import express from 'express';
 import http from 'http';
@@ -7,64 +8,41 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
-import voiceRoutes from './routes/voice';
 import { db } from './db';
+
+// Initialize Google Gemini AI (SDK automatically uses appropriate API version)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3000;
-const allowedOrigins = [
-    "https://norlava.com",
-    "https://www.norlava.com",
-    "https://norlava-production.up.railway.app",
-    "http://localhost:5173"
-];
-
-const corsOptions = {
-    origin: (origin: any, callback: any) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith("web.app") || origin.endsWith("firebaseapp.com")) {
-            callback(null, true);
-        } else {
-            console.log("Blocked by CORS:", origin);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'xi-api-key']
-};
-
-// Logging middleware to debug requests
-app.use((req, res, next) => {
-    console.log(`📡 [${req.method}] ${req.path} | Origin: ${req.headers.origin || 'No Origin'}`);
-    next();
-});
-
-app.use(cors(corsOptions));
-// Explicitly handle pre-flight requests (Express 5 require (.*) for wildcard)
-app.options('(.*)', cors(corsOptions));
-
-app.use(express.json());
-
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: process.env.NODE_ENV === 'production'
+            ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
+            : ["http://localhost:5173", "http://localhost:8080"],
         methods: ["GET", "POST"],
         credentials: true
     }
 });
 
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const PORT = 3000;
+
+console.log("🔍 Server Starting...");
+console.log("📂 Current Working Directory:", process.cwd());
+console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
+
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+        ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
+        : ["http://localhost:5173", "http://localhost:8080"],
+    credentials: true
+}));
+app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
-app.use('/api/voice', voiceRoutes);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
@@ -75,7 +53,7 @@ app.get('/api/health', (req, res) => {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('join-profile', async (data) => {
+    socket.on('join-profile', async (data: any) => {
         const username = typeof data === 'string' ? data : data.username;
         const visitorId = typeof data === 'object' ? data.visitorId : 'anonymous';
 
@@ -86,7 +64,7 @@ io.on('connection', (socket) => {
         console.log(`User joined PRIVATE profile room: ${roomName}`);
     });
 
-    socket.on('send-message', async (data) => {
+    socket.on('send-message', async (data: any) => {
         console.log("📩 Messaging Event Triggered");
         // console.log("📦 Data:", JSON.stringify(data, null, 2));
 

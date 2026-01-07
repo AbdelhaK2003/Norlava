@@ -19,9 +19,7 @@ import {
   User,
   Smile,
   Plus,
-  X,
-  Mic,
-  FileText
+  X
 } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -124,77 +122,6 @@ const Onboarding = () => {
     if (step > 1) setStep(step - 1);
   };
 
-  /* VOICE MODE STATES */
-  const [onboardingMode, setOnboardingMode] = useState<"manual" | "voice" | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [voiceFile, setVoiceFile] = useState<Blob | null>(null);
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      const chunks: BlobPart[] = [];
-
-      recorder.ondataavailable = (e) => chunks.push(e.data);
-      recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/mp3' });
-        setVoiceFile(blob);
-        processVoice(blob);
-      };
-
-      recorder.start();
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Mic Error:", err);
-      alert("Could not access microphone.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder && isRecording) {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      // Stop all tracks to release mic
-      mediaRecorder.stream.getTracks().forEach(track => track.stop());
-    }
-  };
-
-  const processVoice = async (blob: Blob) => {
-    setIsAnalyzing(true);
-    try {
-      const formData = new FormData();
-      formData.append('audio', blob, 'onboarding.mp3');
-
-      const { data } = await api.post('/voice/clone-and-analyze', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-
-      // Populate form with AI analysis
-      setFormData(prev => ({
-        ...prev,
-        nickname: data.analysis.bio.split(' ')[0] || "User", // Simple heuristic
-        tagline: data.analysis.bio.substring(0, 50) + "...",
-        expertise: data.analysis.interests || [],
-        hobbies: data.analysis.funFacts || [],
-        formalityLevel: "casual", // Default for voice users
-        responseLength: "conversational"
-      }));
-
-      // Skip to Avatar step as data is saved to DB already
-      // But we update local state to reflect it in UI if they go back
-      setStep(5);
-    } catch (e) {
-      console.error("Voice Processing Failed", e);
-      alert("Failed to analyze voice. Please try again or use manual mode.");
-      setOnboardingMode("manual");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
   const styleOptions = {
     formality: [
       { value: "casual", label: t('onboarding.styles.casual.label'), desc: t('onboarding.styles.casual.desc') },
@@ -212,130 +139,6 @@ const Onboarding = () => {
       { value: "conversational", label: t('onboarding.styles.conversational.label'), desc: t('onboarding.styles.conversational.desc') }
     ]
   };
-
-  if (onboardingMode === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-grid">
-        <GlassCard className="max-w-4xl w-full p-8 grid md:grid-cols-2 gap-8 items-center" glow>
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Create Your <span className="gradient-text">Digital Twin</span></h1>
-              <p className="text-muted-foreground text-lg">How would you like to build your AI profile?</p>
-            </div>
-
-            <div className="grid gap-4">
-              <button
-                onClick={() => setOnboardingMode("voice")}
-                className="group relative overflow-hidden rounded-xl border border-primary/20 bg-primary/5 p-6 text-left hover:bg-primary/10 transition-all hover:border-primary/50"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-primary/20 text-primary group-hover:scale-110 transition-transform">
-                    <Mic size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
-                      Talk to AI <span className="text-[10px] bg-primary text-black px-2 py-0.5 rounded-full font-bold">Recommended</span>
-                    </h3>
-                    <p className="text-sm text-muted-foreground">Answer a few questions verbally. We'll clone your voice and build your profile instantly.</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setOnboardingMode("manual")}
-                className="group rounded-xl border border-white/10 bg-black/20 p-6 text-left hover:bg-white/5 transition-all hover:border-white/20"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-full bg-secondary/20 text-secondary group-hover:scale-110 transition-transform">
-                    <MessageSquare size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-1">Manual Entry</h3>
-                    <p className="text-sm text-muted-foreground">Fill out the profile form yourself. Traditional and detailed.</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div className="hidden md:flex justify-center">
-            <div className="relative w-80 h-80">
-              <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-full blur-[100px] animate-pulse" />
-              <Avatar3D size="xl" />
-            </div>
-          </div>
-        </GlassCard>
-      </div>
-    );
-  }
-
-  if (onboardingMode === "voice" && step < 5) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-grid relative">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute w-[800px] h-[800px] bg-purple-500/10 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 4, repeat: Infinity }}
-            style={{ top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-          />
-        </div>
-
-        <GlassCard className="max-w-lg w-full p-12 text-center relative z-10" glow>
-          {isAnalyzing ? (
-            <div className="space-y-6">
-              <div className="w-20 h-20 mx-auto relative">
-                <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-primary/30 border-l-transparent animate-spin" />
-                <div className="absolute inset-2 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Brain className="text-primary animate-pulse" size={32} />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Analyzing...</h2>
-                <p className="text-muted-foreground">Cloning your voice and extracting your personality.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              <div>
-                <h2 className="text-3xl font-bold mb-4">Interivew Mode</h2>
-                <p className="text-lg text-muted-foreground">
-                  "Tell me about yourself. What do you do? What are your hobbies? What defines your personality?"
-                </p>
-              </div>
-
-              <div className="relative h-40 flex items-center justify-center">
-                {isRecording && (
-                  <motion.div
-                    className="absolute inset-0 bg-red-500/20 rounded-full blur-xl"
-                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0.8, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                )}
-                <button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all ${isRecording ? "bg-red-500 hover:bg-red-600" : "bg-primary hover:bg-primary/90"
-                    }`}
-                >
-                  {isRecording ? <div className="w-8 h-8 bg-white rounded-md" /> : <Mic size={40} className="text-black" />}
-                </button>
-              </div>
-
-              <p className="text-sm font-medium">
-                {isRecording ? "Listening... (Click to Stop)" : "Click mic to answer (1 min max)"}
-              </p>
-
-              <Button variant="ghost" onClick={() => setOnboardingMode(null)}>
-                Back to Menu
-              </Button>
-            </div>
-          )}
-        </GlassCard>
-
-        {/* Hidden Audio Visualizer could go here */}
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen p-4 bg-grid relative overflow-hidden">
@@ -756,11 +559,9 @@ const Onboarding = () => {
                 </div>
 
                 <div className="flex gap-4">
-                  {(onboardingMode === "manual" || onboardingMode === null) && (
-                    <Button onClick={handleBack} variant="outline" size="lg" className="gap-2">
-                      <ArrowLeft size={18} /> {t('onboarding.back')}
-                    </Button>
-                  )}
+                  <Button onClick={handleBack} variant="outline" size="lg" className="gap-2">
+                    <ArrowLeft size={18} /> {t('onboarding.back')}
+                  </Button>
                   <Button onClick={handleNext} className="flex-1" variant="neon" size="lg">
                     <Sparkles size={18} />
                     {t('onboarding.createAvatar')}
