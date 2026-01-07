@@ -223,12 +223,18 @@ const Interact = () => {
 
     // Helper to remove markdown and system artifacts for smoother speech
     const cleanTextForSpeech = (text: string) => {
-        return text
+        const cleaned = text
             .replace(/[*#_`~]/g, '') // Remove markdown symbols
             .replace(/\[.*?\]\(.*?\)/g, '') // Remove links
             .replace(/(https?:\/\/[^\s]+)/g, 'link') // Replace URLs
+            .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/gu, '') // Remove Emojis
             .replace(/\n/g, '. ') // Pause on newlines
+            .replace(/\s+/g, ' ') // Collapse extra spaces
             .trim();
+
+        console.log("🗣️ Raw for Speech:", text);
+        console.log("🗣️ Cleaned for Speech:", cleaned);
+        return cleaned;
     };
 
     const speakText = (text: string) => {
