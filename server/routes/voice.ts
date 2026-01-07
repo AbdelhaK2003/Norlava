@@ -59,15 +59,38 @@ router.post('/speak', async (req, res) => {
         });
 
     } catch (error: any) {
-        console.error('🔥 ElevenLabs Error:', error.response?.data || error.message);
+        let errorDetails = error.message;
 
-        // Pass the actual error detail to the client for debugging
+        // If it's an Axios error with a response
+        if (error.response) {
+            // If the response data is a stream (Unzip/IncomingMessage), read it
+            if (error.response.data && typeof error.response.data.on === 'function') {
+                try {
+                    const chunks: Buffer[] = [];
+                    // Using async iterator for the stream
+                    for await (const chunk of error.response.data) {
+                        chunks.push(Buffer.from(chunk));
+                    }
+                    const body = Buffer.concat(chunks).toString('utf8');
+                    console.error('🔥 ElevenLabs API Error Body:', body);
+                    errorDetails = body;
+                } catch (readErr) {
+                    console.error('Failed to read error stream:', readErr);
+                }
+            } else {
+                // Not a stream or already read
+                console.error('🔥 ElevenLabs Error Data:', error.response.data);
+                errorDetails = JSON.stringify(error.response.data);
+            }
+        } else {
+            console.error('🔥 Unknown Voice Error:', error.message);
+        }
+
         const status = error.response?.status || 500;
-        const detail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
 
         res.status(status).json({
             error: 'Failed to generate speech',
-            details: detail
+            details: errorDetails
         });
     }
 });
