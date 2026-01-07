@@ -203,24 +203,55 @@ const Interact = () => {
         };
     }, [username, isMuted, visitorId]);
 
+    // Helper to remove markdown and system artifacts for smoother speech
+    const cleanTextForSpeech = (text: string) => {
+        return text
+            .replace(/[*#_`~]/g, '') // Remove markdown symbols
+            .replace(/\[.*?\]\(.*?\)/g, '') // Remove links
+            .replace(/(https?:\/\/[^\s]+)/g, 'link') // Replace URLs
+            .replace(/\n/g, '. ') // Pause on newlines
+            .trim();
+    };
+
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel(); // Stop any previous speech
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1;
-            utterance.pitch = 1;
-            // Use current UI language for speech
-            utterance.lang = t('languageCode') || 'en-US';
+            const safeText = cleanTextForSpeech(text);
+            if (!safeText) return;
 
-            // Find a good voice (optional, but helps quality)
+            const utterance = new SpeechSynthesisUtterance(safeText);
+            utterance.rate = 1.0; // Slightly faster for flow
+            utterance.pitch = 1.0;
+
+            // Dynamic Language Support from i18n
+            const langCode = t('languageCode') || 'en-US';
+            utterance.lang = langCode;
+
+            // Voice Selection Strategy:
+            // 1. Look for "Google" voices (usually better quality on Chrome/Android)
+            // 2. Look for "Natural" or "Enhanced" (Edge/iOS)
+            // 3. Fallback to default match for language
             const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang.startsWith(utterance.lang));
-            if (preferredVoice) utterance.voice = preferredVoice;
+            const preferredVoice = voices.find(v =>
+                v.lang.startsWith(langCode) && (
+                    v.name.includes("Google") ||
+                    v.name.includes("Natural") ||
+                    v.name.includes("Enhanced")
+                )
+            ) || voices.find(v => v.lang.startsWith(langCode));
+
+            if (preferredVoice) {
+                console.log("🗣️ Using Voice:", preferredVoice.name);
+                utterance.voice = preferredVoice;
+            }
 
             utterance.onstart = () => setIsAvatarSpeaking(true);
             utterance.onend = () => setIsAvatarSpeaking(false);
-            utterance.onerror = (e) => console.error("🗣️ TTS Error:", e);
+            utterance.onerror = (e) => {
+                console.error("🗣️ TTS Error:", e);
+                setIsAvatarSpeaking(false);
+            };
 
             window.speechSynthesis.speak(utterance);
         }
