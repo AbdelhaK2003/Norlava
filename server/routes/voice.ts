@@ -5,7 +5,7 @@ import FormData from 'form-data';
 import axios from 'axios';
 import fs from 'fs';
 import { db } from '../db';
-import { authenticateToken } from './auth';
+import { authenticateToken } from '../middleware/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = express.Router();
