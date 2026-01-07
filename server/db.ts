@@ -219,7 +219,10 @@ class Database {
         console.log(`📊 DB: Fetching stats for Host ID: ${hostId}`);
         // 1. Total Messages (both user and AI)
         const totalMessages = await prisma.message.count({
-            where: { hostId }
+            where: {
+                hostId,
+                isUser: true // Only count messages FROM visitors
+            }
         });
 
         // 2. Unique Visitors
