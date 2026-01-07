@@ -15,14 +15,40 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const app = express();
 const server = http.createServer(app);
+// CORS Configuration
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:8080",
+    "https://norlava.com",
+    "https://www.norlava.com",
+    process.env.FRONTEND_URL
+].filter(Boolean) as string[];
+
+const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Dynamic checks for Vercel & Railway previews
+        if (origin.endsWith('.vercel.app') || origin.endsWith('.railway.app')) {
+            return callback(null, true);
+        }
+
+        console.warn(`⚠️ Blocked by CORS: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"]
+};
+
+// Apply to Socket.IO
 const io = new Server(server, {
-    cors: {
-        origin: process.env.NODE_ENV === 'production'
-            ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
-            : ["http://localhost:5173", "http://localhost:8080"],
-        methods: ["GET", "POST"],
-        credentials: true
-    }
+    cors: corsOptions as any // Type casting to satisfy Socket.IO types
 });
 
 const PORT = 3000;
@@ -31,12 +57,8 @@ console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
 
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? [process.env.FRONTEND_URL || "https://your-app.vercel.app"]
-        : ["http://localhost:5173", "http://localhost:8080"],
-    credentials: true
-}));
+// Apply to Express
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
@@ -65,6 +87,9 @@ io.on('connection', (socket) => {
     });
 
     socket.on('send-message', async (data: any) => {
+        const { profileId, message, senderIsUser, inputType, visitorId } = data;
+        const roomName = `${profileId}:${visitorId}`;
+
         console.log(`📩 [${socket.id}] Message Received from ${visitorId}: ${message?.substring(0, 50)}...`);
 
         // 1. Save message to DB
