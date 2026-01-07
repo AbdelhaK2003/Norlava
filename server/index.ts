@@ -76,10 +76,14 @@ io.on('connection', (socket) => {
 
     socket.on('send-message', async (data: any) => {
         console.log("📩 Messaging Event Triggered");
-        // console.log("📦 Data:", JSON.stringify(data, null, 2));
-
         const { profileId, message, senderIsUser, inputType, visitorId } = data;
-        const roomName = `${profileId}:${visitorId}`; // The unique room
+        const roomName = `${profileId}:${visitorId}`;
+
+        // DEBUG: Ack immediately to client (skipping room)
+        socket.emit('debug-ack', { status: 'received', step: 'server-entry' });
+
+        console.log(`🔍 DEBUG: Processing msg for Room: ${roomName}`);
+        console.log(`🔍 DEBUG: OpenAI/Gemini Key Status: ${process.env.GEMINI_API_KEY ? 'Present' : 'MISSING'}`);
 
         // 1. Save message to DB
         const hostUser = await db.findUserByUsername(profileId);

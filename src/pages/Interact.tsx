@@ -146,6 +146,15 @@ const Interact = () => {
             if (!status) setProcessing(false); // Safety net
         });
 
+        socket.on('debug-ack', (data: any) => {
+            console.log("📡 SERVER ACK:", data);
+            const el = document.getElementById('ack-status');
+            if (el) {
+                el.innerText = "RECEIVED ✅";
+                el.className = "text-green-400";
+            }
+        });
+
         return () => {
             socket.off('receive-message');
             socket.off('ai-token');
@@ -317,6 +326,7 @@ const Interact = () => {
                         <div className="absolute top-4 left-4 font-mono text-[10px] text-white/30 z-50 text-left">
                             <p>STATUS: {socket.connected ? "CONNECTED" : "DISCONNECTED"}</p>
                             <p>VISITOR: {visitorId.slice(0, 8)}...</p>
+                            <p>SERVER ACK: <span id="ack-status">WAITING...</span></p>
                         </div>
 
                         {/* Close Button */}
