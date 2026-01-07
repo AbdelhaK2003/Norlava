@@ -16,7 +16,10 @@ router.post('/speak', async (req, res) => {
 
         if (!ELEVENLABS_API_KEY) {
             console.error("❌ ElevenLabs API Key missing!");
-            return res.status(500).json({ error: 'Voice service not configured' });
+            return res.status(503).json({
+                error: 'Voice service not configured',
+                details: 'ELEVENLABS_API_KEY is missing on the server.'
+            });
         }
 
         console.log(`🎙️ Generating Voice for: "${text.substring(0, 20)}..."`);
@@ -48,7 +51,15 @@ router.post('/speak', async (req, res) => {
 
     } catch (error: any) {
         console.error('🔥 ElevenLabs Error:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Failed to generate speech' });
+
+        // Pass the actual error detail to the client for debugging
+        const status = error.response?.status || 500;
+        const detail = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+
+        res.status(status).json({
+            error: 'Failed to generate speech',
+            details: detail
+        });
     }
 });
 
