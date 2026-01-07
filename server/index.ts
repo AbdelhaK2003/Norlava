@@ -11,6 +11,8 @@ import voiceRoutes from './routes/voice';
 import { db } from './db';
 
 const app = express();
+const server = http.createServer(app);
+const PORT = process.env.PORT || 3000;
 const allowedOrigins = [
     "https://norlava.com",
     "https://www.norlava.com",
