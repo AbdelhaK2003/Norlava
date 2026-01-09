@@ -28,6 +28,8 @@ const Dashboard = () => {
     const [stats, setStats] = useState<any>({ totalVisitors: 0, totalMessages: 0 });
     const [memories, setMemories] = useState<{ facts: any[], questions: any[] }>({ facts: [], questions: [] });
     const [answerInput, setAnswerInput] = useState<{ [key: string]: string }>({});
+    const [factIndex, setFactIndex] = useState(0);
+    const [questionIndex, setQuestionIndex] = useState(0);
     const [copied, setCopied] = useState(false);
 
     const fetchMemories = async () => {
@@ -57,12 +59,15 @@ const Dashboard = () => {
 
     const handleApproveFact = async (id: string) => {
         await api.post(`/user/memories/${id}/approve`, {});
+        setFactIndex(0); // Reset to show next available
         fetchMemories();
-        toast.success("Fact approved and added to memory core");
+        toast.success("Fact approved");
     };
 
-    const handleDeleteMemory = async (id: string) => {
+    const handleDeleteMemory = async (id: string, type: 'fact' | 'question') => {
         await api.delete(`/user/memories/${id}`);
+        if (type === 'fact') setFactIndex(0);
+        else setQuestionIndex(0);
         fetchMemories();
         toast.info("Memory discarded");
     };
@@ -72,8 +77,9 @@ const Dashboard = () => {
         if (!answer) return;
         await api.post(`/user/memories/${id}/approve`, { answer });
         fetchMemories();
+        setQuestionIndex(0);
         setAnswerInput(prev => ({ ...prev, [id]: "" }));
-        toast.success("Question answered and saved");
+        toast.success("Question answered");
     };
 
     const profileUrl = user ? `${window.location.origin}/interact/${user.username}` : "";
@@ -91,13 +97,23 @@ const Dashboard = () => {
         navigate('/login');
     };
 
+    // Helper to cycle carousel
+    const nextItem = (type: 'fact' | 'question') => {
+        if (type === 'fact') {
+            setFactIndex(prev => (prev + 1) % memories.facts.length);
+        } else {
+            setQuestionIndex(prev => (prev + 1) % memories.questions.length);
+        }
+    };
+
+    const currentFact = memories.facts[factIndex];
+    const currentQuestion = memories.questions[questionIndex];
+
     return (
         <div className="min-h-screen w-full relative font-outfit overflow-x-hidden text-white">
-            {/* Global Background (Matching Interact.tsx) */}
+            {/* Global Background (Exact match to Interact.tsx) */}
             <div className="absolute inset-0 bg-black">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-neon-cyan/10 rounded-full blur-[100px]"></div>
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-neon-purple/10 rounded-full blur-[100px]"></div>
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
             </div>
 
             {/* Header */}
@@ -217,123 +233,92 @@ const Dashboard = () => {
                             </div>
                         </motion.div>
 
-                        {/* System Status */}
-                        <motion.div
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="flex-1 rounded-3xl border border-white/10 bg-white/5 p-6 flex flex-col"
-                        >
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <Bot size={20} className="text-green-400" />
-                                    <h3 className="font-semibold text-lg">System Status</h3>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                                    <span className="text-xs text-green-500 font-mono">ONLINE</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                                    <span className="text-sm text-white/70">Memory Core</span>
-                                    <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">ACTIVE</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                                    <span className="text-sm text-white/70">Voice Synthesis</span>
-                                    <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">READY</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                                    <span className="text-sm text-white/70">Response Engines</span>
-                                    <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">OPTIMIZED</span>
-                                </div>
-                            </div>
-
-                            <div className="mt-auto pt-6">
-                                <Button variant="ghost" className="w-full text-xs text-white/40 hover:text-white font-mono" onClick={() => navigate("/settings")}>
-                                    CONFIGURE SYSTEM PARAMETERS &rarr;
-                                </Button>
-                            </div>
-                        </motion.div>
+                        {/* System Status (Simplified) */}
+                        <div className="flex items-center gap-2 mb-2 p-2">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <span className="text-xs text-green-500 font-mono">SYSTEM ONLINE</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* MEMORY MANAGEMENT SECTION (Restored) */}
+                {/* MEMORY MANAGEMENT SECTION (Carousel) */}
                 {(memories.facts.length > 0 || memories.questions.length > 0) && (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="grid md:grid-cols-2 gap-6"
                     >
-                        {/* New Facts */}
-                        {memories.facts.length > 0 && (
+                        {/* New Facts Carousel */}
+                        {memories.facts.length > 0 && currentFact && (
                             <GlassCard className="p-0 overflow-hidden border-white/10">
-                                <div className="p-6 border-b border-white/5 bg-white/5">
+                                <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="p-2 bg-neon-cyan/20 rounded-lg">
                                             <Zap size={18} className="text-neon-cyan" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-lg">New Facts Learned</h3>
-                                            <p className="text-xs text-white/50">Details picked up from conversations</p>
+                                            <h3 className="font-semibold text-lg">New Facts ({memories.facts.length})</h3>
                                         </div>
                                     </div>
+                                    {memories.facts.length > 1 && (
+                                        <Button variant="ghost" size="sm" onClick={() => nextItem('fact')} className="text-xs h-7">
+                                            Skip <span className="ml-1 opacity-50">&rarr;</span>
+                                        </Button>
+                                    )}
                                 </div>
-                                <div className="p-6 space-y-4">
-                                    {memories.facts.map((fact) => (
-                                        <div key={fact.id} className="bg-white/5 p-4 rounded-xl flex items-start justify-between gap-4 border border-white/5 hover:border-neon-cyan/30 transition-colors">
-                                            <p className="text-sm text-white/80 py-1">"{fact.content}"</p>
-                                            <div className="flex gap-2">
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-green-400 hover:bg-green-400/20 hover:text-green-300" onClick={() => handleApproveFact(fact.id)}>
-                                                    <Check size={16} />
-                                                </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:bg-red-400/20 hover:text-red-300" onClick={() => handleDeleteMemory(fact.id)}>
-                                                    <LogOut size={16} className="rotate-180" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="p-6 min-h-[160px] flex flex-col justify-between">
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/5 mb-4">
+                                        <p className="text-sm text-white/90 italic">"{currentFact.content}"</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button className="flex-1 bg-green-500/20 text-green-400 hover:bg-green-500/30" onClick={() => handleApproveFact(currentFact.id)}>
+                                            <Check size={16} className="mr-2" /> Approve
+                                        </Button>
+                                        <Button className="flex-1 bg-red-500/20 text-red-400 hover:bg-red-500/30" onClick={() => handleDeleteMemory(currentFact.id, 'fact')}>
+                                            <LogOut size={16} className="mr-2 rotate-180" /> Discard
+                                        </Button>
+                                    </div>
                                 </div>
                             </GlassCard>
                         )}
 
-                        {/* Visitor Questions */}
-                        {memories.questions.length > 0 && (
+                        {/* Visitor Questions Carousel */}
+                        {memories.questions.length > 0 && currentQuestion && (
                             <GlassCard className="p-0 overflow-hidden border-white/10">
-                                <div className="p-6 border-b border-white/5 bg-white/5">
+                                <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="p-2 bg-neon-purple/20 rounded-lg">
                                             <MessageSquare size={18} className="text-neon-purple" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-lg">Pending Questions</h3>
-                                            <p className="text-xs text-white/50">Visitors asked for this info</p>
+                                            <h3 className="font-semibold text-lg">Questions ({memories.questions.length})</h3>
                                         </div>
                                     </div>
+                                    {memories.questions.length > 1 && (
+                                        <Button variant="ghost" size="sm" onClick={() => nextItem('question')} className="text-xs h-7">
+                                            Skip <span className="ml-1 opacity-50">&rarr;</span>
+                                        </Button>
+                                    )}
                                 </div>
-                                <div className="p-6 space-y-4">
-                                    {memories.questions.map((q) => (
-                                        <div key={q.id} className="bg-white/5 p-4 rounded-xl space-y-3 border border-white/5 hover:border-neon-purple/30 transition-colors">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <p className="text-sm font-medium text-neon-purple">Q: {q.prompt}</p>
-                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-white/40 hover:text-red-400" onClick={() => handleDeleteMemory(q.id)}>
-                                                    <LogOut size={14} className="rotate-180" />
-                                                </Button>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-neon-purple/50 transition-colors"
-                                                    placeholder="Type the answer..."
-                                                    value={answerInput[q.id] || ""}
-                                                    onChange={(e) => setAnswerInput({ ...answerInput, [q.id]: e.target.value })}
-                                                />
-                                                <Button size="sm" className="bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30 border border-neon-purple/30" onClick={() => handleAnswerQuestion(q.id)}>
-                                                    Teach
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="p-6 min-h-[160px] flex flex-col justify-between">
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/5 mb-4">
+                                        <p className="text-sm font-medium text-neon-purple mb-2">Visitor asked:</p>
+                                        <p className="text-sm text-white/90">"{currentQuestion.prompt}"</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-neon-purple/50 transition-colors"
+                                            placeholder="Type answer..."
+                                            value={answerInput[currentQuestion.id] || ""}
+                                            onChange={(e) => setAnswerInput({ ...answerInput, [currentQuestion.id]: e.target.value })}
+                                        />
+                                        <Button size="sm" className="bg-neon-purple/20 text-neon-purple hover:bg-neon-purple/30" onClick={() => handleAnswerQuestion(currentQuestion.id)}>
+                                            Teach
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="text-white/40 hover:text-red-400" onClick={() => handleDeleteMemory(currentQuestion.id, 'question')}>
+                                            <LogOut size={14} className="rotate-180" />
+                                        </Button>
+                                    </div>
                                 </div>
                             </GlassCard>
                         )}
