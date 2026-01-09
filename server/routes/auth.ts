@@ -165,7 +165,7 @@ router.post('/reset-password', async (req, res) => {
         res.status(500).json({ error: 'Reset failed' });
     }
 }
-});
+);
 
 // Change Password
 router.post('/change-password', async (req, res) => {
