@@ -141,8 +141,11 @@ const Dashboard = () => {
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md p-8 min-h-[400px] flex flex-col items-center justify-center text-center group"
+                            className="relative rounded-3xl overflow-hidden border border-white/10 bg-black p-8 min-h-[400px] flex flex-col items-center justify-center text-center group"
                         >
+                            {/* Card-Specific Noise Background (Matching Call Page) */}
+                            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+
                             {/* Decorative Rings */}
                             <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
                                 <div className="w-[300px] h-[300px] border border-neon-cyan/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
@@ -153,16 +156,16 @@ const Dashboard = () => {
                                 <Avatar3D size="xl" />
                             </div>
 
-                            <h2 className="text-3xl font-bold mb-2 tracking-tight">
+                            <h2 className="relative z-10 text-3xl font-bold mb-2 tracking-tight">
                                 Ready to learn, <span className="text-neon-cyan">{user?.firstName}</span>?
                             </h2>
-                            <p className="text-white/60 max-w-md mb-8">
+                            <p className="relative z-10 text-white/60 max-w-md mb-8">
                                 Enter training mode to update my knowledge base through natural conversation.
                             </p>
 
                             <Button
                                 onClick={() => user?.username && (window.location.href = `/interact/${user.username}`)}
-                                className="bg-neon-cyan text-black hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,243,255,0.4)] px-8 py-6 rounded-full text-lg font-bold tracking-wide gap-3"
+                                className="relative z-10 bg-neon-cyan text-black hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,243,255,0.4)] px-8 py-6 rounded-full text-lg font-bold tracking-wide gap-3"
                             >
                                 <Zap size={20} className="fill-black" />
                                 ENTER TRAINING MODE
