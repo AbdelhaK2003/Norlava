@@ -16,6 +16,8 @@ import Training from "./pages/Training";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 
+import Settings from "./pages/Settings";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -31,6 +33,7 @@ const App = () => (
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/avatar" element={<AvatarCreation />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/training" element={<Training />} />
           <Route path="/interact/:username" element={<Interact />} />
           <Route path="/profile/:username" element={<PublicProfile />} />

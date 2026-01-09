@@ -31,11 +31,26 @@ const Interact = () => {
     const { username } = useParams();
     const [hostName, setHostName] = useState("");
     const [visitorId, setVisitorId] = useState("");
+    const [isTrainingMode, setIsTrainingMode] = useState(false);
 
     useEffect(() => {
         const newVisitorId = uuidv4();
         console.log("🆕 New Visitor Session Started:", newVisitorId);
         setVisitorId(newVisitorId);
+
+        // Check for logged in user to detect Training Mode
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.username === username) {
+                    setIsTrainingMode(true);
+                    console.log("🛠️ TRAINING MODE ACTIVE");
+                }
+            } catch (e) {
+                console.error("Invalid user session");
+            }
+        }
 
         if (username) {
             api.get(`/user/username/${username}`)
@@ -329,7 +344,7 @@ const Interact = () => {
                         {/* DEBUG STATUS */}
                         <div className="absolute top-4 left-4 font-mono text-[10px] text-white/30 z-50 text-left">
                             <p>STATUS: {socket.connected ? "CONNECTED" : "DISCONNECTED"}</p>
-                            <p>VISITOR: {visitorId.slice(0, 8)}...</p>
+                            <p>{isTrainingMode ? "⚠️ TRAINING MODE ENABLED" : `VISITOR: ${visitorId.slice(0, 8)}...`}</p>
                         </div>
 
                         {/* Close Button */}

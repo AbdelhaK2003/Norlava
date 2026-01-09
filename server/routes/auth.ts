@@ -164,6 +164,36 @@ router.post('/reset-password', async (req, res) => {
         console.error("🔥 Error in reset-password:", error);
         res.status(500).json({ error: 'Reset failed' });
     }
+}
+});
+
+// Change Password
+router.post('/change-password', async (req, res) => {
+    try {
+        const { email, oldPassword, newPassword } = req.body;
+        console.log("👉 Change Password request for:", email);
+
+        const user = await db.findUserByEmail(email);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Verify old password
+        const validPassword = await bcrypt.compare(oldPassword, user.password);
+        if (!validPassword) {
+            return res.status(400).json({ error: 'Incorrect current password' });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.updatePassword(email, hashedPassword);
+
+        console.log("✅ Password changed successfully.");
+        res.json({ message: 'Password updated successfully' });
+    } catch (error) {
+        console.error("🔥 Error in change-password:", error);
+        res.status(500).json({ error: 'Failed to update password' });
+    }
 });
 
 export default router;

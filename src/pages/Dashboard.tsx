@@ -18,6 +18,7 @@ import {
     Copy,
     BarChart3,
     Clock,
+    Bot
     HelpCircle,
     LogOut,
     Brain,
@@ -142,7 +143,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/onboarding")}>
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/settings")}>
                             <Settings size={16} />
                             <span className="hidden md:inline">{t('dashboard.settings')}</span>
                         </Button>
@@ -153,6 +154,42 @@ const Dashboard = () => {
                     </div>
                 </motion.div>
 
+                {/* Main Action Buttons */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <Button
+                        onClick={() => {
+                            if (user?.username) {
+                                window.location.href = `/interact/${user.username}`;
+                            }
+                        }}
+                        className="h-auto p-6 bg-gradient-neon hover:opacity-90 transition-all border-0 shadow-[0_0_20px_rgba(0,243,255,0.3)] group"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Bot size={24} className="text-black" />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="font-bold text-lg text-black">Train My AI</h3>
+                                <p className="text-black/70 text-sm">Chat with yourself to update memories</p>
+                            </div>
+                        </div>
+                    </Button>
+
+                    <Button
+                        onClick={() => navigate('/share')}
+                        className="h-auto p-6 bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Share2 size={24} className="text-white" />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="font-bold text-lg text-white">Share Profile</h3>
+                                <p className="text-white/60 text-sm">Get your public link for visitors</p>
+                            </div>
+                        </div>
+                    </Button>
+                </div>
                 {/* Profile Card */}
                 <motion.div
                     className="mb-8"
