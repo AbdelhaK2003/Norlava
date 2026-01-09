@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import { api } from "@/lib/api";
@@ -11,60 +10,26 @@ import { Button } from "@/components/ui/button";
 import {
     Users,
     MessageSquare,
-    TrendingUp,
     Share2,
     Settings,
-    ExternalLink,
+    MapPin,
     Copy,
-    BarChart3,
-    Clock,
     Bot,
-    HelpCircle,
     LogOut,
-    Brain,
     Check,
-    X
+    Zap,
+    ExternalLink
 } from "lucide-react";
-
-// Mock data removed. Real stats fetched from backend.
+import { toast } from "sonner";
 
 const Dashboard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
     const [stats, setStats] = useState<any>({ totalVisitors: 0, totalMessages: 0 });
-    const [isLoading, setIsLoading] = useState(false);
-    const [memories, setMemories] = useState<{ facts: any[], questions: any[] }>({ facts: [], questions: [] });
-    const [answerInput, setAnswerInput] = useState<{ [key: string]: string }>({});
     const [copied, setCopied] = useState(false);
 
-    const fetchMemories = async () => {
-        try {
-            const { data } = await api.get('/user/memories/pending');
-            setMemories(data);
-        } catch (e) {
-            console.error("Failed memories fetch", e);
-        }
-    };
-
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchStats = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const { data } = await api.get('/user/dashboard-stats');
-            setStats(data);
-        } catch (err: any) {
-            console.error("Failed to fetch stats", err);
-            setError(err.message || "Failed to load stats");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        // Get user from localStorage
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
 
@@ -73,33 +38,18 @@ const Dashboard = () => {
         }
 
         if (token) {
-            fetchStats();
-            fetchMemories();
+            api.get('/user/dashboard-stats')
+                .then(({ data }) => setStats(data))
+                .catch(err => console.error("Failed to load stats", err));
         }
     }, []);
-
-    const handleApproveFact = async (id: string) => {
-        await api.post(`/user/memories/${id}/approve`, {});
-        fetchMemories();
-    };
-
-    const handleDeleteMemory = async (id: string) => {
-        await api.delete(`/user/memories/${id}`);
-        fetchMemories();
-    };
-
-    const handleAnswerQuestion = async (id: string) => {
-        const answer = answerInput[id];
-        if (!answer) return;
-        await api.post(`/user/memories/${id}/approve`, { answer });
-        fetchMemories();
-    };
 
     const profileUrl = user ? `${window.location.origin}/interact/${user.username}` : "";
 
     const copyLink = () => {
         navigator.clipboard.writeText(profileUrl);
         setCopied(true);
+        toast.success("Link copied to clipboard");
         setTimeout(() => setCopied(false), 2000);
     };
 
@@ -109,257 +59,173 @@ const Dashboard = () => {
         navigate('/login');
     };
 
-    const statCards = [
-        {
-            title: t('dashboard.visitors'),
-            value: stats.totalVisitors.toLocaleString(),
-            icon: Users,
-            color: "from-blue-500 to-cyan-500",
-            change: "Live"
-        },
-        {
-            title: t('dashboard.messages'),
-            value: stats.totalMessages.toLocaleString(),
-            icon: MessageSquare,
-            color: "from-purple-500 to-pink-500",
-            change: "Total"
-        }
-    ];
-
     return (
-        <div className="min-h-screen bg-grid p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <motion.div
-                    className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8"
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <div className="flex items-center gap-4">
-                        <Logo size="sm" />
-                        <div>
-                            <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
-                            <p className="text-muted-foreground">{t('dashboard.welcome')}, {user?.firstName || "User"}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button variant="outline" size="sm" className="gap-2" onClick={() => navigate("/settings")}>
-                            <Settings size={16} />
-                            <span className="hidden md:inline">{t('dashboard.settings')}</span>
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-2" onClick={handleLogout}>
-                            <LogOut size={16} />
-                            <span className="hidden md:inline">{t('dashboard.logout')}</span>
-                        </Button>
-                    </div>
-                </motion.div>
-
-                {/* Main Action Buttons */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <Button
-                        onClick={() => {
-                            if (user?.username) {
-                                window.location.href = `/interact/${user.username}`;
-                            }
-                        }}
-                        className="h-auto p-6 bg-gradient-neon hover:opacity-90 transition-all border-0 shadow-[0_0_20px_rgba(0,243,255,0.3)] group"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-black/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Bot size={24} className="text-black" />
-                            </div>
-                            <div className="text-left">
-                                <h3 className="font-bold text-lg text-black">Train My AI</h3>
-                                <p className="text-black/70 text-sm">Chat with yourself to update memories</p>
-                            </div>
-                        </div>
-                    </Button>
-
-                    <Button
-                        onClick={() => navigate('/share')}
-                        className="h-auto p-6 bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
-                    >
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                <Share2 size={24} className="text-white" />
-                            </div>
-                            <div className="text-left">
-                                <h3 className="font-bold text-lg text-white">Share Profile</h3>
-                                <p className="text-white/60 text-sm">Get your public link for visitors</p>
-                            </div>
-                        </div>
-                    </Button>
-                </div>
-                {/* Profile Card */}
-                <motion.div
-                    className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <GlassCard className="p-6" glow>
-                        <div className="flex flex-col md:flex-row items-center gap-6">
-                            <Avatar3D size="lg" />
-                            <div className="flex-1 text-center md:text-left">
-                                <h2 className="text-xl font-bold">Your AI Avatar</h2>
-                                <p className="text-muted-foreground mb-3">Share your profile with others</p>
-                                <div className="flex flex-col sm:flex-row items-center gap-3">
-                                    <div className="flex-1 bg-muted/50 rounded-lg px-4 py-2 text-sm font-mono truncate max-w-md">
-                                        {profileUrl || "Loading..."}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" className="gap-2" onClick={copyLink}>
-                                            {copied ? t('dashboard.copied') : <><Copy size={16} /> {t('dashboard.copyLink')}</>}
-                                        </Button>
-                                        <Button variant="neon" size="sm" className="gap-2" asChild>
-                                            <Link to={user ? `/interact/${user.username}` : "#"}>
-                                                <ExternalLink size={16} /> View Live
-                                            </Link>
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </GlassCard>
-                </motion.div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                    {statCards.map((stat, index) => (
-                        <motion.div
-                            key={stat.title}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 + index * 0.1 }}
-                        >
-                            <GlassCard className="p-4 md:p-6">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color}`}>
-                                        <stat.icon size={20} className="text-white" />
-                                    </div>
-                                    <span className="text-xs text-green-500 font-medium">{stat.change}</span>
-                                </div>
-                                <div className="text-2xl md:text-3xl font-bold mb-1">{stat.value}</div>
-                                <div className="text-sm text-muted-foreground">{stat.title}</div>
-                            </GlassCard>
-                        </motion.div>
-                    ))}
-                </div>
-
+        <div className="min-h-screen w-full relative font-outfit overflow-x-hidden text-white">
+            {/* Global Background (Matching Interact.tsx) */}
+            <div className="absolute inset-0 bg-black">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+                <div className="absolute top-0 left-1/4 w-96 h-96 bg-neon-cyan/10 rounded-full blur-[100px]"></div>
+                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-neon-purple/10 rounded-full blur-[100px]"></div>
             </div>
 
-            {/* Memory Management Section (New Findings) */}
-            {(memories.facts.length > 0 || memories.questions.length > 0) && (
-                <motion.div
-                    className="mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {/* Learned Facts */}
-                        {memories.facts.length > 0 && (
-                            <GlassCard className="p-6 h-full">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Brain size={20} className="text-primary" />
-                                    <h3 className="text-lg font-semibold">New Facts Learned</h3>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Your AI picked up these new details about you. Keep or discard?
-                                </p>
-                                <div className="space-y-3">
-                                    {memories.facts.map((fact) => (
-                                        <div key={fact.id} className="bg-muted/30 p-3 rounded-lg flex items-start justify-between gap-3">
-                                            <p className="text-sm flex-1">"{fact.content}"</p>
-                                            <div className="flex gap-2">
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-green-500 hover:text-green-400 hover:bg-green-500/20" onClick={() => handleApproveFact(fact.id)}>
-                                                    <Check size={16} />
-                                                </Button>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/20" onClick={() => handleDeleteMemory(fact.id)}>
-                                                    <X size={16} />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </GlassCard>
-                        )}
+            {/* Header */}
+            <div className="relative z-20 p-6 flex items-center justify-between backdrop-blur-sm border-b border-white/5">
+                <div className="flex items-center gap-3">
+                    <Logo size="sm" />
+                    <div className="h-4 w-[1px] bg-white/10 mx-2"></div>
+                    <span className="font-mono text-xs text-white/50 tracking-widest">DASHBOARD v2.0</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="sm" className="text-white/70 hover:text-neon-cyan hover:bg-white/5" onClick={() => navigate("/settings")}>
+                        <Settings size={18} />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-white/70 hover:text-red-400 hover:bg-white/5" onClick={handleLogout}>
+                        <LogOut size={18} />
+                    </Button>
+                </div>
+            </div>
 
-                        {/* Visitor Questions */}
-                        {memories.questions.length > 0 && (
-                            <GlassCard className="p-6 h-full">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <HelpCircle size={20} className="text-secondary" />
-                                    <h3 className="text-lg font-semibold">Visitor Questions</h3>
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Visitors asked these questions. Teach your AI the answer.
-                                </p>
-                                <div className="space-y-4">
-                                    {memories.questions.map((q) => (
-                                        <div key={q.id} className="bg-muted/30 p-3 rounded-lg space-y-3">
-                                            <div className="flex justify-between items-start gap-2">
-                                                <p className="text-sm font-medium text-secondary">Q: {q.prompt}</p>
-                                                <Button size="icon" variant="ghost" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteMemory(q.id)}>
-                                                    <X size={14} />
-                                                </Button>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    className="flex-1 bg-background/50 border border-input rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                                    placeholder="Type your answer..."
-                                                    value={answerInput[q.id] || ""}
-                                                    onChange={(e) => setAnswerInput({ ...answerInput, [q.id]: e.target.value })}
-                                                />
-                                                <Button size="sm" variant="secondary" onClick={() => handleAnswerQuestion(q.id)}>
-                                                    Answer
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </GlassCard>
-                        )}
-                    </div>
-                </motion.div>
-            )}
+            <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-            {/* Share Section */}
-            <motion.div
-                className="mt-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-            >
-                <GlassCard className="p-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <Share2 size={24} className="text-primary" />
+                {/* HERO SECTION (Avatar + Training) - Spans 7 columns */}
+                <div className="lg:col-span-7 flex flex-col gap-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-md p-8 min-h-[400px] flex flex-col items-center justify-center text-center group"
+                    >
+                        {/* Decorative Rings */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+                            <div className="w-[300px] h-[300px] border border-neon-cyan/30 rounded-full animate-[spin_10s_linear_infinite]"></div>
+                            <div className="w-[400px] h-[400px] border border-neon-purple/30 rounded-full absolute animate-[spin_15s_linear_infinite_reverse]"></div>
+                        </div>
+
+                        <div className="relative z-10 scale-125 mb-8">
+                            <Avatar3D size="xl" />
+                        </div>
+
+                        <h2 className="text-3xl font-bold mb-2 tracking-tight">
+                            Ready to learn, <span className="text-neon-cyan">{user?.firstName}</span>?
+                        </h2>
+                        <p className="text-white/60 max-w-md mb-8">
+                            Enter training mode to update my knowledge base through natural conversation.
+                        </p>
+
+                        <Button
+                            onClick={() => user?.username && (window.location.href = `/interact/${user.username}`)}
+                            className="bg-neon-cyan text-black hover:bg-white hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,243,255,0.4)] px-8 py-6 rounded-full text-lg font-bold tracking-wide gap-3"
+                        >
+                            <Zap size={20} className="fill-black" />
+                            ENTER TRAINING MODE
+                        </Button>
+                    </motion.div>
+
+                    {/* Quick Stats Row */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <GlassCard className="p-6 flex items-center gap-4 hover:bg-white/5 transition-colors">
+                            <div className="p-3 bg-blue-500/20 rounded-xl text-blue-400">
+                                <Users size={24} />
+                            </div>
                             <div>
-                                <h3 className="font-semibold">Share Your Avatar</h3>
-                                <p className="text-sm text-muted-foreground">Let others interact with your AI</p>
+                                <div className="text-2xl font-bold">{stats.totalVisitors.toLocaleString()}</div>
+                                <div className="text-xs text-white/40 uppercase tracking-wider">Total Visitors</div>
+                            </div>
+                        </GlassCard>
+                        <GlassCard className="p-6 flex items-center gap-4 hover:bg-white/5 transition-colors">
+                            <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400">
+                                <MessageSquare size={24} />
+                            </div>
+                            <div>
+                                <div className="text-2xl font-bold">{stats.totalMessages.toLocaleString()}</div>
+                                <div className="text-xs text-white/40 uppercase tracking-wider">Messages Exchanged</div>
+                            </div>
+                        </GlassCard>
+                    </div>
+                </div>
+
+                {/* SIDEBAR (Share & Control) - Spans 5 columns */}
+                <div className="lg:col-span-5 flex flex-col gap-6">
+
+                    {/* Share Card */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-6 space-y-6"
+                    >
+                        <div className="flex items-center gap-3 mb-2">
+                            <Share2 size={20} className="text-neon-purple" />
+                            <h3 className="font-semibold text-lg">Deployment Hub</h3>
+                        </div>
+
+                        <div className="bg-black/40 rounded-xl p-4 border border-white/5">
+                            <label className="text-xs text-white/40 font-mono mb-2 block">PUBLIC PROFILE LINK</label>
+                            <div className="flex items-center gap-2">
+                                <code className="flex-1 text-sm text-neon-cyan truncate font-mono bg-transparent">
+                                    {profileUrl || "Generating..."}
+                                </code>
+                                <Button size="icon" variant="ghost" onClick={copyLink} className="hover:text-neon-cyan hover:bg-white/10">
+                                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                                </Button>
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <Button variant="outline" className="gap-2">
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                                </svg>
-                                Twitter
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Button variant="outline" className="border-white/10 hover:bg-white/5 gap-2" onClick={() => navigate('/share')}>
+                                <Share2 size={16} /> Share
                             </Button>
-                            <Button variant="outline" className="gap-2">
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                                </svg>
-                                LinkedIn
-                            </Button>
-                            <Button variant="neon" className="gap-2" onClick={copyLink}>
-                                <Copy size={16} />
-                                {copied ? "Copied!" : "Copy Link"}
+                            <Button
+                                className="bg-white/10 hover:bg-white/20 text-white gap-2"
+                                asChild
+                            >
+                                <a href={profileUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink size={16} /> View Live
+                                </a>
                             </Button>
                         </div>
-                    </div>
-                </GlassCard>
-            </motion.div>
+                    </motion.div>
+
+                    {/* Pending Memories (Mini) */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex-1 rounded-3xl border border-white/10 bg-white/5 p-6 flex flex-col"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <Bot size={20} className="text-green-400" />
+                                <h3 className="font-semibold text-lg">System Status</h3>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                <span className="text-xs text-green-500 font-mono">ONLINE</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                                <span className="text-sm text-white/70">Memory Core</span>
+                                <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">ACTIVE</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                                <span className="text-sm text-white/70">Voice Synthesis</span>
+                                <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">READY</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                                <span className="text-sm text-white/70">Response Engines</span>
+                                <span className="text-xs text-green-400 bg-green-500/10 px-2 py-1 rounded">OPTIMIZED</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-auto pt-6">
+                            <Button variant="ghost" className="w-full text-xs text-white/40 hover:text-white font-mono" onClick={() => navigate("/settings")}>
+                                CONFIGURE SYSTEM PARAMETERS &rarr;
+                            </Button>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
         </div>
     );
 };
