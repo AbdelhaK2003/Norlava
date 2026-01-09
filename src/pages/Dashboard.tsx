@@ -18,7 +18,7 @@ import {
     Copy,
     BarChart3,
     Clock,
-    Bot
+    Bot,
     HelpCircle,
     LogOut,
     Brain,
