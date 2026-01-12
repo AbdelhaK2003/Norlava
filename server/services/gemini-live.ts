@@ -77,60 +77,13 @@ export class GeminiLiveSession {
 
     /**
      * Process incoming audio from user (PCM16 format expected)
+     * Note: Currently not supported - use processText with Web Speech API transcription instead
      */
     async processAudio(audioBuffer: Buffer) {
-        if (!this.isActive) {
-            console.warn('⚠️ Session not active');
-            return;
-        }
-
-        try {
-            // Convert audio to base64 for Gemini API
-            const audioBase64 = audioBuffer.toString('base64');
-            
-            // Send audio to Gemini
-            const result = await this.chat.sendMessageStream([
-                {
-                    inlineData: {
-                        data: audioBase64,
-                        mimeType: 'audio/pcm'
-                    }
-                }
-            ]);
-
-            let fullResponse = '';
-
-            // Stream the text response
-            for await (const chunk of result.stream) {
-                const text = chunk.text();
-                if (text) {
-                    fullResponse += text;
-                    this.config.onTextResponse(text); // Real-time text streaming
-                }
-            }
-
-            // Save to conversation history
-            this.conversationHistory.push({
-                role: 'assistant',
-                content: fullResponse
-            });
-
-            // Save to database
-            await db.createMessage({
-                content: fullResponse,
-                isUser: false,
-                hostId: this.config.hostId,
-                senderId: 'ai',
-                visitorId: this.config.visitorId
-            });
-
-            // Trigger adaptive learning in background
-            this.runAdaptiveLearning(fullResponse);
-
-        } catch (error) {
-            console.error('❌ Error processing audio:', error);
-            this.config.onError(error as Error);
-        }
+        console.warn('⚠️ Raw audio processing not supported. Use Web Speech API for transcription.');
+        // Audio processing via Gemini API is not available in the current SDK
+        // The frontend should use Web Speech API to transcribe audio to text,
+        // then send via processText method
     }
 
     /**

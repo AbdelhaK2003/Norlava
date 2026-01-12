@@ -311,15 +311,18 @@ const Interact = () => {
     // ==================== NEW VOICE MODE FUNCTIONS ====================
 
     /**
-     * Start Real-Time Voice Mode (Gemini Live)
+     * Start Real-Time Voice Mode (Uses Web Speech API for transcription)
      */
     const startVoiceMode = async () => {
         try {
             console.log('🎙️ Starting voice mode...');
-            setIsVoiceMode(true);
+            
+            if (!recognitionRef.current) {
+                alert('Voice recognition not supported in this browser');
+                return;
+            }
 
-            // Initialize audio recorder
-            audioRecorderRef.current = new AudioRecorder();
+            setIsVoiceMode(true);
 
             // Start voice session on server
             socket.emit('start-voice-session', {
@@ -327,17 +330,52 @@ const Interact = () => {
                 visitorId
             });
 
-            // Start recording and send audio chunks to server
-            await audioRecorderRef.current.start((audioData: ArrayBuffer) => {
-                // Convert to base64 and send to server
-                const base64Audio = arrayBufferToBase64(audioData);
-                socket.emit('voice-audio-chunk', {
-                    username,
-                    visitorId,
-                    audioData: base64Audio
-                });
-            });
+            // Use Web Speech API for continuous transcription
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+            
+            let finalTranscriptBuffer = '';
+            
+            recognitionRef.current.onresult = (event: any) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // Send final transcript to server
+                if (finalTranscript.trim()) {
+                    console.log('🎤 Transcribed:', finalTranscript);
+                    sendVoiceTextMessage(finalTranscript.trim());
+                }
+            };
 
+            recognitionRef.current.onerror = (event: any) => {
+                console.error('🎙️ Voice Error:', event.error);
+                if (event.error === 'not-allowed') {
+                    alert('Microphone access denied. Please allow microphone access.');
+                    endVoiceMode();
+                }
+            };
+
+            recognitionRef.current.onend = () => {
+                // Restart if still in voice mode
+                if (isVoiceMode) {
+                    try {
+                        recognitionRef.current.start();
+                    } catch (e) {
+                        console.log('Recognition restart skipped');
+                    }
+                }
+            };
+
+            recognitionRef.current.start();
             console.log('✅ Voice mode started');
 
         } catch (error) {
@@ -353,10 +391,13 @@ const Interact = () => {
     const endVoiceMode = () => {
         console.log('👋 Ending voice mode...');
 
-        // Stop audio recorder
-        if (audioRecorderRef.current) {
-            audioRecorderRef.current.stop();
-            audioRecorderRef.current = null;
+        // Stop speech recognition
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.stop();
+            } catch (e) {
+                console.log('Recognition already stopped');
+            }
         }
 
         // Stop TTS
@@ -386,20 +427,6 @@ const Interact = () => {
             visitorId,
             message: text
         });
-
-        setInputValue('');
-    };
-
-    /**
-     * Helper: Convert ArrayBuffer to Base64
-     */
-    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return btoa(binary);
     };
 
     return (
@@ -527,7 +554,7 @@ const Interact = () => {
                         <div className="absolute top-4 left-4 font-mono text-[10px] text-white/30 z-50 text-left">
                             <p>STATUS: {voiceSessionActive ? "🟢 LIVE" : "🟡 CONNECTING..."}</p>
                             <p>{isTrainingMode ? "⚠️ TRAINING MODE ENABLED" : `VISITOR: ${visitorId.slice(0, 8)}...`}</p>
-                            <p>VOICE MODE: {audioRecorderRef.current?.isActive() ? "🎤 RECORDING" : "⏸️ IDLE"}</p>
+                            <p>VOICE MODE: {isVoiceMode ? "🎤 LISTENING" : "⏸️ IDLE"}</p>
                         </div>
 
                         {/* Close Button */}

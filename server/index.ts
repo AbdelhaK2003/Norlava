@@ -26,6 +26,7 @@ const io = new Server(server, {
                 "https://norlava.com",
                 "https://www.norlava.com",
                 "https://norlava.vercel.app",
+                "https://abdelhak-zvmu.norlava.com",
                 process.env.FRONTEND_URL || "https://norlava.com"
             ]
             : ["http://localhost:5173", "http://localhost:8080"],
@@ -46,6 +47,7 @@ app.use(cors({
             "https://norlava.com",
             "https://www.norlava.com",
             "https://norlava.vercel.app",
+            "https://abdelhak-zvmu.norlava.com",
             process.env.FRONTEND_URL || "https://norlava.com"
         ]
         : ["http://localhost:5173", "http://localhost:8080"],
