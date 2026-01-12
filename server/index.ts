@@ -17,6 +17,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 // Store active live voice sessions
 const liveSessions = new Map<string, GeminiLiveSession>();
 
+// Track session messages - resets on new connection
+// Each session only uses messages from current page load
+const sessionMessages = new Map<string, any[]>();
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -77,7 +81,11 @@ io.on('connection', (socket) => {
         const roomName = `${username}:${visitorId}`;
 
         socket.join(roomName);
-        console.log(`User joined PRIVATE profile room: ${roomName}`);
+        
+        // Initialize empty session messages (fresh conversation each page load)
+        sessionMessages.set(roomName, []);
+        
+        console.log(`User joined PRIVATE profile room: ${roomName} (Fresh session started)`);
     });
 
     socket.on('send-message', async (data: any) => {
@@ -111,6 +119,15 @@ io.on('connection', (socket) => {
             senderId: visitorId, // Track who sent it
             visitorId: visitorId // DB Isolation field
         });
+
+        // Add to current session messages (for AI context only from this session)
+        const sessionKey = roomName;
+        const sessionHistory = sessionMessages.get(sessionKey) || [];
+        sessionHistory.push({
+            content: message,
+            isUser: senderIsUser
+        });
+        sessionMessages.set(sessionKey, sessionHistory);
 
         // 2. Broadcast to PRIVATE room
         io.to(roomName).emit('receive-message', {
@@ -174,14 +191,14 @@ io.on('connection', (socket) => {
             // Fetch profile for AI context
             const profile = await db.findProfileByUserId(hostUser.id);
             try {
-                // 3.1 Fetch Conversation History (ISOLATED)
-                const rawHistory = await db.getMessagesForVisitor(hostUser.id, visitorId);
-
-                const history = rawHistory
-                    .slice(-15)
-                    .map(m => `${m.senderId === 'ai' || !m.isUser ? 'You' : 'User'}: ${m.content}`)
+                // 3.1 Use ONLY current session messages for AI context (not all database history)
+                // This ensures each new page load is a fresh conversation
+                const sessionKey = roomName;
+                const sessionHistory = sessionMessages.get(sessionKey) || [];
+                
+                const history = sessionHistory
+                    .map(m => `${m.isUser ? 'User' : 'You'}: ${m.content}`)
                     .join("\n");
-
 
                 // Default context if training is empty
                 const aiBrain = profile?.aiContext || `You are ${hostUser.firstName}. You are a helpful digital assistant.`;
@@ -221,6 +238,14 @@ io.on('connection', (socket) => {
                     senderId: "ai",
                     visitorId: visitorId // Associate AI reply with this visitor
                 });
+
+                // Add AI response to session history
+                const sessionHistory2 = sessionMessages.get(roomName) || [];
+                sessionHistory2.push({
+                    content: fullResponse,
+                    isUser: false
+                });
+                sessionMessages.set(roomName, sessionHistory2);
 
                 io.to(roomName).emit('receive-message', {
                     id: aiMsg.id,
