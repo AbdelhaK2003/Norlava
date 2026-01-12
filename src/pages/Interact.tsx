@@ -206,32 +206,14 @@ const Interact = () => {
                             />
                             {/* Avatar container */}
                             <motion.div 
-                                className="relative w-14 h-14 rounded-full bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan p-[2px]"
+                                className="relative w-14 h-14 rounded-full bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan p-[2px] overflow-hidden"
                                 whileHover={{ scale: 1.1, rotate: 5 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
-                                    <motion.div
-                                        animate={{ 
-                                            scale: [1, 1.2, 1],
-                                            rotate: [0, 10, -10, 0]
-                                        }}
-                                        transition={{ 
-                                            duration: 2, 
-                                            repeat: Infinity,
-                                            repeatDelay: 1
-                                        }}
-                                    >
-                                        <Sparkles size={20} className="text-neon-cyan" />
-                                    </motion.div>
+                                <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center overflow-hidden">
+                                    <Avatar3D size="sm" isSpeaking={false} />
                                 </div>
                             </motion.div>
-                            {/* Active indicator */}
-                            <motion.div 
-                                className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-black shadow-[0_0_10px_rgba(74,222,128,0.5)]"
-                                animate={{ scale: [1, 1.3, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                            />
                         </div>
                         <div>
                             <h3 className="font-bold text-2xl text-white tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
@@ -243,6 +225,12 @@ const Interact = () => {
                             </div>
                         </div>
                     </div>
+
+                    {isTrainingMode && (
+                        <div className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
+                            <span className="text-xs font-mono text-yellow-400 tracking-wider">🛠️ TRAINING MODE</span>
+                        </div>
+                    )}
                 </motion.div>
 
                 {/* Messages Area */}
