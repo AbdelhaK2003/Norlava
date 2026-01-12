@@ -33,9 +33,19 @@ const Interact = () => {
     const [isTrainingMode, setIsTrainingMode] = useState(false);
 
     useEffect(() => {
-        const newVisitorId = uuidv4();
-        console.log("🆕 New Visitor Session Started:", newVisitorId);
-        setVisitorId(newVisitorId);
+        // Get or create persistent visitorId for this profile
+        const storageKey = `visitor_${username}`;
+        let currentVisitorId = localStorage.getItem(storageKey);
+        
+        if (!currentVisitorId) {
+            currentVisitorId = uuidv4();
+            localStorage.setItem(storageKey, currentVisitorId);
+            console.log("🆕 New Visitor Session Started:", currentVisitorId);
+        } else {
+            console.log("♻️ Returning Visitor Session:", currentVisitorId);
+        }
+        
+        setVisitorId(currentVisitorId);
 
         // Check for logged in user to detect Training Mode
         const userStr = localStorage.getItem('user');
@@ -75,9 +85,22 @@ const Interact = () => {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    // Socket connection
+    // Socket connection and load previous messages
     useEffect(() => {
         if (!username || !visitorId) return;
+
+        // Load previous messages for this visitor
+        api.get(`/messages/${username}/${visitorId}`)
+            .then(res => {
+                if (res.data && Array.isArray(res.data)) {
+                    setMessages(res.data.map((msg: any) => ({
+                        id: msg.id,
+                        text: msg.content,
+                        isUser: msg.isUser
+                    })));
+                }
+            })
+            .catch(err => console.log('No previous messages:', err));
 
         socket.connect();
         socket.emit('join-profile', { username, visitorId });

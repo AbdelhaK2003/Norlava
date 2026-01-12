@@ -231,4 +231,33 @@ router.get('/:userId', async (req, res) => {
     }
 });
 
+// Get conversation history for a visitor
+router.get('/messages/:username/:visitorId', async (req, res) => {
+    try {
+        const { username, visitorId } = req.params;
+
+        // Find host user by username
+        const hostUser = await db.findUserByUsername(username);
+        if (!hostUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Fetch messages for this visitor
+        const messages = await db.getMessagesForVisitor(hostUser.id, visitorId);
+
+        // Transform to match frontend format
+        const formattedMessages = messages.map((msg: any) => ({
+            id: msg.id,
+            content: msg.content,
+            isUser: msg.isUser,
+            senderId: msg.senderId
+        }));
+
+        res.json(formattedMessages);
+    } catch (error) {
+        console.error('Failed to fetch messages:', error);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+});
+
 export default router;

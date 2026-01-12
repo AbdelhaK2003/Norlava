@@ -153,7 +153,8 @@ io.on('connection', (socket) => {
                         content: fullSimResponse.trim(),
                         isUser: false,
                         hostId: hostId,
-                        senderId: "ai"
+                        senderId: "ai",
+                        visitorId: visitorId  // Add visitor isolation
                     });
 
                     io.to(roomName).emit('receive-message', {
