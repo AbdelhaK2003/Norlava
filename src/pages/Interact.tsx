@@ -207,11 +207,13 @@ const Interact = () => {
                             {/* Avatar container */}
                             <motion.div 
                                 className="relative w-14 h-14 rounded-full bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan p-[2px] overflow-hidden"
-                                whileHover={{ scale: 1.1, rotate: 5 }}
+                                    whileHover={{ scale: 1.1 }}
                                 transition={{ duration: 0.3 }}
                             >
                                 <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center overflow-hidden">
-                                    <Avatar3D size="sm" isSpeaking={false} />
+                                        <div className="scale-[2] translate-y-2">
+                                            <Avatar3D size="sm" isSpeaking={false} />
+                                        </div>
                                 </div>
                             </motion.div>
                         </div>
