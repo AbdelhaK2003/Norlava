@@ -63,6 +63,7 @@ const Interact = () => {
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const [showCreatePrompt, setShowCreatePrompt] = useState(true);
+    const [ctaDismissed, setCtaDismissed] = useState(false);
 
     // Auto-scroll logic
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -196,14 +197,41 @@ const Interact = () => {
                     className="p-6 border-b border-neon-cyan/10 flex items-center justify-between backdrop-blur-xl bg-black/40"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="relative group">
-                            <div className="absolute inset-0 bg-gradient-to-r from-neon-cyan to-neon-purple rounded-full blur-lg opacity-50 group-hover:opacity-75 transition-opacity"></div>
-                            <div className="relative w-14 h-14 rounded-full bg-gradient-neon p-[2px] rotate-0 group-hover:rotate-180 transition-transform duration-500">
-                                <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
-                                    <Sparkles size={20} className="text-neon-cyan" />
+                        <div className="relative group cursor-pointer">
+                            {/* Animated glow */}
+                            <motion.div 
+                                className="absolute inset-0 bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-cyan rounded-full blur-lg opacity-50 group-hover:opacity-100"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                            />
+                            {/* Avatar container */}
+                            <motion.div 
+                                className="relative w-14 h-14 rounded-full bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan p-[2px]"
+                                whileHover={{ scale: 1.1, rotate: 5 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center">
+                                    <motion.div
+                                        animate={{ 
+                                            scale: [1, 1.2, 1],
+                                            rotate: [0, 10, -10, 0]
+                                        }}
+                                        transition={{ 
+                                            duration: 2, 
+                                            repeat: Infinity,
+                                            repeatDelay: 1
+                                        }}
+                                    >
+                                        <Sparkles size={20} className="text-neon-cyan" />
+                                    </motion.div>
                                 </div>
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-black animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.5)]"></div>
+                            </motion.div>
+                            {/* Active indicator */}
+                            <motion.div 
+                                className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-black shadow-[0_0_10px_rgba(74,222,128,0.5)]"
+                                animate={{ scale: [1, 1.3, 1] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            />
                         </div>
                         <div>
                             <h3 className="font-bold text-2xl text-white tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
@@ -215,12 +243,6 @@ const Interact = () => {
                             </div>
                         </div>
                     </div>
-
-                    {isTrainingMode && (
-                        <div className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
-                            <span className="text-xs font-mono text-yellow-400 tracking-wider">🛠️ TRAINING MODE</span>
-                        </div>
-                    )}
                 </motion.div>
 
                 {/* Messages Area */}
@@ -238,10 +260,10 @@ const Interact = () => {
                             </div>
                             <div className="space-y-3">
                                 <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-cyan bg-clip-text text-transparent animate-gradient">
-                                    Start Your Conversation
+                                    Start talking with {hostName}
                                 </h2>
                                 <p className="text-gray-400 text-sm md:text-base max-w-md mx-auto font-mono tracking-wide">
-                                    Experience the future of AI interaction
+                                    Say hello and start the conversation
                                 </p>
                             </div>
                         </motion.div>
@@ -299,8 +321,8 @@ const Interact = () => {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* CTA Banner - Show after first message or to encourage creation */}
-                {showCreatePrompt && messages.length > 2 && (
+                {/* CTA Banner - Show after 7-8 messages */}
+                {showCreatePrompt && !ctaDismissed && messages.length >= 7 && (
                     <motion.div
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -318,7 +340,10 @@ const Interact = () => {
                             </div>
                             <div className="flex gap-3">
                                 <Button
-                                    onClick={() => setShowCreatePrompt(false)}
+                                    onClick={() => {
+                                        setShowCreatePrompt(false);
+                                        setCtaDismissed(true);
+                                    }}
                                     variant="ghost"
                                     className="text-gray-400 hover:text-white"
                                 >
@@ -366,10 +391,28 @@ const Interact = () => {
                         </div>
                     </form>
                     
+                    {/* Floating Join Button - Shows when CTA is dismissed but user has enough messages */}
+                    {ctaDismissed && messages.length >= 7 && (
+                        <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="flex justify-center mt-4"
+                        >
+                            <Button
+                                onClick={() => navigate('/register')}
+                                variant="ghost"
+                                className="text-neon-cyan hover:text-white border border-neon-cyan/30 hover:border-neon-cyan hover:bg-neon-cyan/10 rounded-full px-6 py-2 text-sm font-mono tracking-wider transition-all hover:shadow-[0_0_20px_rgba(0,243,255,0.3)]"
+                            >
+                                <UserPlus size={16} className="mr-2" />
+                                Create Your Own Twin
+                            </Button>
+                        </motion.div>
+                    )}
+                    
                     {/* Powered by badge */}
                     <div className="text-center mt-4">
                         <p className="text-xs text-gray-600 font-mono tracking-wider">
-                            POWERED BY <span className="text-neon-cyan">NORLAVA AI</span>
+                            POWERED BY <span className="text-neon-cyan">NORLAVA</span>
                         </p>
                     </div>
                 </motion.div>
