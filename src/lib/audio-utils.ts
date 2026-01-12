@@ -218,22 +218,38 @@ export class TextToSpeech {
     }
 
     /**
-     * Speak text
+     * Speak text with auto-language detection
      */
     speak(text: string, lang: string = 'en-US', onStart?: () => void, onEnd?: () => void): void {
         // Cancel any ongoing speech
         this.cancel();
 
+        // Detect if text is primarily English or French
+        const detectedLang = this.detectLanguage(text);
+        const voiceLang = detectedLang || lang;
+
         this.currentUtterance = new SpeechSynthesisUtterance(text);
-        this.currentUtterance.lang = lang;
+        this.currentUtterance.lang = voiceLang;
         this.currentUtterance.rate = 1.0;
         this.currentUtterance.pitch = 1.0;
 
-        // Try to use a natural voice
+        // Try to use a natural, human-like voice
         const voices = this.synthesis.getVoices();
-        const preferredVoice = voices.find(v => v.lang.startsWith(lang) && v.name.includes('Google'));
-        if (preferredVoice) {
-            this.currentUtterance.voice = preferredVoice;
+        
+        // Prefer Google voices or natural-sounding voices
+        let selectedVoice = voices.find(v => 
+            v.lang.startsWith(voiceLang.split('-')[0]) && 
+            (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
+        );
+        
+        // Fallback to any voice in the right language
+        if (!selectedVoice) {
+            selectedVoice = voices.find(v => v.lang.startsWith(voiceLang.split('-')[0]));
+        }
+        
+        if (selectedVoice) {
+            this.currentUtterance.voice = selectedVoice;
+            console.log(`🔊 Using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
         }
 
         this.currentUtterance.onstart = () => {
@@ -245,6 +261,22 @@ export class TextToSpeech {
         };
 
         this.synthesis.speak(this.currentUtterance);
+    }
+
+    /**
+     * Detect language of text (simple detection for English vs French)
+     */
+    private detectLanguage(text: string): string {
+        // Common French words
+        const frenchWords = /\b(je|tu|il|elle|nous|vous|ils|elles|le|la|les|un|une|des|et|ou|mais|donc|car|est|sont|avoir|être|dans|pour|avec|sur|par|comment|pourquoi|quoi|qui|que)\b/gi;
+        const frenchMatches = (text.match(frenchWords) || []).length;
+        
+        // If significant French content, use French voice
+        if (frenchMatches > 3 || (frenchMatches > 0 && text.split(' ').length < 20)) {
+            return 'fr-FR';
+        }
+        
+        return 'en-US';
     }
 
     /**

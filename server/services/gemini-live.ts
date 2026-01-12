@@ -44,10 +44,19 @@ export class GeminiLiveSession {
             const hostUser = await db.findUserById(this.config.hostId);
             const profile = await db.findProfileByUserId(this.config.hostId);
             
-            // Build AI context
+            // Build AI context for natural conversation
             const systemContext = profile?.aiContext || 
-                `You are ${hostUser?.firstName || this.config.username}, a helpful digital assistant. 
-                You're having a real-time voice conversation. Keep responses natural, concise, and conversational.`;
+                `You are ${hostUser?.firstName || this.config.username}. You're having a natural voice conversation with someone.
+                
+                IMPORTANT RULES:
+                - Speak naturally like a real human in conversation
+                - Keep responses concise (1-3 sentences max)
+                - Be warm, friendly, and engaging
+                - Use casual, conversational language
+                - Don't be overly formal or robotic
+                - React naturally to what they say
+                - Ask follow-up questions when appropriate
+                - Show personality and emotion in your responses`;
 
             // Fetch conversation history (last 10 messages for context)
             const rawHistory = await db.getMessagesForVisitor(this.config.hostId, this.config.visitorId);
@@ -115,6 +124,11 @@ export class GeminiLiveSession {
                     fullResponse += text;
                     this.config.onTextResponse(text);
                 }
+            }
+
+            // Also send complete response for TTS
+            if (fullResponse.trim()) {
+                this.config.onAudioResponse(Buffer.from(fullResponse)); // Reuse callback to signal completion
             }
 
             // Save AI response

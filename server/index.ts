@@ -372,8 +372,9 @@ io.on('connection', (socket) => {
                     io.to(roomName).emit('voice-text-chunk', { text });
                 },
                 onAudioResponse: (audioData: Buffer) => {
-                    // Send audio data to client (for future audio-to-audio)
-                    io.to(roomName).emit('voice-audio-chunk', { audio: audioData });
+                    // Send complete response for TTS (reusing this callback)
+                    const completeText = audioData.toString('utf-8');
+                    io.to(roomName).emit('voice-response-complete', { text: completeText });
                 },
                 onError: (error: Error) => {
                     console.error('❌ Voice session error:', error);

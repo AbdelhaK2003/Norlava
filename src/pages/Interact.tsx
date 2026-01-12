@@ -208,12 +208,14 @@ const Interact = () => {
                     isStreaming: true
                 }];
             });
+        });
 
-            // Speak the text using TTS
+        socket.on('voice-response-complete', (data: { text: string }) => {
+            // When complete response is ready, speak it with proper language detection
             if (textToSpeechRef.current && isVoiceMode) {
                 textToSpeechRef.current.speak(
                     data.text,
-                    t('languageCode') || 'en-US',
+                    'auto', // Will auto-detect language
                     () => setIsAvatarSpeaking(true),
                     () => setIsAvatarSpeaking(false)
                 );
@@ -251,6 +253,7 @@ const Interact = () => {
             socket.off('bot-speak');
             socket.off('voice-session-ready');
             socket.off('voice-text-chunk');
+            socket.off('voice-response-complete');
             socket.off('voice-user-message');
             socket.off('voice-error');
             socket.off('voice-session-ended');
@@ -318,34 +321,44 @@ const Interact = () => {
             console.log('🎙️ Starting voice mode...');
             
             if (!recognitionRef.current) {
-                alert('Voice recognition not supported in this browser');
+                alert('Voice recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
                 return;
             }
 
-            setIsVoiceMode(true);
-
-            // Start voice session on server
+            // Start voice session on server FIRST
             socket.emit('start-voice-session', {
                 username,
                 visitorId
             });
 
+            // Wait for session to be ready
+            await new Promise<void>((resolve) => {
+                const timeout = setTimeout(() => {
+                    console.warn('⚠️ Session ready timeout, continuing anyway');
+                    resolve();
+                }, 2000);
+
+                const readyHandler = () => {
+                    clearTimeout(timeout);
+                    socket.off('voice-session-ready', readyHandler);
+                    resolve();
+                };
+                socket.on('voice-session-ready', readyHandler);
+            });
+
+            setIsVoiceMode(true);
+
             // Use Web Speech API for continuous transcription
             recognitionRef.current.continuous = true;
             recognitionRef.current.interimResults = true;
-            
-            let finalTranscriptBuffer = '';
+            recognitionRef.current.lang = 'en-US'; // Primary language
             
             recognitionRef.current.onresult = (event: any) => {
-                let interimTranscript = '';
                 let finalTranscript = '';
                 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                    } else {
-                        interimTranscript += transcript;
+                        finalTranscript += event.results[i][0].transcript;
                     }
                 }
                 
@@ -361,17 +374,21 @@ const Interact = () => {
                 if (event.error === 'not-allowed') {
                     alert('Microphone access denied. Please allow microphone access.');
                     endVoiceMode();
+                } else if (event.error === 'no-speech') {
+                    console.log('No speech detected, continuing...');
                 }
             };
 
             recognitionRef.current.onend = () => {
-                // Restart if still in voice mode
+                // Auto-restart if still in voice mode
                 if (isVoiceMode) {
-                    try {
-                        recognitionRef.current.start();
-                    } catch (e) {
-                        console.log('Recognition restart skipped');
-                    }
+                    setTimeout(() => {
+                        try {
+                            recognitionRef.current?.start();
+                        } catch (e) {
+                            console.log('Recognition already started');
+                        }
+                    }, 100);
                 }
             };
 
