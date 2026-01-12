@@ -74,48 +74,9 @@ const Interact = () => {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    // Socket listeners
-    useEffect(() => {
-        if (!username || !visitorId) return;
-            recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = t('languageCode') || 'en-US';
-
-            recognitionRef.current.onstart = () => {
-                console.log("🎙️ Voice: Listening started");
-                setIsListening(true);
-            };
-
-            recognitionRef.current.onresult = (event: any) => {
-                let finalTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
-                }
-                if (finalTranscript.trim()) {
-                    handleSendMessage(finalTranscript, 'voice');
-                }
-            };
-
-            recognitionRef.current.onerror = (event: any) => {
-                console.error("🎙️ Voice Error:", event.error);
-                if (event.error === 'not-allowed') {
-                    alert("Allow microphone access to use voice mode.");
-                    setIsListening(false);
-                }
-            };
-
-            recognitionRef.current.onend = () => {
-                if (isListening) {
-                    try { recognitionRef.current.start(); } catch (e) { /* ignore */ }
-                }
-            };
-        }
-    }, [t]);
-
     // Socket connection
     useEffect(() => {
-        if (!visitorId) return;
+        if (!username || !visitorId) return;
 
         socket.connect();
         socket.emit('join-profile', { username, visitorId });
@@ -213,14 +174,6 @@ const Interact = () => {
             inputType
         });
         setInputValue("");
-    };
-
-    const toggleListening = () => {
-        if (!recognitionRef.current) return;
-        if (isListening) {
-            setIsListening(false);
-            recognitionRef.current.stop();
-        }
     };
 
     return (
