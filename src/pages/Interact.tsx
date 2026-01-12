@@ -20,7 +20,7 @@ import {
     PhoneOff
 } from "lucide-react";
 import { socket, api } from "@/lib/api";
-import { AudioRecorder, TextToSpeech } from "@/lib/audio-utils";
+import { AudioRecorder, AudioPlayer, TextToSpeech } from "@/lib/audio-utils";
 
 interface Message {
     id: string | number;
@@ -72,6 +72,7 @@ const Interact = () => {
 
     // Audio utilities
     const audioRecorderRef = useRef<AudioRecorder | null>(null);
+    const audioPlayerRef = useRef<AudioPlayer | null>(null); // For playing AI voice
     const textToSpeechRef = useRef<TextToSpeech | null>(null);
     const audioBufferRef = useRef<ArrayBuffer[]>([]); // Buffer for audio chunks
 
@@ -210,9 +211,22 @@ const Interact = () => {
             });
         });
 
+        socket.on('voice-audio-response', (data: { audioData: string; mimeType: string; sampleRate: number }) => {
+            // Play REAL AI voice (PCM audio from Gemini Live API)
+            console.log('🔊 Received AI voice response');
+            if (audioPlayerRef.current && isVoiceMode) {
+                audioPlayerRef.current.playPCM(data.audioData, data.sampleRate);
+            }
+        });
+
+        socket.on('voice-text-chunk', (data: { text: string }) => {
+            // Display text chunks for transparency
+            console.log('📝 AI text:', data.text);
+        });
+
         socket.on('voice-response-complete', (data: { text: string }) => {
-            // When complete response is ready, speak it with proper language detection
-            if (textToSpeechRef.current && isVoiceMode) {
+            // FALLBACK: When complete response is ready, speak it with TTS if no audio
+            if (textToSpeechRef.current && isVoiceMode && !audioPlayerRef.current?.isSpeaking()) {
                 textToSpeechRef.current.speak(
                     data.text,
                     'auto', // Will auto-detect language
@@ -314,24 +328,31 @@ const Interact = () => {
     // ==================== NEW VOICE MODE FUNCTIONS ====================
 
     /**
-     * Start Real-Time Voice Mode (Uses Web Speech API for transcription)
+     * Start Real-Time Voice Mode with REAL audio streaming (no Web Speech API)
      */
     const startVoiceMode = async () => {
         try {
-            console.log('🎙️ Starting voice mode...');
-            
-            if (!recognitionRef.current) {
-                alert('Voice recognition not supported in this browser. Please use Chrome, Edge, or Safari.');
-                return;
+            console.log('🎙️ Starting REAL voice mode...');
+
+            // Initialize audio player for AI voice responses
+            if (!audioPlayerRef.current) {
+                audioPlayerRef.current = new AudioPlayer((speaking) => {
+                    setIsAvatarSpeaking(speaking);
+                });
             }
 
-            // Start voice session on server FIRST
+            // Initialize audio recorder
+            if (!audioRecorderRef.current) {
+                audioRecorderRef.current = new AudioRecorder();
+            }
+
+            // Start voice session on server
             socket.emit('start-voice-session', {
                 username,
                 visitorId
             });
 
-            // Wait for session to be ready
+            // Wait for session ready
             await new Promise<void>((resolve) => {
                 const timeout = setTimeout(() => {
                     console.warn('⚠️ Session ready timeout, continuing anyway');
@@ -347,53 +368,22 @@ const Interact = () => {
             });
 
             setIsVoiceMode(true);
+            setVoiceSessionActive(true);
 
-            // Use Web Speech API for continuous transcription
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = 'en-US'; // Primary language
-            
-            recognitionRef.current.onresult = (event: any) => {
-                let finalTranscript = '';
+            // Start recording and send audio chunks to server
+            await audioRecorderRef.current.start((audioData) => {
+                const base64Audio = btoa(
+                    String.fromCharCode(...new Uint8Array(audioData))
+                );
                 
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
-                }
-                
-                // Send final transcript to server
-                if (finalTranscript.trim()) {
-                    console.log('🎤 Transcribed:', finalTranscript);
-                    sendVoiceTextMessage(finalTranscript.trim());
-                }
-            };
+                socket.emit('voice-audio-chunk', {
+                    username,
+                    visitorId,
+                    audioData: base64Audio
+                });
+            });
 
-            recognitionRef.current.onerror = (event: any) => {
-                console.error('🎙️ Voice Error:', event.error);
-                if (event.error === 'not-allowed') {
-                    alert('Microphone access denied. Please allow microphone access.');
-                    endVoiceMode();
-                } else if (event.error === 'no-speech') {
-                    console.log('No speech detected, continuing...');
-                }
-            };
-
-            recognitionRef.current.onend = () => {
-                // Auto-restart if still in voice mode
-                if (isVoiceMode) {
-                    setTimeout(() => {
-                        try {
-                            recognitionRef.current?.start();
-                        } catch (e) {
-                            console.log('Recognition already started');
-                        }
-                    }, 100);
-                }
-            };
-
-            recognitionRef.current.start();
-            console.log('✅ Voice mode started');
+            console.log('✅ REAL voice mode started - AI can now hear your voice!');
 
         } catch (error) {
             console.error('❌ Failed to start voice mode:', error);
@@ -408,18 +398,28 @@ const Interact = () => {
     const endVoiceMode = () => {
         console.log('👋 Ending voice mode...');
 
-        // Stop speech recognition
+        // Stop audio recorder
+        if (audioRecorderRef.current) {
+            audioRecorderRef.current.stop();
+        }
+
+        // Stop audio player
+        if (audioPlayerRef.current) {
+            audioPlayerRef.current.stop();
+        }
+
+        // Stop TTS (fallback)
+        if (textToSpeechRef.current) {
+            textToSpeechRef.current.cancel();
+        }
+
+        // Stop speech recognition (if used)
         if (recognitionRef.current) {
             try {
                 recognitionRef.current.stop();
             } catch (e) {
                 console.log('Recognition already stopped');
             }
-        }
-
-        // Stop TTS
-        if (textToSpeechRef.current) {
-            textToSpeechRef.current.cancel();
         }
 
         // End server session

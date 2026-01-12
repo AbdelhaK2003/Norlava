@@ -151,6 +151,47 @@ export class AudioPlayer {
     }
 
     /**
+     * Play RAW PCM16 audio from Gemini Live API
+     * @param pcmData Base64-encoded PCM16 audio
+     * @param sampleRate Sample rate (default 24000 Hz)
+     */
+    async playPCM(pcmData: string, sampleRate: number = 24000): Promise<void> {
+        if (!this.audioContext) {
+            this.audioContext = new AudioContext();
+        }
+
+        try {
+            // Decode base64 to ArrayBuffer
+            const binaryString = atob(pcmData);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Convert Int16 PCM to Float32
+            const pcm16 = new Int16Array(bytes.buffer);
+            const float32 = new Float32Array(pcm16.length);
+            for (let i = 0; i < pcm16.length; i++) {
+                float32[i] = pcm16[i] / (pcm16[i] < 0 ? 0x8000 : 0x7FFF);
+            }
+
+            // Create AudioBuffer
+            const audioBuffer = this.audioContext.createBuffer(1, float32.length, sampleRate);
+            audioBuffer.getChannelData(0).set(float32);
+
+            // Add to queue
+            this.audioQueue.push(audioBuffer);
+
+            // Start playback if not already playing
+            if (!this.isPlaying) {
+                this.playNext();
+            }
+        } catch (error) {
+            console.error('❌ Failed to play PCM audio:', error);
+        }
+    }
+
+    /**
      * Play next audio chunk in queue
      */
     private playNext(): void {

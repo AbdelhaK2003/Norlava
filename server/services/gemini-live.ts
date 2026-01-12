@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import WebSocket from 'ws';
 import { db } from '../db';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -14,70 +15,122 @@ interface LiveSessionConfig {
 }
 
 /**
- * Gemini 2.0 Flash Live API Handler
- * Supports real-time bidirectional voice conversation
+ * Gemini 2.0 Flash Multimodal Live API Handler
+ * Real voice-to-voice conversation (not TTS)
  */
 export class GeminiLiveSession {
-    private model: any;
-    private chat: any;
+    private ws: WebSocket | null = null;
     private config: LiveSessionConfig;
-    private conversationHistory: Array<{ role: string; content: string }> = [];
     private isActive: boolean = false;
+    private currentResponseText: string = '';
+    private apiKey: string;
 
     constructor(config: LiveSessionConfig) {
         this.config = config;
-        this.model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash-exp",
-            generationConfig: {
-                temperature: 0.9,
-                topP: 0.95,
-                maxOutputTokens: 2048,
-            }
-        });
+        this.apiKey = process.env.GEMINI_API_KEY || '';
     }
 
     async initialize() {
         try {
-            console.log(`🎙️ Initializing Gemini Live session for ${this.config.username}`);
+            console.log(`🎙️ Initializing Gemini Live API for ${this.config.username}`);
             
             // Fetch host user and profile for context
             const hostUser = await db.findUserById(this.config.hostId);
             const profile = await db.findProfileByUserId(this.config.hostId);
             
-            // Build AI context for natural conversation
-            const systemContext = profile?.aiContext || 
-                `You are ${hostUser?.firstName || this.config.username}. You're having a natural voice conversation with someone.
+            // Build system instruction for natural voice conversation
+            const systemInstruction = profile?.aiContext || 
+                `You are ${hostUser?.firstName || this.config.username}. You're having a natural voice conversation.
                 
-                IMPORTANT RULES:
-                - Speak naturally like a real human in conversation
-                - Keep responses concise (1-3 sentences max)
-                - Be warm, friendly, and engaging
-                - Use casual, conversational language
-                - Don't be overly formal or robotic
-                - React naturally to what they say
-                - Ask follow-up questions when appropriate
-                - Show personality and emotion in your responses`;
+                IMPORTANT:
+                - Speak naturally like a real human
+                - Keep responses SHORT (1-2 sentences max)
+                - Be conversational and warm
+                - Handle multiple languages naturally (English, French, Arabic, etc.)
+                - Understand context, tone, and emotion from voice
+                - Don't mention that you're AI
+                - Be yourself - show personality!`;
 
-            // Fetch conversation history (last 10 messages for context)
-            const rawHistory = await db.getMessagesForVisitor(this.config.hostId, this.config.visitorId);
-            const recentHistory = rawHistory
-                .slice(-10)
-                .map(m => ({
-                    role: m.senderId === 'ai' || !m.isUser ? 'model' : 'user',
-                    parts: [{ text: m.content }]
+            // Connect to Gemini Multimodal Live API via WebSocket
+            const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${this.apiKey}`;
+            
+            this.ws = new WebSocket(wsUrl);
+
+            this.ws.on('open', () => {
+                console.log('✅ Connected to Gemini Live API');
+                
+                // Send setup message
+                this.ws?.send(JSON.stringify({
+                    setup: {
+                        model: 'models/gemini-2.0-flash-exp',
+                        generation_config: {
+                            response_modalities: ['AUDIO', 'TEXT'],
+                            speech_config: {
+                                voice_config: {
+                                    prebuilt_voice_config: {
+                                        voice_name: 'Aoede' // Natural voice
+                                    }
+                                }
+                            }
+                        },
+                        system_instruction: {
+                            parts: [{ text: systemInstruction }]
+                        }
+                    }
                 }));
-
-            // Initialize chat with history
-            this.chat = this.model.startChat({
-                history: [
-                    { role: 'user', parts: [{ text: systemContext }] },
-                    { role: 'model', parts: [{ text: 'Understood. I am ready for voice conversation.' }] },
-                    ...recentHistory
-                ]
+                
+                this.isActive = true;
             });
 
-            this.isActive = true;
-            console.log('✅ Gemini Live session initialized');
+            this.ws.on('message', (data: Buffer) => {
+                try {
+                    const response = JSON.parse(data.toString());
+                    
+                    // Handle server response with audio and text
+                    if (response.serverContent) {
+                        const parts = response.serverContent.modelTurn?.parts || [];
+                        
+                        for (const part of parts) {
+                            // Text response
+                            if (part.text) {
+                                this.currentResponseText += part.text;
+                                this.config.onTextResponse(part.text);
+                            }
+                            
+                            // Audio response (real AI voice, not TTS!)
+                            if (part.inlineData && part.inlineData.mimeType === 'audio/pcm') {
+                                const audioBuffer = Buffer.from(part.inlineData.data, 'base64');
+                                this.config.onAudioResponse(audioBuffer);
+                            }
+                        }
+                        
+                        // Save complete response to database
+                        if (response.serverContent.turnComplete && this.currentResponseText) {
+                            this.saveResponse(this.currentResponseText);
+                            this.currentResponseText = '';
+                        }
+                    }
+                    
+                    // Handle setup completion
+                    if (response.setupComplete) {
+                        console.log('✅ Gemini Live setup complete');
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Error parsing Gemini response:', error);
+                }
+            });
+
+            this.ws.on('error', (error) => {
+                console.error('❌ WebSocket error:', error);
+                this.config.onError(error);
+            });
+
+            this.ws.on('close', () => {
+                console.log('👋 Gemini Live connection closed');
+                this.isActive = false;
+            });
+
         } catch (error) {
             console.error('❌ Failed to initialize Gemini Live:', error);
             this.config.onError(error as Error);
@@ -85,21 +138,41 @@ export class GeminiLiveSession {
     }
 
     /**
-     * Process incoming audio from user (PCM16 format expected)
-     * Note: Currently not supported - use processText with Web Speech API transcription instead
+     * Send real audio to Gemini (processes voice directly!)
      */
     async processAudio(audioBuffer: Buffer) {
-        console.warn('⚠️ Raw audio processing not supported. Use Web Speech API for transcription.');
-        // Audio processing via Gemini API is not available in the current SDK
-        // The frontend should use Web Speech API to transcribe audio to text,
-        // then send via processText method
+        if (!this.isActive || !this.ws) {
+            console.warn('⚠️ Session not active');
+            return;
+        }
+
+        try {
+            // Send audio to Gemini Live API
+            this.ws.send(JSON.stringify({
+                clientContent: {
+                    turns: [{
+                        role: 'user',
+                        parts: [{
+                            inlineData: {
+                                mimeType: 'audio/pcm',
+                                data: audioBuffer.toString('base64')
+                            }
+                        }]
+                    }],
+                    turnComplete: true
+                }
+            }));
+        } catch (error) {
+            console.error('❌ Error sending audio:', error);
+            this.config.onError(error as Error);
+        }
     }
 
     /**
-     * Process text input (fallback or hybrid mode)
+     * Process text input (fallback)
      */
     async processText(message: string) {
-        if (!this.isActive) {
+        if (!this.isActive || !this.ws) {
             console.warn('⚠️ Session not active');
             return;
         }
@@ -114,38 +187,40 @@ export class GeminiLiveSession {
                 visitorId: this.config.visitorId
             });
 
-            // Send to Gemini with streaming
-            const result = await this.chat.sendMessageStream(message);
-            let fullResponse = '';
-
-            for await (const chunk of result.stream) {
-                const text = chunk.text();
-                if (text) {
-                    fullResponse += text;
-                    this.config.onTextResponse(text);
+            // Send text to Gemini
+            this.ws.send(JSON.stringify({
+                clientContent: {
+                    turns: [{
+                        role: 'user',
+                        parts: [{ text: message }]
+                    }],
+                    turnComplete: true
                 }
-            }
+            }));
 
-            // Also send complete response for TTS
-            if (fullResponse.trim()) {
-                this.config.onAudioResponse(Buffer.from(fullResponse)); // Reuse callback to signal completion
-            }
+        } catch (error) {
+            console.error('❌ Error processing text:', error);
+            this.config.onError(error as Error);
+        }
+    }
 
-            // Save AI response
+    /**
+     * Save AI response to database
+     */
+    private async saveResponse(text: string) {
+        try {
             await db.createMessage({
-                content: fullResponse,
+                content: text,
                 isUser: false,
                 hostId: this.config.hostId,
                 senderId: 'ai',
                 visitorId: this.config.visitorId
             });
 
-            // Trigger learning
-            this.runAdaptiveLearning(message);
-
+            // Run adaptive learning in background
+            this.runAdaptiveLearning(text);
         } catch (error) {
-            console.error('❌ Error processing text:', error);
-            this.config.onError(error as Error);
+            console.error('❌ Error saving response:', error);
         }
     }
 
@@ -160,94 +235,40 @@ export class GeminiLiveSession {
 
             const learningModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
-            // Fact extraction prompt
             const learningPrompt = `
-                Analyze the following user message sent to a digital avatar of ${hostUser.firstName}.
-                Does the message contain a specific FACT about ${hostUser.firstName} (the Host) that the avatar should remember?
+                Analyze: "${userMessage}"
                 
-                Message: "${userMessage}"
-                
-                Rules:
-                1. EXTRACT: Biographical facts, Personality traits, Life goals, Preferences, or "Vibe" descriptions.
-                2. INCLUDE "SOFT" FACTS: e.g., "You are a chill person", "You like to live peacefully", "I love making new friends".
-                3. HANDLE 2ND PERSON: If the message says "You are X", treat it as a potential fact about ${hostUser.firstName}.
-                4. CONVERT TO 1ST PERSON: Output the fact as if ${hostUser.firstName} is saying it (e.g. "I am a chill girl who wants to live peacefully").
-                5. IGNORE: Greetings, temporary states ("You look tired"), or compliments that aren't deep traits ("You are cute").
-                6. IGNORE GUEST INFO: Do not learn facts about the visitor.
-                
-                Output ONLY the declarative fact statement. Do NOT include "YES" or "FACT:". 
-                If NO fact is found, output exactly "NO".
+                Extract any facts about ${hostUser.firstName} (the Host).
+                Convert to 1st person. Output ONLY the fact or "NO".
             `;
 
-            // Question extraction prompt
-            const questionPrompt = `
-                Analyze the following message from a visitor to ${hostUser.firstName}'s AI.
-                Is the visitor asking a specific, meaningful question about ${hostUser.firstName}'s life, identity, or preferences that requires a permanent answer?
-                
-                Message: "${userMessage}"
-                
-                Rules:
-                1. MUST be a question about the Host's biography, favorites, history, or opinions.
-                2. IGNORE conversational questions like "How are you?", "What are you doing?", "Can you help me?".
-                3. IGNORE context-dependent questions like "Do you remember?", "What did I say?", "Why?".
-                4. IGNORE vague questions. It must be specific enough that the Host could write a permanent Q&A answer for it.
-                5. Examples of YES: "Where did you go to college?", "What is your favorite book?", "How did you start your company?".
-                6. Examples of NO: "Do you remember me?", "Can I ask a question?", "What is this?".
-                
-                If YES, output ONLY the question text. Do NOT include "YES" or any other prefix.
-                If NO, output exactly "NO".
-            `;
-
-            const [factResult, questionResult] = await Promise.all([
-                learningModel.generateContent(learningPrompt),
-                learningModel.generateContent(questionPrompt)
-            ]);
-
-            const fact = factResult.response.text().trim().replace(/^(YES|FACT):?\s*/i, "");
-            const question = questionResult.response.text().trim().replace(/^(YES|QUESTION):?\s*/i, "");
+            const result = await learningModel.generateContent(learningPrompt);
+            const fact = result.response.text().trim().replace(/^(YES|FACT):?\s*/i, "");
 
             if (fact && fact !== "NO") {
-                console.log(`💡 LEARNED NEW FACT: "${fact}"`);
+                console.log(`💡 LEARNED: "${fact}"`);
                 await db.createMemory({
                     profileId: profile.id,
                     type: 'LEARNED_FROM_GUEST',
-                    prompt: 'Learned from voice conversation',
+                    prompt: 'Learned from voice',
                     content: fact
                 });
                 await db.refreshAiContext(profile.id);
             }
-
-            if (question && question !== "NO") {
-                console.log(`❓ VISITOR ASKED: "${question}"`);
-                await db.createMemory({
-                    profileId: profile.id,
-                    type: 'GUEST_QUESTION',
-                    prompt: question,
-                    content: ""
-                });
-            }
         } catch (err) {
-            console.error("⚠️ Adaptive Learning failed:", err);
+            console.error("⚠️ Learning failed:", err);
         }
     }
 
     /**
-     * Interrupt current response (for natural conversation flow)
-     */
-    async interrupt() {
-        console.log('⏸️ Interrupting current response');
-        // Reset streaming state
-        this.isActive = false;
-        await new Promise(resolve => setTimeout(resolve, 100));
-        this.isActive = true;
-    }
-
-    /**
-     * End session and cleanup
+     * End session
      */
     async end() {
         console.log('👋 Ending Gemini Live session');
         this.isActive = false;
-        this.chat = null;
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
     }
 }
