@@ -211,25 +211,24 @@ const Interact = () => {
             });
         });
 
-        socket.on('voice-audio-response', (data: { audioData: string; mimeType: string; sampleRate: number }) => {
-            // Play REAL AI voice (PCM audio from Gemini Live API)
-            console.log('🔊 Received AI voice response');
-            if (audioPlayerRef.current && isVoiceMode) {
-                audioPlayerRef.current.playPCM(data.audioData, data.sampleRate);
-            }
-        });
-
         socket.on('voice-text-chunk', (data: { text: string }) => {
             // Display text chunks for transparency
-            console.log('📝 AI text:', data.text);
+            console.log('💬 AI:', data.text);
         });
 
         socket.on('voice-response-complete', (data: { text: string }) => {
-            // FALLBACK: When complete response is ready, speak it with TTS if no audio
-            if (textToSpeechRef.current && isVoiceMode && !audioPlayerRef.current?.isSpeaking()) {
+            // Fallback not needed anymore
+        });
+
+        socket.on('voice-audio-response', (data: { audioData: string }) => {
+            // Speak complete AI response with natural TTS
+            const responseText = Buffer.from(data.audioData, 'base64').toString('utf-8');
+            console.log('🔊 AI response:', responseText);
+            
+            if (textToSpeechRef.current && isVoiceMode) {
                 textToSpeechRef.current.speak(
-                    data.text,
-                    'auto', // Will auto-detect language
+                    responseText,
+                    'auto',
                     () => setIsAvatarSpeaking(true),
                     () => setIsAvatarSpeaking(false)
                 );
@@ -328,22 +327,20 @@ const Interact = () => {
     // ==================== NEW VOICE MODE FUNCTIONS ====================
 
     /**
-     * Start Real-Time Voice Mode with REAL audio streaming (no Web Speech API)
+     * Start Real-Time Voice Mode with Web Speech API
      */
     const startVoiceMode = async () => {
         try {
-            console.log('🎙️ Starting REAL voice mode...');
-
-            // Initialize audio player for AI voice responses
-            if (!audioPlayerRef.current) {
-                audioPlayerRef.current = new AudioPlayer((speaking) => {
-                    setIsAvatarSpeaking(speaking);
-                });
+            console.log('🎙️ Starting voice mode...');
+            
+            if (!recognitionRef.current) {
+                alert('Voice recognition not supported. Please use Chrome, Edge, or Safari.');
+                return;
             }
 
-            // Initialize audio recorder
-            if (!audioRecorderRef.current) {
-                audioRecorderRef.current = new AudioRecorder();
+            // Initialize TTS
+            if (!textToSpeechRef.current) {
+                textToSpeechRef.current = new TextToSpeech();
             }
 
             // Start voice session on server
@@ -355,13 +352,14 @@ const Interact = () => {
             // Wait for session ready
             await new Promise<void>((resolve) => {
                 const timeout = setTimeout(() => {
-                    console.warn('⚠️ Session ready timeout, continuing anyway');
+                    console.log('✅ Starting voice mode anyway');
                     resolve();
                 }, 2000);
 
                 const readyHandler = () => {
                     clearTimeout(timeout);
                     socket.off('voice-session-ready', readyHandler);
+                    console.log('✅ Voice session ready');
                     resolve();
                 };
                 socket.on('voice-session-ready', readyHandler);
@@ -370,20 +368,54 @@ const Interact = () => {
             setIsVoiceMode(true);
             setVoiceSessionActive(true);
 
-            // Start recording and send audio chunks to server
-            await audioRecorderRef.current.start((audioData) => {
-                const base64Audio = btoa(
-                    String.fromCharCode(...new Uint8Array(audioData))
-                );
+            // Configure Speech Recognition
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+            recognitionRef.current.lang = 'en-US';
+            
+            recognitionRef.current.onresult = (event: any) => {
+                let finalTranscript = '';
                 
-                socket.emit('voice-audio-chunk', {
-                    username,
-                    visitorId,
-                    audioData: base64Audio
-                });
-            });
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+                
+                // Send final transcript to server
+                if (finalTranscript.trim()) {
+                    console.log('🎤 You said:', finalTranscript);
+                    socket.emit('voice-text-input', {
+                        username,
+                        visitorId,
+                        text: finalTranscript.trim()
+                    });
+                }
+            };
 
-            console.log('✅ REAL voice mode started - AI can now hear your voice!');
+            recognitionRef.current.onerror = (event: any) => {
+                console.error('🎙️ Voice Error:', event.error);
+                if (event.error === 'not-allowed') {
+                    alert('Microphone access denied. Please allow microphone access.');
+                    endVoiceMode();
+                }
+            };
+
+            recognitionRef.current.onend = () => {
+                // Auto-restart if still in voice mode
+                if (isVoiceMode) {
+                    setTimeout(() => {
+                        try {
+                            recognitionRef.current?.start();
+                        } catch (e) {
+                            // Already started
+                        }
+                    }, 100);
+                }
+            };
+
+            recognitionRef.current.start();
+            console.log('✅ Voice mode started - speak now!');
 
         } catch (error) {
             console.error('❌ Failed to start voice mode:', error);
@@ -398,28 +430,18 @@ const Interact = () => {
     const endVoiceMode = () => {
         console.log('👋 Ending voice mode...');
 
-        // Stop audio recorder
-        if (audioRecorderRef.current) {
-            audioRecorderRef.current.stop();
-        }
-
-        // Stop audio player
-        if (audioPlayerRef.current) {
-            audioPlayerRef.current.stop();
-        }
-
-        // Stop TTS (fallback)
-        if (textToSpeechRef.current) {
-            textToSpeechRef.current.cancel();
-        }
-
-        // Stop speech recognition (if used)
+        // Stop speech recognition
         if (recognitionRef.current) {
             try {
                 recognitionRef.current.stop();
             } catch (e) {
-                console.log('Recognition already stopped');
+                // Already stopped
             }
+        }
+
+        // Stop TTS
+        if (textToSpeechRef.current) {
+            textToSpeechRef.current.cancel();
         }
 
         // End server session

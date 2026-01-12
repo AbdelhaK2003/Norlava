@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import WebSocket from 'ws';
 import { db } from '../db';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -15,169 +14,100 @@ interface LiveSessionConfig {
 }
 
 /**
- * Gemini 2.0 Flash Multimodal Live API Handler
- * Real voice-to-voice conversation (not TTS)
+ * Gemini Real-Time Voice Session Handler
+ * Uses Web Speech API transcription + Gemini 2.0 Flash + Natural TTS
  */
 export class GeminiLiveSession {
-    private ws: WebSocket | null = null;
+    private model: any;
+    private chat: any;
     private config: LiveSessionConfig;
     private isActive: boolean = false;
-    private currentResponseText: string = '';
-    private apiKey: string;
 
     constructor(config: LiveSessionConfig) {
         this.config = config;
-        this.apiKey = process.env.GEMINI_API_KEY || '';
+        this.model = genAI.getGenerativeModel({ 
+            model: 'gemini-2.0-flash-exp',
+            generationConfig: {
+                temperature: 0.9,
+                topP: 0.95,
+                maxOutputTokens: 500, // Keep responses short for voice
+            }
+        });
     }
 
     async initialize() {
         try {
-            console.log(`🎙️ Initializing Gemini Live API for ${this.config.username}`);
+            console.log(`🎙️ Initializing voice session for ${this.config.username}`);
             
             // Fetch host user and profile for context
             const hostUser = await db.findUserById(this.config.hostId);
             const profile = await db.findProfileByUserId(this.config.hostId);
             
             // Build system instruction for natural voice conversation
-            const systemInstruction = profile?.aiContext || 
-                `You are ${hostUser?.firstName || this.config.username}. You're having a natural voice conversation.
+            const systemContext = profile?.aiContext || 
+                `You are ${hostUser?.firstName || this.config.username}. You're having a natural VOICE conversation.
                 
-                IMPORTANT:
-                - Speak naturally like a real human
-                - Keep responses SHORT (1-2 sentences max)
-                - Be conversational and warm
+                CRITICAL RULES:
+                - Keep responses VERY SHORT (1-2 sentences maximum)
+                - Speak naturally like a real human talking
+                - Be warm, friendly, and conversational  
                 - Handle multiple languages naturally (English, French, Arabic, etc.)
-                - Understand context, tone, and emotion from voice
-                - Don't mention that you're AI
-                - Be yourself - show personality!`;
+                - Understand if user makes mistakes or speaks imperfectly
+                - Correct mistakes naturally without pointing them out
+                - Show personality and emotion
+                - Ask follow-up questions when natural`;
 
-            // Connect to Gemini Multimodal Live API via WebSocket
-            const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${this.apiKey}`;
-            
-            this.ws = new WebSocket(wsUrl);
-
-            this.ws.on('open', () => {
-                console.log('✅ Connected to Gemini Live API');
-                
-                // Send setup message
-                this.ws?.send(JSON.stringify({
-                    setup: {
-                        model: 'models/gemini-2.0-flash-exp',
-                        generation_config: {
-                            response_modalities: ['AUDIO', 'TEXT'],
-                            speech_config: {
-                                voice_config: {
-                                    prebuilt_voice_config: {
-                                        voice_name: 'Aoede' // Natural voice
-                                    }
-                                }
-                            }
-                        },
-                        system_instruction: {
-                            parts: [{ text: systemInstruction }]
-                        }
-                    }
+            // Fetch conversation history
+            const rawHistory = await db.getMessagesForVisitor(this.config.hostId, this.config.visitorId);
+            const recentHistory = rawHistory
+                .slice(-10)
+                .map(m => ({
+                    role: m.senderId === 'ai' || !m.isUser ? 'model' : 'user',
+                    parts: [{ text: m.content }]
                 }));
-                
-                this.isActive = true;
+
+            // Initialize chat
+            this.chat = this.model.startChat({
+                history: [
+                    { role: 'user', parts: [{ text: systemContext }] },
+                    { role: 'model', parts: [{ text: 'Ready for voice conversation!' }] },
+                    ...recentHistory
+                ]
             });
 
-            this.ws.on('message', (data: Buffer) => {
-                try {
-                    const response = JSON.parse(data.toString());
-                    
-                    // Handle server response with audio and text
-                    if (response.serverContent) {
-                        const parts = response.serverContent.modelTurn?.parts || [];
-                        
-                        for (const part of parts) {
-                            // Text response
-                            if (part.text) {
-                                this.currentResponseText += part.text;
-                                this.config.onTextResponse(part.text);
-                            }
-                            
-                            // Audio response (real AI voice, not TTS!)
-                            if (part.inlineData && part.inlineData.mimeType === 'audio/pcm') {
-                                const audioBuffer = Buffer.from(part.inlineData.data, 'base64');
-                                this.config.onAudioResponse(audioBuffer);
-                            }
-                        }
-                        
-                        // Save complete response to database
-                        if (response.serverContent.turnComplete && this.currentResponseText) {
-                            this.saveResponse(this.currentResponseText);
-                            this.currentResponseText = '';
-                        }
-                    }
-                    
-                    // Handle setup completion
-                    if (response.setupComplete) {
-                        console.log('✅ Gemini Live setup complete');
-                    }
-                    
-                } catch (error) {
-                    console.error('❌ Error parsing Gemini response:', error);
-                }
-            });
-
-            this.ws.on('error', (error) => {
-                console.error('❌ WebSocket error:', error);
-                this.config.onError(error);
-            });
-
-            this.ws.on('close', () => {
-                console.log('👋 Gemini Live connection closed');
-                this.isActive = false;
-            });
-
+            this.isActive = true;
+            console.log('✅ Voice session initialized successfully');
+            
         } catch (error) {
-            console.error('❌ Failed to initialize Gemini Live:', error);
+            console.error('❌ Failed to initialize voice session:', error);
             this.config.onError(error as Error);
         }
     }
 
     /**
-     * Send real audio to Gemini (processes voice directly!)
+     * Process audio chunk from user (buffering for future implementation)
      */
     async processAudio(audioBuffer: Buffer) {
-        if (!this.isActive || !this.ws) {
-            console.warn('⚠️ Session not active');
-            return;
-        }
-
-        try {
-            // Send audio to Gemini Live API
-            this.ws.send(JSON.stringify({
-                clientContent: {
-                    turns: [{
-                        role: 'user',
-                        parts: [{
-                            inlineData: {
-                                mimeType: 'audio/pcm',
-                                data: audioBuffer.toString('base64')
-                            }
-                        }]
-                    }],
-                    turnComplete: true
-                }
-            }));
-        } catch (error) {
-            console.error('❌ Error sending audio:', error);
-            this.config.onError(error as Error);
-        }
+        // Currently not used - Web Speech API handles transcription client-side
+        console.log(`🎤 Received audio chunk (${audioBuffer.length} bytes)`);
     }
 
     /**
-     * Process text input (fallback)
+     * Process text input from Web Speech API transcription
      */
     async processText(message: string) {
-        if (!this.isActive || !this.ws) {
-            console.warn('⚠️ Session not active');
-            return;
+        if (!this.isActive) {
+            console.warn('⚠️ Session not active, initializing...');
+            await this.initialize();
+            if (!this.isActive) {
+                console.error('❌ Failed to initialize session');
+                return;
+            }
         }
 
         try {
+            console.log(`💬 Processing: "${message}"`);
+            
             // Save user message
             await db.createMessage({
                 content: message,
@@ -187,40 +117,38 @@ export class GeminiLiveSession {
                 visitorId: this.config.visitorId
             });
 
-            // Send text to Gemini
-            this.ws.send(JSON.stringify({
-                clientContent: {
-                    turns: [{
-                        role: 'user',
-                        parts: [{ text: message }]
-                    }],
-                    turnComplete: true
+            // Send to Gemini with streaming
+            const result = await this.chat.sendMessageStream(message);
+            let fullResponse = '';
+
+            for await (const chunk of result.stream) {
+                const text = chunk.text();
+                if (text) {
+                    fullResponse += text;
+                    this.config.onTextResponse(text);
                 }
-            }));
+            }
 
-        } catch (error) {
-            console.error('❌ Error processing text:', error);
-            this.config.onError(error as Error);
-        }
-    }
+            // Send complete response for TTS
+            if (fullResponse.trim()) {
+                this.config.onAudioResponse(Buffer.from(fullResponse));
+            }
 
-    /**
-     * Save AI response to database
-     */
-    private async saveResponse(text: string) {
-        try {
+            // Save AI response
             await db.createMessage({
-                content: text,
+                content: fullResponse,
                 isUser: false,
                 hostId: this.config.hostId,
                 senderId: 'ai',
                 visitorId: this.config.visitorId
             });
 
-            // Run adaptive learning in background
-            this.runAdaptiveLearning(text);
+            // Trigger learning
+            this.runAdaptiveLearning(message);
+
         } catch (error) {
-            console.error('❌ Error saving response:', error);
+            console.error('❌ Error processing text:', error);
+            this.config.onError(error as Error);
         }
     }
 
@@ -264,11 +192,8 @@ export class GeminiLiveSession {
      * End session
      */
     async end() {
-        console.log('👋 Ending Gemini Live session');
+        console.log('👋 Ending voice session');
         this.isActive = false;
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
+        this.chat = null;
     }
 }

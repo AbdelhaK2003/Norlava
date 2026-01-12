@@ -345,14 +345,14 @@ io.on('connection', (socket) => {
     
     /**
      * Start Live Voice Session
-     * Uses Gemini 2.0 Flash Multimodal Live API for REAL voice-to-voice
+     * Uses Web Speech API + Gemini 2.0 Flash + Natural TTS
      */
     socket.on('start-voice-session', async (data: any) => {
         const { username, visitorId } = data;
         const sessionKey = `${username}:${visitorId}`;
         const roomName = sessionKey;
 
-        console.log(`🎙️ Starting REAL voice-to-voice session: ${sessionKey}`);
+        console.log(`🎙️ Starting voice session: ${sessionKey}`);
 
         try {
             // Get host user
@@ -362,21 +362,19 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // Create new live session with REAL voice processing
+            // Create new live session
             const liveSession = new GeminiLiveSession({
                 hostId: hostUser.id.toString(),
                 visitorId,
                 username,
                 onTextResponse: (text: string) => {
-                    // Send text for display
+                    // Stream text chunks for display
                     io.to(roomName).emit('voice-text-chunk', { text });
                 },
                 onAudioResponse: (audioData: Buffer) => {
-                    // Send REAL AI voice audio (PCM format from Gemini)
+                    // Send complete text for TTS
                     io.to(roomName).emit('voice-audio-response', { 
-                        audioData: audioData.toString('base64'),
-                        mimeType: 'audio/pcm',
-                        sampleRate: 24000
+                        audioData: audioData.toString('base64')
                     });
                 },
                 onError: (error: Error) => {
@@ -389,7 +387,7 @@ io.on('connection', (socket) => {
             liveSessions.set(sessionKey, liveSession);
 
             socket.emit('voice-session-ready');
-            console.log(`✅ Real voice-to-voice session ready: ${sessionKey}`);
+            console.log(`✅ Voice session ready: ${sessionKey}`);
 
         } catch (error) {
             console.error('❌ Failed to start voice session:', error);
@@ -398,26 +396,24 @@ io.on('connection', (socket) => {
     });
 
     /**
-     * Process Voice Audio Chunk
-     * Receives REAL audio from user's microphone → Gemini processes it directly
+     * Process Voice Text Input (from Web Speech API)
      */
-    socket.on('voice-audio-chunk', async (data: any) => {
-        const { username, visitorId, audioData } = data;
+    socket.on('voice-text-input', async (data: any) => {
+        const { username, visitorId, text } = data;
         const sessionKey = `${username}:${visitorId}`;
 
         const session = liveSessions.get(sessionKey);
         if (!session) {
+            console.warn('❌ No active voice session for:', sessionKey);
             socket.emit('voice-error', { error: 'No active voice session' });
             return;
         }
 
         try {
-            // Convert base64 to buffer and send to Gemini
-            const audioBuffer = Buffer.from(audioData, 'base64');
-            await session.processAudio(audioBuffer);
+            await session.processText(text);
         } catch (error) {
-            console.error('❌ Error processing audio chunk:', error);
-            socket.emit('voice-error', { error: 'Failed to process audio' });
+            console.error('❌ Error processing voice text:', error);
+            socket.emit('voice-error', { error: 'Failed to process voice input' });
         }
     });
 
