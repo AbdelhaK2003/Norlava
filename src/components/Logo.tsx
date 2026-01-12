@@ -25,7 +25,7 @@ export const Logo = ({ size = "md", showText = true, className = "" }: LogoProps
         {/* Logo Image */}
         <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
           <img
-            src="/norlava.png"
+            src="/Logo1.jpeg"
             alt="Norlava"
             className="w-full h-full object-contain"
           />
