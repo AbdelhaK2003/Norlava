@@ -15,9 +15,12 @@ import {
     MicOff,
     Sparkles,
     Zap,
-    X
+    X,
+    Phone,
+    PhoneOff
 } from "lucide-react";
 import { socket, api } from "@/lib/api";
+import { AudioRecorder, TextToSpeech } from "@/lib/audio-utils";
 
 interface Message {
     id: string | number;
@@ -64,6 +67,13 @@ const Interact = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [isVoiceMode, setIsVoiceMode] = useState(false); // New: Real-time voice mode
+    const [voiceSessionActive, setVoiceSessionActive] = useState(false);
+
+    // Audio utilities
+    const audioRecorderRef = useRef<AudioRecorder | null>(null);
+    const textToSpeechRef = useRef<TextToSpeech | null>(null);
+    const audioBufferRef = useRef<ArrayBuffer[]>([]); // Buffer for audio chunks
 
     // Auto-scroll logic
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -77,8 +87,11 @@ const Interact = () => {
 
     const recognitionRef = useRef<any>(null);
 
-    // Initialize Speech Recognition
+    // Initialize Speech Recognition and Audio Utils
     useEffect(() => {
+        // Initialize Text-to-Speech
+        textToSpeechRef.current = new TextToSpeech();
+
         const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
         if (SpeechRecognition) {
@@ -174,14 +187,76 @@ const Interact = () => {
             if (!status) setProcessing(false); // Safety net
         });
 
+        // ==================== VOICE MODE HANDLERS ====================
+        
+        socket.on('voice-session-ready', () => {
+            console.log('✅ Voice session ready');
+            setVoiceSessionActive(true);
+        });
+
+        socket.on('voice-text-chunk', (data: { text: string }) => {
+            // Stream AI response text in real-time
+            setMessages((prev) => {
+                const lastMsg = prev[prev.length - 1];
+                if (lastMsg && !lastMsg.isUser && lastMsg.isStreaming) {
+                    return [...prev.slice(0, -1), { ...lastMsg, text: lastMsg.text + data.text }];
+                }
+                return [...prev, {
+                    id: Date.now(),
+                    text: data.text,
+                    isUser: false,
+                    isStreaming: true
+                }];
+            });
+
+            // Speak the text using TTS
+            if (textToSpeechRef.current && isVoiceMode) {
+                textToSpeechRef.current.speak(
+                    data.text,
+                    t('languageCode') || 'en-US',
+                    () => setIsAvatarSpeaking(true),
+                    () => setIsAvatarSpeaking(false)
+                );
+            }
+        });
+
+        socket.on('voice-user-message', (data: { text: string }) => {
+            // Display user message in voice mode
+            setMessages((prev) => [...prev, {
+                id: Date.now(),
+                text: data.text,
+                isUser: true
+            }]);
+        });
+
+        socket.on('voice-error', (data: { error: string }) => {
+            console.error('❌ Voice error:', data.error);
+            setMessages((prev) => [...prev, {
+                id: Date.now(),
+                text: `Voice Error: ${data.error}`,
+                isUser: false
+            }]);
+            endVoiceMode();
+        });
+
+        socket.on('voice-session-ended', () => {
+            console.log('👋 Voice session ended');
+            setVoiceSessionActive(false);
+        });
+
         return () => {
             socket.off('receive-message');
             socket.off('ai-token');
             socket.off('bot-typing');
             socket.off('bot-speak');
+            socket.off('voice-session-ready');
+            socket.off('voice-text-chunk');
+            socket.off('voice-user-message');
+            socket.off('voice-error');
+            socket.off('voice-session-ended');
             socket.disconnect();
         };
-    }, [username, visitorId]);
+    }, [username, visitorId, isVoiceMode]);
 
     const speakText = (text: string) => {
         if ('speechSynthesis' in window) {
@@ -233,13 +308,107 @@ const Interact = () => {
         }
     };
 
+    // ==================== NEW VOICE MODE FUNCTIONS ====================
+
+    /**
+     * Start Real-Time Voice Mode (Gemini Live)
+     */
+    const startVoiceMode = async () => {
+        try {
+            console.log('🎙️ Starting voice mode...');
+            setIsVoiceMode(true);
+
+            // Initialize audio recorder
+            audioRecorderRef.current = new AudioRecorder();
+
+            // Start voice session on server
+            socket.emit('start-voice-session', {
+                username,
+                visitorId
+            });
+
+            // Start recording and send audio chunks to server
+            await audioRecorderRef.current.start((audioData: ArrayBuffer) => {
+                // Convert to base64 and send to server
+                const base64Audio = arrayBufferToBase64(audioData);
+                socket.emit('voice-audio-chunk', {
+                    username,
+                    visitorId,
+                    audioData: base64Audio
+                });
+            });
+
+            console.log('✅ Voice mode started');
+
+        } catch (error) {
+            console.error('❌ Failed to start voice mode:', error);
+            alert('Failed to start voice mode. Please check microphone permissions.');
+            setIsVoiceMode(false);
+        }
+    };
+
+    /**
+     * End Voice Mode
+     */
+    const endVoiceMode = () => {
+        console.log('👋 Ending voice mode...');
+
+        // Stop audio recorder
+        if (audioRecorderRef.current) {
+            audioRecorderRef.current.stop();
+            audioRecorderRef.current = null;
+        }
+
+        // Stop TTS
+        if (textToSpeechRef.current) {
+            textToSpeechRef.current.cancel();
+        }
+
+        // End server session
+        socket.emit('end-voice-session', {
+            username,
+            visitorId
+        });
+
+        setIsVoiceMode(false);
+        setVoiceSessionActive(false);
+        setIsAvatarSpeaking(false);
+    };
+
+    /**
+     * Send text message in voice mode
+     */
+    const sendVoiceTextMessage = (text: string) => {
+        if (!text.trim()) return;
+
+        socket.emit('voice-text-input', {
+            username,
+            visitorId,
+            message: text
+        });
+
+        setInputValue('');
+    };
+
+    /**
+     * Helper: Convert ArrayBuffer to Base64
+     */
+    const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    };
+
     return (
         <div className="h-screen w-screen overflow-hidden relative font-outfit">
             {/* Global Background */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
 
             {/* ==================== 1. CHAT MODE (DEFAULT) ==================== */}
-            <div className={`relative z-10 flex flex-col h-full transition-all duration-700 ${isListening ? 'scale-95 opacity-0 blur-sm pointer-events-none' : 'scale-100 opacity-100'}`}>
+            <div className={`relative z-10 flex flex-col h-full transition-all duration-700 ${isVoiceMode ? 'scale-95 opacity-0 blur-sm pointer-events-none' : 'scale-100 opacity-100'}`}>
                 {/* Header */}
                 <div className="p-4 border-b border-white/5 flex items-center justify-between backdrop-blur-md sticky top-0 z-20 bg-background/50">
                     <div className="flex items-center gap-4">
@@ -258,11 +427,24 @@ const Interact = () => {
                     </div>
 
                     <Button
-                        onClick={toggleListening}
-                        className="bg-neon-cyan/10 hover:bg-neon-cyan/20 text-neon-cyan border border-neon-cyan/30 rounded-full px-6 gap-2 transition-all hover:shadow-[0_0_20px_rgba(0,243,255,0.3)]"
+                        onClick={isVoiceMode ? endVoiceMode : startVoiceMode}
+                        className={`${
+                            isVoiceMode 
+                                ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-400/30' 
+                                : 'bg-neon-cyan/10 hover:bg-neon-cyan/20 text-neon-cyan border-neon-cyan/30'
+                        } rounded-full px-6 gap-2 transition-all hover:shadow-[0_0_20px_rgba(0,243,255,0.3)]`}
                     >
-                        <Zap size={16} />
-                        <span className="font-mono text-xs tracking-wider">INITIATE CALL</span>
+                        {isVoiceMode ? (
+                            <>
+                                <PhoneOff size={16} />
+                                <span className="font-mono text-xs tracking-wider">END CALL</span>
+                            </>
+                        ) : (
+                            <>
+                                <Phone size={16} />
+                                <span className="font-mono text-xs tracking-wider">START VOICE</span>
+                            </>
+                        )}
                     </Button>
                 </div>
 
@@ -330,7 +512,7 @@ const Interact = () => {
 
             {/* ==================== 2. CALL MODE (OVERLAY) ==================== */}
             <AnimatePresence>
-                {isListening && (
+                {isVoiceMode && (
                     <motion.div
                         initial={{ opacity: 0, scale: 1.1 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -343,14 +525,15 @@ const Interact = () => {
 
                         {/* DEBUG STATUS */}
                         <div className="absolute top-4 left-4 font-mono text-[10px] text-white/30 z-50 text-left">
-                            <p>STATUS: {socket.connected ? "CONNECTED" : "DISCONNECTED"}</p>
+                            <p>STATUS: {voiceSessionActive ? "🟢 LIVE" : "🟡 CONNECTING..."}</p>
                             <p>{isTrainingMode ? "⚠️ TRAINING MODE ENABLED" : `VISITOR: ${visitorId.slice(0, 8)}...`}</p>
+                            <p>VOICE MODE: {audioRecorderRef.current?.isActive() ? "🎤 RECORDING" : "⏸️ IDLE"}</p>
                         </div>
 
                         {/* Close Button */}
                         <div className="absolute top-8 right-8 z-50">
                             <Button
-                                onClick={toggleListening}
+                                onClick={endVoiceMode}
                                 variant="ghost"
                                 className="text-white/50 hover:text-red-400 hover:bg-white/5 rounded-full p-4 h-auto border border-transparent hover:border-red-400/30 transition-all font-mono text-xs tracking-widest gap-2"
                             >
@@ -377,16 +560,16 @@ const Interact = () => {
                                 <Avatar3D size="xl" isSpeaking={isAvatarSpeaking} />
                             </div>
 
-                            {/* Live Transcript Log (Simulating HUD Data) */}
+                            {/* Live Transcript Log */}
                             <div className="absolute -bottom-24 w-full text-center space-y-2">
                                 {messages.length > 0 && (
                                     <motion.div
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         key={messages.length}
-                                        className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md"
+                                        className="inline-block px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md max-w-lg"
                                     >
-                                        <p className={`font-mono text-sm max-w-sm truncate ${messages[messages.length - 1].isUser ? "text-white" : "text-neon-cyan"
+                                        <p className={`font-mono text-sm truncate ${messages[messages.length - 1].isUser ? "text-white" : "text-neon-cyan"
                                             }`}>
                                             {messages[messages.length - 1].isUser
                                                 ? `YOU: ${messages[messages.length - 1].text}`
@@ -395,6 +578,31 @@ const Interact = () => {
                                     </motion.div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Optional: Text Input for Hybrid Mode */}
+                        <div className="absolute bottom-8 w-full max-w-2xl px-4">
+                            <form
+                                onSubmit={(e) => { 
+                                    e.preventDefault(); 
+                                    sendVoiceTextMessage(inputValue); 
+                                }}
+                                className="relative group"
+                            >
+                                <Input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    placeholder="Type message (optional)..."
+                                    className="bg-white/5 border-white/10 focus-visible:ring-neon-cyan/30 text-base pl-6 pr-14 h-14 rounded-full shadow-lg backdrop-blur-xl transition-all group-hover:bg-white/10 group-hover:border-white/20"
+                                />
+                                <Button
+                                    type="submit"
+                                    size="icon"
+                                    className="absolute right-2 top-2 h-10 w-10 bg-neon-cyan text-black hover:bg-white transition-colors rounded-full shadow-lg"
+                                >
+                                    <Send size={18} />
+                                </Button>
+                            </form>
                         </div>
                     </motion.div>
                 )}

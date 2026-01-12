@@ -9,9 +9,13 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
 import { db } from './db';
+import { GeminiLiveSession } from './services/gemini-live';
 
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+
+// Store active live voice sessions
+const liveSessions = new Map<string, GeminiLiveSession>();
 
 const app = express();
 const server = http.createServer(app);
@@ -335,8 +339,137 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ==================== VOICE MODE HANDLERS ====================
+    
+    /**
+     * Start Live Voice Session
+     * Uses Gemini 2.0 Flash for real-time voice conversation
+     */
+    socket.on('start-voice-session', async (data: any) => {
+        const { username, visitorId } = data;
+        const sessionKey = `${username}:${visitorId}`;
+        const roomName = sessionKey;
+
+        console.log(`🎙️ Starting live voice session: ${sessionKey}`);
+
+        try {
+            // Get host user
+            const hostUser = await db.findUserByUsername(username);
+            if (!hostUser) {
+                socket.emit('voice-error', { error: 'Host user not found' });
+                return;
+            }
+
+            // Create new live session
+            const liveSession = new GeminiLiveSession({
+                hostId: hostUser.id.toString(),
+                visitorId,
+                username,
+                onTextResponse: (text: string) => {
+                    // Stream text chunks to client
+                    io.to(roomName).emit('voice-text-chunk', { text });
+                },
+                onAudioResponse: (audioData: Buffer) => {
+                    // Send audio data to client (for future audio-to-audio)
+                    io.to(roomName).emit('voice-audio-chunk', { audio: audioData });
+                },
+                onError: (error: Error) => {
+                    console.error('❌ Voice session error:', error);
+                    io.to(roomName).emit('voice-error', { error: error.message });
+                }
+            });
+
+            await liveSession.initialize();
+            liveSessions.set(sessionKey, liveSession);
+
+            socket.emit('voice-session-ready');
+            console.log(`✅ Voice session ready: ${sessionKey}`);
+
+        } catch (error) {
+            console.error('❌ Failed to start voice session:', error);
+            socket.emit('voice-error', { error: 'Failed to initialize voice session' });
+        }
+    });
+
+    /**
+     * Process Voice Audio Chunk
+     * Receives audio from client and sends to Gemini
+     */
+    socket.on('voice-audio-chunk', async (data: any) => {
+        const { username, visitorId, audioData } = data;
+        const sessionKey = `${username}:${visitorId}`;
+
+        const session = liveSessions.get(sessionKey);
+        if (!session) {
+            socket.emit('voice-error', { error: 'No active voice session' });
+            return;
+        }
+
+        try {
+            // Convert base64 to buffer
+            const audioBuffer = Buffer.from(audioData, 'base64');
+            await session.processAudio(audioBuffer);
+        } catch (error) {
+            console.error('❌ Error processing audio chunk:', error);
+            socket.emit('voice-error', { error: 'Failed to process audio' });
+        }
+    });
+
+    /**
+     * Process Voice Text Input (hybrid mode)
+     * User can type while in voice mode
+     */
+    socket.on('voice-text-input', async (data: any) => {
+        const { username, visitorId, message } = data;
+        const sessionKey = `${username}:${visitorId}`;
+        const roomName = sessionKey;
+
+        const session = liveSessions.get(sessionKey);
+        if (!session) {
+            socket.emit('voice-error', { error: 'No active voice session' });
+            return;
+        }
+
+        try {
+            // Emit user message to room
+            io.to(roomName).emit('voice-user-message', { text: message });
+            
+            // Process through Gemini Live
+            await session.processText(message);
+        } catch (error) {
+            console.error('❌ Error processing voice text:', error);
+            socket.emit('voice-error', { error: 'Failed to process text' });
+        }
+    });
+
+    /**
+     * End Voice Session
+     */
+    socket.on('end-voice-session', async (data: any) => {
+        const { username, visitorId } = data;
+        const sessionKey = `${username}:${visitorId}`;
+
+        const session = liveSessions.get(sessionKey);
+        if (session) {
+            await session.end();
+            liveSessions.delete(sessionKey);
+            console.log(`👋 Ended voice session: ${sessionKey}`);
+        }
+
+        socket.emit('voice-session-ended');
+    });
+
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
+        
+        // Cleanup any active voice sessions for this socket
+        // Note: In production, you'd want to track socket.id -> sessionKey mapping
+        liveSessions.forEach(async (session, key) => {
+            if (key.includes(socket.id)) {
+                await session.end();
+                liveSessions.delete(key);
+            }
+        });
     });
 });
 
