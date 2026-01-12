@@ -197,26 +197,14 @@ const Interact = () => {
                     className="p-6 border-b border-neon-cyan/10 flex items-center justify-between backdrop-blur-xl bg-black/40"
                 >
                     <div className="flex items-center gap-4">
-                        <div className="relative group cursor-pointer">
-                            {/* Animated glow */}
-                            <motion.div 
-                                className="absolute inset-0 bg-gradient-to-r from-neon-cyan via-neon-purple to-neon-cyan rounded-full blur-lg opacity-50 group-hover:opacity-100"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                            />
-                            {/* Avatar container */}
-                            <motion.div 
-                                className="relative w-14 h-14 rounded-full bg-gradient-to-br from-neon-cyan via-neon-purple to-neon-cyan p-[2px] overflow-hidden"
-                                    whileHover={{ scale: 1.1 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="w-full h-full rounded-full bg-gradient-to-br from-gray-900 to-black flex items-center justify-center overflow-hidden">
-                                        <div className="scale-[2] translate-y-2">
-                                            <Avatar3D size="sm" isSpeaking={false} />
-                                        </div>
-                                </div>
-                            </motion.div>
-                        </div>
+                        {/* Direct Avatar without circular frame */}
+                        <motion.div 
+                            className="w-14 h-14 flex items-center justify-center"
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <Avatar3D size="sm" isSpeaking={false} />
+                        </motion.div>
                         <div>
                             <h3 className="font-bold text-2xl text-white tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
                                 {hostName}
