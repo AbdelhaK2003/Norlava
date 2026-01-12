@@ -90,7 +90,7 @@ const Interact = () => {
         if (!username || !visitorId) return;
 
         // Load previous messages for this visitor
-        api.get(`/messages/${username}/${visitorId}`)
+        api.get(`/user/messages/${username}/${visitorId}`)
             .then(res => {
                 if (res.data && Array.isArray(res.data)) {
                     setMessages(res.data.map((msg: any) => ({
