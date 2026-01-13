@@ -119,7 +119,7 @@ const Dashboard = () => {
             {/* Header */}
             <div className="relative z-20 p-6 flex items-center justify-between backdrop-blur-sm border-b border-white/5">
                 <div className="flex items-center gap-3">
-                    <Logo size="sm" />
+                    <Logo size="md" />
                     <div className="h-4 w-[1px] bg-white/10 mx-2"></div>
                     <span className="font-mono text-xs text-white/50 tracking-widest">DASHBOARD v2.0</span>
                 </div>

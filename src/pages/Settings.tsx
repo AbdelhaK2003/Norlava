@@ -76,7 +76,7 @@ const Settings = () => {
                         <ArrowLeft size={18} /> {t('common.backToDashboard') || "Back to Dashboard"}
                     </Button>
                     <div className="flex items-center gap-3 mt-4">
-                        <Logo size="sm" />
+                        <Logo size="md" />
                         <h1 className="text-2xl font-bold">{t('settings.title') || "Settings"}</h1>
                     </div>
                 </div>

@@ -83,7 +83,7 @@ const Share = () => {
             <ArrowLeft size={18} />
             Back
           </Button>
-          <Logo size="sm" />
+          <Logo size="md" />
         </motion.div>
 
         {/* Preview Card */}
