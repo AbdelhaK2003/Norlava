@@ -8,10 +8,10 @@ interface LogoProps {
 
 export const Logo = ({ size = "md", showText = true, className = "" }: LogoProps) => {
   const sizes = {
-    sm: "w-8 h-8 text-xl",
-    md: "w-10 h-10 text-2xl",
-    lg: "w-16 h-16 text-4xl",
-    xl: "w-24 h-24 text-6xl"
+    sm: "w-10 h-10 text-xl",
+    md: "w-12 h-12 text-2xl",
+    lg: "w-20 h-20 text-4xl",
+    xl: "w-28 h-28 text-6xl"
   };
 
   const textSize = sizes[size].split(" ")[2];
