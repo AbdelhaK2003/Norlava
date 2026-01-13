@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Onboarding from "./pages/Onboarding";
+import OnboardingNew from "./pages/OnboardingNew";
 import AvatarCreation from "./pages/AvatarCreation";
 import PublicProfile from "./pages/PublicProfile";
 import Share from "./pages/Share";
@@ -30,7 +30,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/onboarding" element={<OnboardingNew />} />
           <Route path="/avatar" element={<AvatarCreation />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />

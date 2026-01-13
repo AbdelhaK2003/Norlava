@@ -21,6 +21,29 @@ const liveSessions = new Map<string, GeminiLiveSession>();
 // Each session only uses messages from current page load
 const sessionMessages = new Map<string, any[]>();
 
+// Helper: Check if a similar question was already asked in this session
+function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], threshold = 0.7): boolean {
+    if (!sessionHistory || sessionHistory.length === 0) return false;
+    
+    const newWords = newMessage.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    
+    // Check recent messages (last 10)
+    const recentMessages = sessionHistory.slice(-10);
+    
+    for (const msg of recentMessages) {
+        if (msg.isUser) { // Check user's previous messages
+            const existingWords = msg.content.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+            const commonWords = newWords.filter(w => existingWords.includes(w));
+            const similarity = commonWords.length / Math.max(newWords.length, existingWords.length);
+            
+            if (similarity >= threshold) {
+                return true; // Similar question found
+            }
+        }
+    }
+    return false;
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -112,6 +135,15 @@ io.on('connection', (socket) => {
 
         const hostId = hostUser.id;
 
+        // Check for duplicate/similar questions BEFORE saving
+        const sessionKey = roomName;
+        const sessionHistory = sessionMessages.get(sessionKey) || [];
+        
+        const isDuplicateQuestion = hasSimilarQuestionBeenAsked(message, sessionHistory);
+        if (isDuplicateQuestion && senderIsUser) {
+            console.log("⚠️ Similar question detected in this session, continuing anyway...");
+        }
+
         const savedMsg = await db.createMessage({
             content: message,
             isUser: senderIsUser,
@@ -121,8 +153,6 @@ io.on('connection', (socket) => {
         });
 
         // Add to current session messages (for AI context only from this session)
-        const sessionKey = roomName;
-        const sessionHistory = sessionMessages.get(sessionKey) || [];
         sessionHistory.push({
             content: message,
             isUser: senderIsUser
@@ -201,7 +231,15 @@ io.on('connection', (socket) => {
                     .join("\n");
 
                 // Default context if training is empty
-                const aiBrain = profile?.aiContext || `You are ${hostUser.firstName}. You are a helpful digital assistant.`;
+                let aiBrain = profile?.aiContext || `You are ${hostUser.firstName}. You are a helpful digital assistant.`;
+
+                // Add writing style instruction if available
+                if (profile?.writingStyle) {
+                    aiBrain += `\n\nIMPORTANT: Write exactly like this sample. Copy the tone, style, and personality:\n"${profile.writingStyle}"`;
+                }
+
+                // Add instruction for "still learning" responses
+                aiBrain += `\n\nWhen a visitor asks about something you don't know about the person you represent, respond warmly like: "I'm still learning more about that! ${hostUser.firstName} hasn't shared those details with me yet, but once they do, I'll let you know!"`;
 
                 // Emit typing status to PRIVATE room
                 io.to(roomName).emit('bot-typing', true);

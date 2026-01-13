@@ -7,7 +7,7 @@ const router = Router();
 // Initial Onboarding (Create Profile)
 router.post('/onboarding', authenticateToken, async (req: AuthRequest, res) => {
     try {
-        const { interests, personality, funFacts } = req.body;
+        const { interests, personality, funFacts, bio, writingStyle } = req.body;
 
         // Parse personality to construct AI Context
         let aiContext = "";
@@ -15,6 +15,10 @@ router.post('/onboarding', authenticateToken, async (req: AuthRequest, res) => {
             const pData = JSON.parse(personality);
             aiContext = `
 You are ${pData.nickname || "an AI assistant"}. ${pData.tagline ? `Your tagline is: "${pData.tagline}".` : ""}
+
+About you:
+${bio ? `Bio: ${bio}` : ""}
+
 Your personality traits:
 - Formality: ${pData.formalityLevel}
 - Humor: ${pData.humorStyle}
@@ -23,11 +27,11 @@ Your personality traits:
 Your Expertise: ${interests}
 Your Hobbies: ${funFacts}
 
-Here are some examples of how you speak (Q&A pairs):
-${pData.sampleQA ? pData.sampleQA.map((qa: any) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n") : "No samples provided."}
+${writingStyle ? `Here's a sample of your writing style (copy this style in your responses):\n"${writingStyle}"` : ""}
 
 Instructions:
 Respond to visitors using this persona. Stay in character.
+If a visitor asks about something you don't know about the person you represent, respond with something like: "I'm still learning more about that! The ${pData.nickname} I represent hasn't shared those details with me yet, but once they do, I'll let you know!"
 `.trim();
         } catch (e) {
             console.error("Error parsing personality for AI context", e);
@@ -39,7 +43,9 @@ Respond to visitors using this persona. Stay in character.
             interests,
             personality,
             funFacts,
-            aiContext // Save the "Brain"
+            aiContext, // Save the "Brain"
+            bio: bio || "", // Save bio
+            writingStyle: writingStyle || "" // Save writing style
         });
 
         res.json(profile);

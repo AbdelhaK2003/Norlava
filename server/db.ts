@@ -89,14 +89,16 @@ class Database {
     }
 
     // Profile Methods
-    async createProfile(profile: { userId: string; interests: string; personality: string; funFacts: string; aiContext?: string }) {
+    async createProfile(profile: { userId: string; interests: string; personality: string; funFacts: string; aiContext?: string; bio?: string; writingStyle?: string }) {
         return await prisma.profile.create({
             data: {
                 userId: profile.userId,
                 interests: profile.interests,
                 personality: profile.personality,
                 funFacts: profile.funFacts,
-                aiContext: profile.aiContext
+                aiContext: profile.aiContext,
+                bio: profile.bio,
+                writingStyle: profile.writingStyle
             }
         });
     }
