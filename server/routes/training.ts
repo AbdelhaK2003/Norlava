@@ -36,7 +36,7 @@ router.post('/', authenticateToken, async (req, res) => {
         });
 
         // Auto-update the "Brain" context
-        await db.refreshAiContext(profile.id);
+        await db.refreshAiContext(profile.id); 
 
         res.json(memory);
     } catch (error) {
