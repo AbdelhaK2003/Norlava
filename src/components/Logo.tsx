@@ -29,7 +29,7 @@ export const Logo = ({ size = "md", showText = true, className = "" }: LogoProps
           <path
             d="M 25 75 L 50 25 L 75 75"
             stroke="currentColor"
-            strokeWidth="6"
+            strokeWidth="8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
