@@ -185,7 +185,7 @@ const Index = () => {
       {/* Navigation */}
       <nav className="relative z-20 p-6 border-b border-glass-border/50 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Logo size="md" />
+          <Logo size="lg" />
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
