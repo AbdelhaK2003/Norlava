@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Black circular background -->
+  <circle cx="50" cy="50" r="50" fill="#000000"/>
+  
+  <!-- White mountain peak (Ʌ) -->
+  <path d="M 30 70 L 50 25 L 70 70" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
