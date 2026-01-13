@@ -6,6 +6,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { GlassCard } from "@/components/GlassCard";
 import { Avatar3D } from "@/components/Avatar3D";
+import { Statistics } from "@/components/Statistics";
+import { PendingFacts } from "@/components/PendingFacts";
 import { Button } from "@/components/ui/button";
 import {
     Users,
@@ -243,6 +245,32 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* NEW SECTION: Statistics & Pending Facts */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="space-y-6"
+                >
+                    {/* Statistics Grid */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <span className="w-1 h-6 bg-neon-cyan rounded"></span>
+                            Real-time Insights
+                        </h3>
+                        <Statistics />
+                    </div>
+
+                    {/* Pending Facts Section */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <span className="w-1 h-6 bg-neon-purple rounded"></span>
+                            Visitor Discoveries
+                        </h3>
+                        <PendingFacts />
+                    </div>
+                </motion.div>
 
                 {/* MEMORY MANAGEMENT SECTION (Carousel) */}
                 {(memories.facts.length > 0 || memories.questions.length > 0) && (

@@ -8,6 +8,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
+import factsRoutes from './routes/facts';
 import { db } from './db';
 import { GeminiLiveSession } from './services/gemini-live';
 
@@ -32,8 +33,8 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
     
     for (const msg of recentMessages) {
         if (msg.isUser) { // Check user's previous messages
-            const existingWords = msg.content.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-            const commonWords = newWords.filter(w => existingWords.includes(w));
+            const existingWords = msg.content.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+            const commonWords = newWords.filter((w: string) => existingWords.includes(w));
             const similarity = commonWords.length / Math.max(newWords.length, existingWords.length);
             
             if (similarity >= threshold) {
@@ -86,6 +87,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
+app.use('/api/facts', factsRoutes);
 
 // Basic health check
 app.get('/api/health', (req, res) => {
@@ -233,6 +235,12 @@ io.on('connection', (socket) => {
                 // Default context if training is empty
                 let aiBrain = profile?.aiContext || `You are ${hostUser.firstName}. You are a helpful digital assistant.`;
 
+                // Add learned facts from visitor interactions
+                const learnedFacts = profile?.learnedFacts ? JSON.parse(profile.learnedFacts) : [];
+                if (learnedFacts.length > 0) {
+                    aiBrain += `\n\nFACTS I'VE LEARNED FROM VISITOR CONVERSATIONS:\n${learnedFacts.map((fact: string) => `• ${fact}`).join('\n')}`;
+                }
+
                 // Add writing style instruction if available
                 if (profile?.writingStyle) {
                     aiBrain += `\n\nIMPORTANT: Write exactly like this sample. Copy the tone, style, and personality:\n"${profile.writingStyle}"`;
@@ -296,91 +304,65 @@ io.on('connection', (socket) => {
                     io.to(roomName).emit('bot-speak', { text: fullResponse });
                 }
 
-                // --- 4. ADAPTIVE LEARNING LOOP (Background) ---
-                // We don't await this, let it run in background to keep chat fast
+                // --- 4. FACT EXTRACTION FROM VISITOR MESSAGE ---
+                // Extract facts from what the visitor said, but DON'T apply them to AI yet
+                // The user must approve facts before they affect the AI
                 (async () => {
                     try {
+                        if (!profile) return;
+
                         const learningModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-                        // A: Check for Facts
-                        console.log("🧠 Adaptive Learning: Analyzing message for new facts...");
-                        const learningPrompt = `
-                            Analyze the following user message sent to a digital avatar of ${hostUser.firstName}.
-                            Does the message contain a specific FACT about ${hostUser.firstName} (the Host) that the avatar should remember?
+                        // Extract facts about the HOST from what the visitor said
+                        console.log("🧠 Analyzing visitor message for learnable facts...");
+                        const factPrompt = `
+                            Analyze this message sent to a digital avatar of "${hostUser.firstName}".
+                            Extract any facts about ${hostUser.firstName} that the visitor revealed or mentioned.
                             
                             Message: "${message}"
                             
                             Rules:
-                            1. EXTRACT: Biographical facts, Personality traits, Life goals, Preferences, or "Vibe" descriptions.
-                            2. INCLUDE "SOFT" FACTS: e.g., "You are a chill person", "You like to live peacefully", "I love making new friends".
-                            3. HANDLE 2ND PERSON: If the message says "You are X", treat it as a potential fact about ${hostUser.firstName}.
-                            4. CONVERT TO 1ST PERSON: Output the fact as if ${hostUser.firstName} is saying it (e.g. "I am a chill girl who wants to live peacefully").
-                            5. IGNORE: Greetings, temporary states ("You look tired"), or compliments that aren't deep traits ("You are cute").
-                            6. IGNORE GUEST INFO: Do not learn facts about the visitor.
+                            1. EXTRACT facts about ${hostUser.firstName} ONLY (their traits, preferences, history, goals)
+                            2. INCLUDE both explicit facts ("I go to Harvard") and soft facts ("You're really chill")
+                            3. Convert 2nd person to 1st person (e.g., "You are creative" → "I am creative")
+                            4. IGNORE temporary states, greetings, and compliments
+                            5. IGNORE facts about the VISITOR themselves
                             
-                            Output ONLY the declarative fact statement. Do NOT include "YES" or "FACT:". 
-                            If NO fact is found, output exactly "NO".
+                            Output ONLY the fact statement (one per line if multiple facts).
+                            If NO facts found, output "NONE".
                         `;
 
-                        // B: Check for Questions (New Feature)
-                        const questionPrompt = `
-                            Analyze the following message from a visitor to ${hostUser.firstName}'s AI.
-                            Is the visitor asking a specific, meaningful question about ${hostUser.firstName}'s life, identity, or preferences that requires a permanent answer?
-                            
-                            Message: "${message}"
-                            
-                            Rules:
-                            1. MUST be a question about the Host's biography, favorites, history, or opinions.
-                            2. IGNORE conversational questions like "How are you?", "What are you doing?", "Can you help me?".
-                            3. IGNORE context-dependent questions like "Do you remember?", "What did I say?", "Why?".
-                            4. IGNORE vague questions. It must be specific enough that the Host could write a permanent Q&A answer for it.
-                            5. Examples of YES: "Where did you go to college?", "What is your favorite book?", "How did you start your company?".
-                            6. Examples of NO: "Do you remember me?", "Can I ask a question?", "What is this?".
-                            
-                            If YES, output ONLY the question text. Do NOT include "YES" or any other prefix.
-                            If NO, output exactly "NO".
-                        `;
+                        const factResult = await learningModel.generateContent(factPrompt);
+                        const factText = factResult.response.text().trim();
 
-                        const [factResult, questionResult] = await Promise.all([
-                            learningModel.generateContent(learningPrompt),
-                            learningModel.generateContent(questionPrompt)
-                        ]);
-
-                        const fact = factResult.response.text().trim().replace(/^(YES|FACT):?\s*/i, "");
-                        const question = questionResult.response.text().trim().replace(/^(YES|QUESTION):?\s*/i, "");
-
-                        if (fact && fact !== "NO") {
-                            console.log(`💡 LEARNED NEW FACT: "${fact}"`);
-                            if (profile) {
-                                await db.createMemory({
-                                    profileId: profile.id,
-                                    type: 'LEARNED_FROM_GUEST',
-                                    prompt: 'Learned from conversation',
-                                    content: fact
-                                });
-                                // Refresh context for next time
-                                await db.refreshAiContext(profile.id);
+                        if (factText && factText !== "NONE" && factText !== "NO") {
+                            // Could be multiple facts, split by newline
+                            const facts = factText.split('\n').filter(f => f.trim().length > 10);
+                            
+                            for (const fact of facts) {
+                                console.log(`💡 PENDING FACT FOR APPROVAL: "${fact}"`);
+                                
+                                // Add to pendingFacts (don't affect AI yet)
+                                const pending = profile.pendingFacts ? JSON.parse(profile.pendingFacts) : [];
+                                
+                                // Avoid duplicates
+                                if (!pending.some((p: string) => p.toLowerCase() === fact.trim().toLowerCase())) {
+                                    pending.push(fact.trim());
+                                    
+                                    // Save to database using userId
+                                    await db.updateProfile(hostUser.id, {
+                                        pendingFacts: JSON.stringify(pending)
+                                    });
+                                    
+                                    console.log(`✅ Pending fact saved: "${fact}"`);
+                                }
                             }
                         } else {
-                            console.log("🧠 No new facts learned.");
-                        }
-
-                        if (question && question !== "NO") {
-                            console.log(`❓ VISITOR ASKED: "${question}"`);
-                            // START: Check if similar question already exists to avoid dupes (Simple check)
-                            // Ideally we'd use embedding search, but for MVP string match or just save it
-                            if (profile) {
-                                await db.createMemory({
-                                    profileId: profile.id,
-                                    type: 'GUEST_QUESTION',
-                                    prompt: question,
-                                    content: "" // Empty content means it needs an answer from the host
-                                });
-                            }
+                            console.log("🧠 No new facts extracted from this message.");
                         }
 
                     } catch (err) {
-                        console.error("⚠️ Adaptive Learning failed:", err);
+                        console.error("⚠️ Fact extraction failed:", err);
                     }
                 })();
 

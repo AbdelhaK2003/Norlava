@@ -53,7 +53,10 @@ model Profile {
   aiContext   String? 
   
   // New: Facts learned from visitors
-  learnedFacts String? // JSON array of facts discovered during conversations
+  learnedFacts String? // JSON array of approved facts discovered during conversations
+  
+  // New: Pending facts awaiting user approval
+  pendingFacts String? // JSON array of facts pending approval from visitors
   
   avatar      Avatar?
   memories    Memory[]
