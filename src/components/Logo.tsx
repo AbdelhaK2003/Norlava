@@ -19,8 +19,8 @@ export const Logo = ({ size = "md", showText = true, className = "" }: LogoProps
   return (
     <Link to="/" className={`flex items-center gap-3 group ${className}`}>
       <div className={`relative ${sizes[size].split(" ").slice(0, 2).join(" ")} transition-transform group-hover:scale-105`}>
-        {/* Glow effect */}
-        <div className="absolute inset-0 bg-primary/40 rounded-xl blur-lg group-hover:blur-xl transition-all" />
+        {/* Subtle white glow for black/white logo */}
+        <div className="absolute inset-0 bg-white/20 rounded-xl blur-md group-hover:blur-lg transition-all" />
 
         {/* Logo Image */}
         <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
@@ -33,7 +33,7 @@ export const Logo = ({ size = "md", showText = true, className = "" }: LogoProps
       </div>
 
       {showText && (
-        <span className={`font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-primary/50 to-white/50 ${textSize}`}>
+        <span className={`font-bold tracking-tight text-white ${textSize}`}>
           Norlava
         </span>
       )}
