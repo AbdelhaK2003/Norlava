@@ -19,13 +19,10 @@ export const Logo = ({ size = "md", showText = true, className = "" }: LogoProps
   return (
     <Link to="/" className={`flex items-center gap-3 group ${className}`}>
       <div className={`relative ${sizes[size].split(" ").slice(0, 2).join(" ")} transition-transform group-hover:scale-105`}>
-        {/* Subtle white glow for black/white logo */}
-        <div className="absolute inset-0 bg-white/20 rounded-xl blur-md group-hover:blur-lg transition-all" />
-
-        {/* Logo Image */}
+        {/* Logo Image - no background needed for transparent PNG */}
         <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
           <img
-            src="/logo.svg"
+            src="/logo-transparent-png.png"
             alt="Norlava"
             className="w-full h-full object-contain"
           />
