@@ -46,18 +46,18 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
 }
 
 const corsOptions = {
-    origin: function (origin: any, callback: any) {
-        // Allow all in dev/production for debugging 500s easily
-        // In strict prod, you'd verify against the list, but for now we want to see the error.
-        callback(null, true);
-    },
+    origin: "*", // allow all for debugging 502
+    methods: ["GET", "POST", "OPTIONS"],
     credentials: true
 };
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: corsOptions
+    cors: {
+        origin: "*", // Socket.iov4 needs explicit internal cors config sometimes, separate from Express
+        methods: ["GET", "POST"]
+    }
 });
 
 const PORT = process.env.PORT || 3000;
@@ -722,7 +722,7 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(PORT, () => {
+server.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`🚀 Voxterna Backend running on port ${PORT}`);
 });
 

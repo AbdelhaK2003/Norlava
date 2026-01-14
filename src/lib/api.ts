@@ -24,5 +24,8 @@ const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://
 
 export const socket = io(SOCKET_URL, {
     autoConnect: false,
-    withCredentials: true, // Important for production CORS
+    withCredentials: true,
+    transports: ['websocket', 'polling'], // Critical for some cloud proxies
+    reconnection: true,
+    reconnectionAttempts: 5,
 });
