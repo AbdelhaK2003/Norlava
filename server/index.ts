@@ -88,6 +88,10 @@ app.use('/api/training', trainingRoutes);
 app.use('/api/facts', factsRoutes);
 
 // Basic health check
+app.get('/', (req, res) => {
+    res.send('Voxterna Backend is Running 🚀');
+});
+
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Voxterna Backend is running' });
 });
