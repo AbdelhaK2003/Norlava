@@ -1,7 +1,13 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { SECRET_KEY } from '../middleware/auth';
+
+// Handle ESM/CommonJS default export mismatch
+// @ts-ignore
+const jwtSign = jwt.sign || (jwt.default && jwt.default.sign) || jwt;
+// @ts-ignore
+const jwtVerify = jwt.verify || (jwt.default && jwt.default.verify) || jwt;
+
 import { db } from '../db';
 import { sendEmail } from '../email';
 
@@ -35,7 +41,7 @@ router.post('/register', async (req, res) => {
         });
         console.log("✅ User created successfully:", user.id);
 
-        const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '7d' });
+        const token = jwtSign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '7d' });
         res.json({
             token,
             user: {
@@ -67,7 +73,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Invalid password' });
         }
 
-        const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '7d' });
+        const token = jwtSign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '7d' });
         res.json({
             token,
             user: {
