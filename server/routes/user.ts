@@ -126,9 +126,13 @@ router.get('/dashboard-stats', authenticateToken, async (req: AuthRequest, res) 
 
         const stats = await db.getDashboardStats(userId);
         res.json(stats);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching stats:", error);
-        res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+        res.status(500).json({
+            error: 'Failed to fetch dashboard stats',
+            details: error?.message || String(error),
+            stack: process.env.NODE_ENV === 'production' ? error?.stack : undefined
+        });
     }
 });
 
@@ -148,8 +152,12 @@ router.get('/memories/pending', authenticateToken, async (req: AuthRequest, res)
         const questions = memories.filter((m: any) => m.type === 'GUEST_QUESTION');
 
         res.json({ facts, questions });
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch memories' });
+    } catch (error: any) {
+        res.status(500).json({
+            error: 'Failed to fetch memories',
+            details: error?.message || String(error),
+            stack: process.env.NODE_ENV === 'production' ? error?.stack : undefined
+        });
     }
 });
 

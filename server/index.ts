@@ -9,89 +9,28 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
 import factsRoutes from './routes/facts';
-import { db } from './db';
+import { db, prisma } from './db';
 import { GeminiLiveSession } from './services/gemini-live';
 
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Store active live voice sessions
-const liveSessions = new Map<string, GeminiLiveSession>();
+// ... lines 18-97 ...
 
-// Track session messages - resets on new connection
-// Each session only uses messages from current page load
-const sessionMessages = new Map<string, any[]>();
-
-// Helper: Check if a similar question was already asked in this session
-function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], threshold = 0.7): boolean {
-    if (!sessionHistory || sessionHistory.length === 0) return false;
-
-    const newWords = newMessage.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-
-    // Check recent messages (last 10)
-    const recentMessages = sessionHistory.slice(-10);
-
-    for (const msg of recentMessages) {
-        if (msg.isUser) { // Check user's previous messages
-            const existingWords = msg.content.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
-            const commonWords = newWords.filter((w: string) => existingWords.includes(w));
-            const similarity = commonWords.length / Math.max(newWords.length, existingWords.length);
-
-            if (similarity >= threshold) {
-                return true; // Similar question found
-            }
-        }
+// Database health check
+app.get('/api/health-db', async (req, res) => {
+    try {
+        // Try a simple query
+        const userCount = await prisma.user.count();
+        res.json({ status: 'ok', userCount, message: 'Database connection successful' });
+    } catch (error: any) {
+        console.error("DB Health Check Failed:", error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Database connection failed',
+            details: error?.message || String(error)
+        });
     }
-    return false;
-}
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: process.env.NODE_ENV === 'production'
-            ? [
-                "https://norlava.com",
-                "https://www.norlava.com",
-                "https://norlava.vercel.app",
-                "https://abdelhak-zvmu.norlava.com",
-                process.env.FRONTEND_URL || "https://norlava.com"
-            ]
-            : ["http://localhost:5173", "http://localhost:8080"],
-        methods: ["GET", "POST"],
-        credentials: true
-    }
-});
-
-const PORT = 3000;
-
-console.log("🔍 Server Starting...");
-console.log("📂 Current Working Directory:", process.cwd());
-console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
-
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? [
-            "https://norlava.com",
-            "https://www.norlava.com",
-            "https://norlava.vercel.app",
-            "https://abdelhak-zvmu.norlava.com",
-            process.env.FRONTEND_URL || "https://norlava.com"
-        ]
-        : ["http://localhost:5173", "http://localhost:8080"],
-    credentials: true
-}));
-app.use(express.json());
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/training', trainingRoutes);
-app.use('/api/facts', factsRoutes);
-
-// Basic health check
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Voxterna Backend is running' });
 });
 
 // Socket.io Connection
