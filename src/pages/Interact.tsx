@@ -31,6 +31,8 @@ const Interact = () => {
     const [hostName, setHostName] = useState("");
     const [visitorId, setVisitorId] = useState("");
     const [isTrainingMode, setIsTrainingMode] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
 
     useEffect(() => {
         // Get or create persistent visitorId for this profile
@@ -179,7 +181,7 @@ const Interact = () => {
         }
     };
 
-    const [processing, setProcessing] = useState(false);
+
 
     const handleSendMessage = (text: string, inputType: 'voice' | 'text' = 'text') => {
         if (!text.trim()) return;
@@ -288,15 +290,15 @@ const Interact = () => {
                                         </div>
                                     )}
                                     <div className={`relative p-5 rounded-3xl backdrop-blur-md border transition-all duration-300 hover:scale-[1.02] ${message.isUser
-                                            ? 'bg-gradient-to-br from-neon-purple/20 to-neon-purple/5 border-neon-purple/30 text-white rounded-br-md shadow-[0_0_20px_rgba(188,19,254,0.1)]'
-                                            : 'bg-white/5 border-white/10 text-gray-100 rounded-bl-md shadow-[0_0_20px_rgba(0,243,255,0.05)]'
+                                        ? 'bg-gradient-to-br from-neon-purple/20 to-neon-purple/5 border-neon-purple/30 text-white rounded-br-md shadow-[0_0_20px_rgba(188,19,254,0.1)]'
+                                        : 'bg-white/5 border-white/10 text-gray-100 rounded-bl-md shadow-[0_0_20px_rgba(0,243,255,0.05)]'
                                         }`}>
                                         <p className="text-base leading-relaxed tracking-wide">{message.text}</p>
 
                                         {/* Glow effect on hover */}
                                         <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${message.isUser
-                                                ? 'bg-gradient-to-r from-neon-purple/0 via-neon-purple/10 to-neon-purple/0'
-                                                : 'bg-gradient-to-r from-neon-cyan/0 via-neon-cyan/10 to-neon-cyan/0'
+                                            ? 'bg-gradient-to-r from-neon-purple/0 via-neon-purple/10 to-neon-purple/0'
+                                            : 'bg-gradient-to-r from-neon-cyan/0 via-neon-cyan/10 to-neon-cyan/0'
                                             }`}></div>
                                     </div>
                                 </div>
