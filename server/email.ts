@@ -1,6 +1,11 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend safely
+const resendApiKey = process.env.RESEND_API_KEY;
+if (!resendApiKey) {
+    console.warn("⚠️ RESEND_API_KEY is missing. Email service will not function.");
+}
+const resend = new Resend(resendApiKey || 're_123456789'); // Dummy key to prevent crash, check in sendEmail
 
 interface SendEmailProps {
     to: string;
