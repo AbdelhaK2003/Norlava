@@ -13,6 +13,9 @@
     "start": "tsx server/index.ts",
     "postinstall": "npx prisma generate --schema=server/prisma/schema.prisma"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^3.10.0",

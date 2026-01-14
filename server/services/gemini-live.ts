@@ -2,7 +2,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { db } from '../db';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Removed top-level genAI to prevent import-time crash
+// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 interface LiveSessionConfig {
     hostId: string;
@@ -25,7 +26,7 @@ export class GeminiLiveSession {
 
     constructor(config: LiveSessionConfig) {
         this.config = config;
-        this.model = genAI.getGenerativeModel({ 
+        this.model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash-exp',
             generationConfig: {
                 temperature: 0.9,
@@ -38,13 +39,13 @@ export class GeminiLiveSession {
     async initialize() {
         try {
             console.log(`🎙️ Initializing voice session for ${this.config.username}`);
-            
+
             // Fetch host user and profile for context
             const hostUser = await db.findUserById(this.config.hostId);
             const profile = await db.findProfileByUserId(this.config.hostId);
-            
+
             // Build system instruction for natural voice conversation
-            const systemContext = profile?.aiContext || 
+            const systemContext = profile?.aiContext ||
                 `You are ${hostUser?.firstName || this.config.username}. You're having a natural VOICE conversation.
                 
                 CRITICAL RULES:
@@ -77,7 +78,7 @@ export class GeminiLiveSession {
 
             this.isActive = true;
             console.log('✅ Voice session initialized successfully');
-            
+
         } catch (error) {
             console.error('❌ Failed to initialize voice session:', error);
             this.config.onError(error as Error);
@@ -107,7 +108,7 @@ export class GeminiLiveSession {
 
         try {
             console.log(`💬 Processing: "${message}"`);
-            
+
             // Save user message
             await db.createMessage({
                 content: message,
@@ -161,6 +162,8 @@ export class GeminiLiveSession {
             const profile = await db.findProfileByUserId(this.config.hostId);
             if (!hostUser || !profile) return;
 
+            const apiKey = process.env.GEMINI_API_KEY || '';
+            const genAI = new GoogleGenerativeAI(apiKey);
             const learningModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
             const learningPrompt = `
