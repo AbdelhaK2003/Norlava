@@ -60,6 +60,15 @@ const io = new Server(server, {
     }
 });
 
+// Global Error Handlers for debugging in production
+process.on('uncaughtException', (err) => {
+    console.error('❌ UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ UNHANDLED REJECTION:', reason);
+});
+
 const PORT = process.env.PORT || 3000;
 
 console.log("🔍 Server Starting...");
