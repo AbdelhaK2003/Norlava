@@ -326,9 +326,19 @@ io.on('connection', (socket) => {
                                     data: { type: 'BIOGRAPHY' }
                                 });
                                 await db.refreshAiContext(profile.id);
+                                io.to(roomName).emit('receive-message', {
+                                    id: "sys-conf-" + Date.now(),
+                                    text: `✅ [SYSTEM] Fact Confirmed!`,
+                                    isUser: false
+                                });
                             } else if (action === 'DELETE_MEMORY') {
                                 const id = params;
                                 await db.deleteMemory(id);
+                                io.to(roomName).emit('receive-message', {
+                                    id: "sys-del-" + Date.now(),
+                                    text: `🗑️ [SYSTEM] Memory Deleted.`,
+                                    isUser: false
+                                });
                             }
                         } catch (err) {
                             console.error("❌ Failed to execute training command:", err);
@@ -392,6 +402,14 @@ io.on('connection', (socket) => {
                                     content: '' // No answer yet
                                 });
                                 console.log(`📝 Captured GUEST_QUESTION: "${message}"`);
+
+                                if (data.isTrainingMode || senderIsUser) {
+                                    io.to(roomName).emit('receive-message', {
+                                        id: "sys-q-" + Date.now(),
+                                        text: `❓ [SYSTEM] New Question Captured: "${message}"`,
+                                        isUser: false
+                                    });
+                                }
                             } else {
                                 console.log(`⏩ Skipped duplicate question: "${message}"`);
                             }
@@ -463,6 +481,19 @@ io.on('connection', (socket) => {
                                 });
 
                                 console.log(`✅ Pending fact saved to DB: "${cleanFact}"`);
+
+                                // NEW: Notify Host immediately if in Training Mode or just for debugging feedback
+                                // We check if the sender is the User (Host) or if we want to confirm to Visitor?
+                                // Actually, only show this if senderIsUser (Trainer) or if we want to debug.
+                                // For now, let's emit a special 'debug-event' or just a system message?
+                                // A system message is safest.
+                                if (data.isTrainingMode || senderIsUser) {
+                                    io.to(roomName).emit('receive-message', {
+                                        id: "sys-" + Date.now(),
+                                        text: `📝 [SYSTEM] Extracted Fact: "${cleanFact}"`,
+                                        isUser: false
+                                    });
+                                }
                             }
                         } else {
                             console.log("🧠 [Fact Probe] No meaningful facts found in output.");
