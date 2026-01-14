@@ -38,6 +38,7 @@ const Dashboard = () => {
         try {
             const { data } = await api.get('/user/memories/pending');
             setMemories(data);
+            localStorage.setItem('pendingMemories', JSON.stringify(data));
         } catch (e) {
             console.error("Failed memories fetch", e);
         }
@@ -47,15 +48,15 @@ const Dashboard = () => {
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
         const cachedStats = localStorage.getItem('dashboardStats');
+        const cachedMemories = localStorage.getItem('pendingMemories');
 
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
 
         // 1. Instant Load from Cache
-        if (cachedStats) {
-            setStats(JSON.parse(cachedStats));
-        }
+        if (cachedStats) setStats(JSON.parse(cachedStats));
+        if (cachedMemories) setMemories(JSON.parse(cachedMemories));
 
         if (token) {
             const loadData = () => {
@@ -295,31 +296,7 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* NEW SECTION: Statistics & Pending Facts */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="space-y-6"
-                >
-                    {/* Statistics Grid */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <span className="w-1 h-6 bg-neon-cyan rounded"></span>
-                            Real-time Insights
-                        </h3>
-                        <Statistics />
-                    </div>
 
-                    {/* Pending Facts Section */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <span className="w-1 h-6 bg-neon-purple rounded"></span>
-                            Visitor Discoveries
-                        </h3>
-                        <PendingFacts />
-                    </div>
-                </motion.div>
 
                 {/* MEMORY MANAGEMENT SECTION (Carousel) */}
                 {(memories.facts.length > 0 || memories.questions.length > 0) && (
