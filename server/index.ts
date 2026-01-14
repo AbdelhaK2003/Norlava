@@ -320,6 +320,40 @@ io.on('connection', (socket) => {
                     io.to(roomName).emit('bot-speak', { text: fullResponse });
                 }
 
+                // --- 3.2 DETECT UNKNOWN QUESTIONS (Fallback Trigger) ---
+                // If AI used the fallback phrase, we capture the user's question as a GUEST_QUESTION
+                // Fallback phrases: "I'm still learning", "hasn't shared those details", "I'll ask them"
+                const fallbackPhrases = ["still learning", "hasn't shared", "ask them about that"];
+                const contentLower = fullResponse.toLowerCase();
+
+                if (fallbackPhrases.some(phrase => contentLower.includes(phrase))) {
+                    console.log("🤔 AI used fallback. Capturing question for Host...");
+
+                    (async () => {
+                        try {
+                            const pendingQuestions = await db.getMemories(profile.id);
+                            const existing = pendingQuestions.find((m: any) =>
+                                m.type === 'GUEST_QUESTION' &&
+                                m.prompt === message // Exact match on question
+                            );
+
+                            if (!existing) {
+                                await db.createMemory({
+                                    profileId: profile.id,
+                                    type: 'GUEST_QUESTION',
+                                    prompt: message, // The visitor's question
+                                    content: '' // No answer yet
+                                });
+                                console.log(`📝 Captured GUEST_QUESTION: "${message}"`);
+                            } else {
+                                console.log(`⏩ Skipped duplicate question: "${message}"`);
+                            }
+                        } catch (err) {
+                            console.error("Failed to capture question:", err);
+                        }
+                    })();
+                }
+
                 // --- 4. FACT EXTRACTION FROM VISITOR MESSAGE ---
                 // Extract facts from what the visitor said, but DON'T apply them to AI yet
                 // The user must approve facts before they affect the AI
