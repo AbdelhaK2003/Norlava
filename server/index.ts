@@ -317,7 +317,7 @@ io.on('connection', (socket) => {
                                         data: { type: 'QUESTION', content: answer }
                                     });
                                     // Refresh context
-                                    await db.refreshAiContext(profile.id);
+                                    if (profile) await db.refreshAiContext(profile.id);
                                 }
                             } else if (action === 'RESOLVED_FACT') {
                                 const id = params;
@@ -325,7 +325,7 @@ io.on('connection', (socket) => {
                                     where: { id },
                                     data: { type: 'BIOGRAPHY' }
                                 });
-                                await db.refreshAiContext(profile.id);
+                                if (profile) await db.refreshAiContext(profile.id);
                                 io.to(roomName).emit('receive-message', {
                                     id: "sys-conf-" + Date.now(),
                                     text: `✅ [SYSTEM] Fact Confirmed!`,
