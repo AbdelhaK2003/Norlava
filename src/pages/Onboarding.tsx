@@ -31,30 +31,33 @@ interface SampleQA {
 const Onboarding = () => {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
-  const totalSteps = 5;
+  const totalSteps = 6; // Increased step count
 
   const [formData, setFormData] = useState({
     // Step 1: Basic Identity
     nickname: "",
     tagline: "",
 
-    // Step 2: Communication Style
+    // NEW Step 2: The Brain Dump (Philosophy)
+    philosophy: "",
+
+    // Step 3: Communication Style
     formalityLevel: "balanced" as "casual" | "balanced" | "formal",
     humorStyle: "witty" as "playful" | "witty" | "serious",
     responseLength: "conversational" as "brief" | "detailed" | "conversational",
 
-    // Step 3: Expertise & Interests
+    // Step 4: Expertise & Interests
     expertise: [] as string[],
     hobbies: [] as string[],
 
-    // Step 4: Sample Responses
+    // Step 5: Sample Responses
     sampleQA: [] as SampleQA[],
 
-    // Step 5: Avatar
+    // Step 6: Avatar
     gender: "neutral" as "male" | "female" | "neutral",
   });
 
-  /* Separate temp inputs for Step 3 */
+  /* Separate temp inputs for Step 4 */
   const [expertInput, setExpertInput] = useState("");
   const [hobbyInput, setHobbyInput] = useState("");
 
@@ -98,6 +101,7 @@ const Onboarding = () => {
       try {
         await api.post('/user/onboarding', {
           interests: formData.expertise.join(", "),
+          philosophy: formData.philosophy, // Send Brain Dump
           personality: JSON.stringify({
             nickname: formData.nickname,
             tagline: formData.tagline,
@@ -232,8 +236,56 @@ const Onboarding = () => {
             </motion.div>
           )}
 
-          {/* Step 2: Communication Style */}
+          {/* NEW Step 2: The Brain Dump */}
           {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <GlassCard className="p-8" glow>
+                <div className="text-center mb-8">
+                  <motion.div
+                    className="inline-flex items-center gap-2 bg-neon-purple/20 text-neon-purple px-4 py-2 rounded-full text-sm font-medium mb-4"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                  >
+                    <Brain size={16} />
+                    {t('onboarding.brainDumpTitle') || "Digital Brain"}
+                  </motion.div>
+                  <h2 className="text-2xl font-bold mb-2">{t('onboarding.brainDumpHeading') || "Upload Your Mind"}</h2>
+                  <p className="text-muted-foreground">
+                    {t('onboarding.brainDumpDesc') || "This is the most important step. Write everything about who you are, your philosophy, your stories, and how you view the world. The AI will use this to truly become you."}
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <Textarea
+                    placeholder="I believe that..."
+                    className="min-h-[300px] text-lg leading-relaxed bg-black/40 border-white/10 focus:border-neon-purple/50"
+                    value={formData.philosophy}
+                    onChange={(e) => updateField("philosophy", e.target.value)}
+                  />
+                  <p className="text-xs text-center text-muted-foreground">
+                    Tip: The more you write, the better your AI twin will be.
+                  </p>
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <Button onClick={handleBack} variant="outline" size="lg" className="gap-2">
+                    <ArrowLeft size={18} /> {t('onboarding.back')}
+                  </Button>
+                  <Button onClick={handleNext} className="flex-1" variant="neon" size="lg">
+                    {t('onboarding.continue')} <ArrowRight size={18} />
+                  </Button>
+                </div>
+              </GlassCard>
+            </motion.div>
+          )}
+
+          {/* Step 3: Communication Style */}
+          {step === 3 && (
             <motion.div
               key="step2"
               initial={{ opacity: 0, x: 20 }}
@@ -331,8 +383,8 @@ const Onboarding = () => {
             </motion.div>
           )}
 
-          {/* Step 3: Expertise & Hobbies */}
-          {step === 3 && (
+          {/* Step 4: Expertise & Hobbies */}
+          {step === 4 && (
             <motion.div
               key="step3"
               initial={{ opacity: 0, x: 20 }}
@@ -435,8 +487,8 @@ const Onboarding = () => {
             </motion.div>
           )}
 
-          {/* Step 4: Sample Q&A */}
-          {step === 4 && (
+          {/* Step 5: Sample Q&A */}
+          {step === 5 && (
             <motion.div
               key="step4"
               initial={{ opacity: 0, x: 20 }}
@@ -515,8 +567,8 @@ const Onboarding = () => {
             </motion.div>
           )}
 
-          {/* Step 5: Avatar Selection */}
-          {step === 5 && (
+          {/* Step 6: Avatar Selection */}
+          {step === 6 && (
             <motion.div
               key="step5"
               initial={{ opacity: 0, x: 20 }}

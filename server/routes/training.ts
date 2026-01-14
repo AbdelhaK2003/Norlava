@@ -34,7 +34,7 @@ router.post('/', authenticateToken, async (req, res) => {
             prompt,   // The question asked
             content   // The user's answer
         });
-
+ 
         // Auto-update the "Brain" context
         await db.refreshAiContext(profile.id); 
 

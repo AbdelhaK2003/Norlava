@@ -46,42 +46,91 @@ const Dashboard = () => {
     useEffect(() => {
         const storedUser = localStorage.getItem('user');
         const token = localStorage.getItem('token');
+        const cachedStats = localStorage.getItem('dashboardStats');
 
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
 
+        // 1. Instant Load from Cache
+        if (cachedStats) {
+            setStats(JSON.parse(cachedStats));
+        }
+
         if (token) {
-            api.get('/user/dashboard-stats')
-                .then(({ data }) => setStats(data))
-                .catch(err => console.error("Failed to load stats", err));
-            fetchMemories();
+            const loadData = () => {
+                api.get('/user/dashboard-stats')
+                    .then(({ data }) => {
+                        setStats(data);
+                        localStorage.setItem('dashboardStats', JSON.stringify(data));
+                    })
+                    .catch(err => console.error("Failed to load stats", err));
+                fetchMemories();
+            };
+
+            loadData(); // Initial Fetch
+            const interval = setInterval(loadData, 5000); // Poll every 5s
+
+            return () => clearInterval(interval);
         }
     }, []);
 
     const handleApproveFact = async (id: string) => {
-        await api.post(`/user/memories/${id}/approve`, {});
-        setFactIndex(0); // Reset to show next available
-        fetchMemories();
+        // Optimistic Update
+        setMemories(prev => ({
+            ...prev,
+            facts: prev.facts.filter(f => f.id !== id)
+        }));
+        setFactIndex(0);
         toast.success("Fact approved");
+
+        try {
+            await api.post(`/user/memories/${id}/approve`, {});
+            fetchMemories(); // Sync in background
+        } catch (e) {
+            toast.error("Failed to sync approval");
+        }
     };
 
     const handleDeleteMemory = async (id: string, type: 'fact' | 'question') => {
-        await api.delete(`/user/memories/${id}`);
+        // Optimistic Update
+        setMemories(prev => ({
+            ...prev,
+            facts: type === 'fact' ? prev.facts.filter(f => f.id !== id) : prev.facts,
+            questions: type === 'question' ? prev.questions.filter(q => q.id !== id) : prev.questions
+        }));
+
         if (type === 'fact') setFactIndex(0);
         else setQuestionIndex(0);
-        fetchMemories();
         toast.info("Memory discarded");
+
+        try {
+            await api.delete(`/user/memories/${id}`);
+            fetchMemories(); // Sync
+        } catch (e) {
+            toast.error("Failed to delete");
+        }
     };
 
     const handleAnswerQuestion = async (id: string) => {
         const answer = answerInput[id];
         if (!answer) return;
-        await api.post(`/user/memories/${id}/approve`, { answer });
-        fetchMemories();
+
+        // Optimistic Update
+        setMemories(prev => ({
+            ...prev,
+            questions: prev.questions.filter(q => q.id !== id)
+        }));
         setQuestionIndex(0);
         setAnswerInput(prev => ({ ...prev, [id]: "" }));
         toast.success("Question answered");
+
+        try {
+            await api.post(`/user/memories/${id}/approve`, { answer });
+            fetchMemories(); // Sync
+        } catch (e) {
+            toast.error("Failed to sync answer");
+        }
     };
 
     const profileUrl = user ? `${window.location.origin}/interact/${user.username}` : "";

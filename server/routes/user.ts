@@ -7,7 +7,7 @@ const router = Router();
 // Initial Onboarding (Create Profile)
 router.post('/onboarding', authenticateToken, async (req: AuthRequest, res) => {
     try {
-        const { interests, personality, funFacts, bio, writingStyle } = req.body;
+        const { interests, personality, funFacts, bio, writingStyle, philosophy } = req.body;
 
         // Parse personality to construct AI Context
         let aiContext = "";
@@ -18,6 +18,7 @@ You are ${pData.nickname || "an AI assistant"}. ${pData.tagline ? `Your tagline 
 
 About you:
 ${bio ? `Bio: ${bio}` : ""}
+${philosophy ? `Your Philosophy/Brain Dump: "${philosophy}"` : ""}
 
 Your personality traits:
 - Formality: ${pData.formalityLevel}
@@ -45,7 +46,8 @@ If a visitor asks about something you don't know about the person you represent,
             funFacts,
             aiContext, // Save the "Brain"
             bio: bio || "", // Save bio
-            writingStyle: writingStyle || "" // Save writing style
+            writingStyle: writingStyle || "", // Save writing style
+            philosophy: philosophy || "" // Save Brain Dump
         });
 
         res.json(profile);

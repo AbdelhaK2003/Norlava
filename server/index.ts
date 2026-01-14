@@ -25,18 +25,18 @@ const sessionMessages = new Map<string, any[]>();
 // Helper: Check if a similar question was already asked in this session
 function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], threshold = 0.7): boolean {
     if (!sessionHistory || sessionHistory.length === 0) return false;
-    
+
     const newWords = newMessage.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    
+
     // Check recent messages (last 10)
     const recentMessages = sessionHistory.slice(-10);
-    
+
     for (const msg of recentMessages) {
         if (msg.isUser) { // Check user's previous messages
             const existingWords = msg.content.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
             const commonWords = newWords.filter((w: string) => existingWords.includes(w));
             const similarity = commonWords.length / Math.max(newWords.length, existingWords.length);
-            
+
             if (similarity >= threshold) {
                 return true; // Similar question found
             }
@@ -106,10 +106,10 @@ io.on('connection', (socket) => {
         const roomName = `${username}:${visitorId}`;
 
         socket.join(roomName);
-        
+
         // Initialize empty session messages (fresh conversation each page load)
         sessionMessages.set(roomName, []);
-        
+
         console.log(`User joined PRIVATE profile room: ${roomName} (Fresh session started)`);
     });
 
@@ -140,7 +140,7 @@ io.on('connection', (socket) => {
         // Check for duplicate/similar questions BEFORE saving
         const sessionKey = roomName;
         const sessionHistory = sessionMessages.get(sessionKey) || [];
-        
+
         const isDuplicateQuestion = hasSimilarQuestionBeenAsked(message, sessionHistory);
         if (isDuplicateQuestion && senderIsUser) {
             console.log("⚠️ Similar question detected in this session, continuing anyway...");
@@ -227,7 +227,7 @@ io.on('connection', (socket) => {
                 // This ensures each new page load is a fresh conversation
                 const sessionKey = roomName;
                 const sessionHistory = sessionMessages.get(sessionKey) || [];
-                
+
                 const history = sessionHistory
                     .map(m => `${m.isUser ? 'User' : 'You'}: ${m.content}`)
                     .join("\n");
@@ -338,23 +338,43 @@ io.on('connection', (socket) => {
                         if (factText && factText !== "NONE" && factText !== "NO") {
                             // Could be multiple facts, split by newline
                             const facts = factText.split('\n').filter(f => f.trim().length > 10);
-                            
+
+                            // Load existing memories (approved facts/questions) to avoid adding what we already know
+                            const existingMemories = await db.getMemories(profile.id);
+                            const knownContent = existingMemories.map((m: any) => m.content.toLowerCase());
+                            const knownPrompts = existingMemories.map((m: any) => m.prompt?.toLowerCase());
+
                             for (const fact of facts) {
-                                console.log(`💡 PENDING FACT FOR APPROVAL: "${fact}"`);
-                                
-                                // Add to pendingFacts (don't affect AI yet)
+                                const cleanFact = fact.trim();
+                                const lowerFact = cleanFact.toLowerCase();
+
+                                // 1. CHECK IF WE ALREADY KNOW THIS (Approved Memory)
+                                // Fuzzy check: if any existing memory contains 80% of the words or vice versa
+                                const alreadyKnown = knownContent.some((k: string) => k.includes(lowerFact) || lowerFact.includes(k));
+                                const alreadyAsked = knownPrompts.some((p: string) => p && (p.includes(lowerFact) || lowerFact.includes(p)));
+
+                                if (alreadyKnown || alreadyAsked) {
+                                    console.log(`🧠 SKIPPED (Already Known): "${cleanFact}"`);
+                                    continue;
+                                }
+
+                                console.log(`💡 PENDING FACT FOR APPROVAL: "${cleanFact}"`);
+
+                                // 2. CHECK PENDING LIST (Deduplication)
                                 const pending = profile.pendingFacts ? JSON.parse(profile.pendingFacts) : [];
-                                
-                                // Avoid duplicates
-                                if (!pending.some((p: string) => p.toLowerCase() === fact.trim().toLowerCase())) {
-                                    pending.push(fact.trim());
-                                    
+
+                                // Avoid duplicates in pending list
+                                if (!pending.some((p: string) => p.toLowerCase() === lowerFact)) {
+                                    pending.push(cleanFact);
+
                                     // Save to database using userId
                                     await db.updateProfile(hostUser.id, {
                                         pendingFacts: JSON.stringify(pending)
                                     });
-                                    
-                                    console.log(`✅ Pending fact saved: "${fact}"`);
+
+                                    console.log(`✅ Pending fact saved: "${cleanFact}"`);
+                                } else {
+                                    console.log(`🧠 SKIPPED (Already Pending): "${cleanFact}"`);
                                 }
                             }
                         } else {
@@ -388,7 +408,7 @@ io.on('connection', (socket) => {
     });
 
     // ==================== VOICE MODE HANDLERS ====================
-    
+
     /**
      * Start Live Voice Session
      * Uses Web Speech API + Gemini 2.0 Flash + Natural TTS
@@ -419,7 +439,7 @@ io.on('connection', (socket) => {
                 },
                 onAudioResponse: (audioData: Buffer) => {
                     // Send complete text for TTS
-                    io.to(roomName).emit('voice-audio-response', { 
+                    io.to(roomName).emit('voice-audio-response', {
                         audioData: audioData.toString('base64')
                     });
                 },
@@ -481,7 +501,7 @@ io.on('connection', (socket) => {
         try {
             // Emit user message to room
             io.to(roomName).emit('voice-user-message', { text: message });
-            
+
             // Process through Gemini Live
             await session.processText(message);
         } catch (error) {
@@ -509,7 +529,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
-        
+
         // Cleanup any active voice sessions for this socket
         // Note: In production, you'd want to track socket.id -> sessionKey mapping
         liveSessions.forEach(async (session, key) => {

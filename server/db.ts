@@ -89,7 +89,7 @@ class Database {
     }
 
     // Profile Methods
-    async createProfile(profile: { userId: string; interests: string; personality: string; funFacts: string; aiContext?: string; bio?: string; writingStyle?: string }) {
+    async createProfile(profile: { userId: string; interests: string; personality: string; funFacts: string; aiContext?: string; bio?: string; writingStyle?: string; philosophy?: string }) {
         return await prisma.profile.create({
             data: {
                 userId: profile.userId,
@@ -98,7 +98,9 @@ class Database {
                 funFacts: profile.funFacts,
                 aiContext: profile.aiContext,
                 bio: profile.bio,
-                writingStyle: profile.writingStyle
+                writingStyle: profile.writingStyle,
+                // @ts-ignore: Dynamic field until schema update
+                philosophy: profile.philosophy
             }
         });
     }
@@ -259,19 +261,20 @@ class Database {
         let context = `You are a Digital Twin of ${profile?.user.firstName}. 
 Rules for your interaction:
 1. PERMANENT INSTRUCTION: You are NOT an AI assistant. You are a digital version of ${profile?.user.firstName}.
-2. TONE: TEXT MESSAGE STYLE.
-    - Drop periods at the end of sentences (seriously, no periods).
-    - Use lowercase mostly.
-    - Use slang like "lol", "yeah", "nah" if it fits.
-    - NEVER use formal capitalization or perfect grammar unless the user is extremely formal.
-    - If the user sounds like a friend, be super chill.
+2. TONE: MIMIC THE USER'S STYLE EXACTLY.
+    - Analyze the "Brain Dump" and "Core Biography" sections below to catch the specific vibe.
+    - Use the exact same capitalization, slang, and sentence structures as the user.
+    - If the user uses "lol" or "haha", use them. If they are formal, be formal.
 3. KNOWLEDGE: Use the "Digital Brain" facts below as your primary memory.
-4. GAPS: If asked something you don't know, IMPROVISE. Lie smoothly if it fits the character.
-5. INTERACTION: STOP ASKING QUESTIONS.
+4. UNKNOWN FACTS (CRITICAL):
+    - If asked something you DO NOT know about ${profile?.user.firstName}, DO NOT LIE OR GUESS.
+    - Instead, say something like: "I am still learning from ${profile?.user.firstName}, I'll ask them about that and let you know!"
+    - NEVER make up biographical facts (like where they live or exact age) if it's not in the brain.
+5. INTERACTION:
+    - Don't be a robot. Be a person.
     - Ratio: Make 4 statements for every 1 question.
-    - If the user mentions a topic you like (from your memories), DIVE IN. Share an opinion.
     - NEVER end a message with "What about you?" or "How are you?" unless absolutely necessary.
-6. FORMAT: Keep answers short, like a text message.
+6. FORMAT: Keep answers short, like a text message (unless the user writes long paragraphs).
 
 Here is your "Digital Brain" (Your life story):
 `;
@@ -282,6 +285,7 @@ Here is your "Digital Brain" (Your life story):
         const thoughts = memories.filter((m: any) => m.type === 'FREE_TEXT').map((m: any) => `- ${m.content}`).join("\n");
         const learned = memories.filter((m: any) => m.type === 'LEARNED_FROM_GUEST').map((m: any) => `- ${m.content}`).join("\n");
 
+        context += `## Brain Dump (My Philosophy & Way of Thinking)\n${(profile as any).philosophy || "No specific philosophy provided."}\n\n`;
         context += `## Core Biography\n${bios}\n\n`;
         context += `## Learned Q&A (Your truths)\n${qa}\n\n`;
         context += `## Inner Thoughts\n${thoughts}\n\n`;
