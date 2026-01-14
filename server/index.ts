@@ -254,7 +254,7 @@ io.on('connection', (socket) => {
                 }
 
                 // --- TRAINING MODE: HANDLE "START" COMMAND ---
-                if (data.isTrainingMode && /^(start|go|begin|ready)$/i.test(message.trim())) {
+                if (data.isTrainingMode && profile && /^(start|go|begin|ready)$/i.test(message.trim())) {
                     const pendingQuestions = await db.getMemories(profile.id);
                     const nextQuestion = pendingQuestions.find((m: any) => m.type === 'GUEST_QUESTION');
 
