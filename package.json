@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && npm run build:server",
+    "build": "vite build",
     "build:dev": "vite build --mode development",
     "build:server": "npx esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist-server/index.cjs --external:bcryptjs --external:prisma --external:@prisma/client",
     "lint": "eslint .",
