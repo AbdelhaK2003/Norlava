@@ -12,50 +12,42 @@ import trainingRoutes from './routes/training';
 import factsRoutes from './routes/facts';
 import { db, prisma } from './db';
 import { GeminiLiveSession } from './services/gemini-live';
-
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
 // Wrap in try-catch or ensure key exists to prevent startup crash
-let genAI: GoogleGenerativeAI;
+let genAI;
 try {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'MISSING_KEY');
-} catch (e) {
+}
+catch (e) {
     console.error("❌ Failed to initialize Gemini SDK:", e);
 }
-
 // Global Error Handlers for debugging in production
 // Must be as high as possible to catch early failures
 process.on('uncaughtException', (err) => {
     console.error('❌ UNCAUGHT EXCEPTION:', err);
     // Don't exit immediately, let logs flush
 });
-
 process.on('unhandledRejection', (reason, promise) => {
     console.error('❌ UNHANDLED REJECTION:', reason);
 });
-
 // Store active live voice sessions
-const liveSessions = new Map<string, GeminiLiveSession>();
-
+const liveSessions = new Map();
 // Track session messages - resets on new connection
 // Each session only uses messages from current page load
-const sessionMessages = new Map<string, any[]>();
-
+const sessionMessages = new Map();
 // Helper: Check if a similar question was already asked in this session
-function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], threshold = 0.7): boolean {
-    if (!sessionHistory || sessionHistory.length === 0) return false;
-
+function hasSimilarQuestionBeenAsked(newMessage, sessionHistory, threshold = 0.7) {
+    if (!sessionHistory || sessionHistory.length === 0)
+        return false;
     const newWords = newMessage.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-
     // Check recent messages (last 10)
     const recentMessages = sessionHistory.slice(-10);
-
     for (const msg of recentMessages) {
         if (msg.isUser) { // Check user's previous messages
-            const existingWords = msg.content.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
-            const commonWords = newWords.filter((w: string) => existingWords.includes(w));
+            const existingWords = msg.content.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+            const commonWords = newWords.filter((w) => existingWords.includes(w));
             const similarity = commonWords.length / Math.max(newWords.length, existingWords.length);
-
             if (similarity >= threshold) {
                 return true; // Similar question found
             }
@@ -63,7 +55,6 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
     }
     return false;
 }
-
 const allowedOrigins = [
     "https://norlava.com",
     "https://www.norlava.com",
@@ -71,7 +62,6 @@ const allowedOrigins = [
     "http://localhost:4173",
     "https://norlava-production.up.railway.app"
 ];
-
 const corsOptions = {
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -79,7 +69,6 @@ const corsOptions = {
     credentials: true,
     optionsSuccessStatus: 200
 };
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -89,54 +78,44 @@ const io = new Server(server, {
         credentials: true
     }
 });
-
 // (Moved to top)
-
 const PORT = process.env.PORT || 3000;
-
 console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
-
 // Apply CORS middleware explicitly
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
-
 app.use(express.json());
-
 // Request Logger
 app.use((req, res, next) => {
     console.log(`📡 [${req.method}] ${req.path}`);
     next();
 });
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/facts', factsRoutes);
-
 // Basic health check
 app.get('/', (req, res) => {
     res.send('Voxterna Backend is Running 🚀');
 });
-
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Voxterna Backend is running' });
 });
-
 // Catch-all for API 404s (Must come after all API routes)
 app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'API Endpoint Not Found' });
 });
-
 // Database health check
 app.get('/api/health-db', async (req, res) => {
     try {
         // Try a simple query
         const userCount = await prisma.user.count();
         res.json({ status: 'ok', userCount, message: 'Database connection successful' });
-    } catch (error: any) {
+    }
+    catch (error) {
         console.error("DB Health Check Failed:", error);
         res.status(500).json({
             status: 'error',
@@ -145,36 +124,26 @@ app.get('/api/health-db', async (req, res) => {
         });
     }
 });
-
 // Socket.io Connection
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
-
-    socket.on('join-profile', async (data: any) => {
+    socket.on('join-profile', async (data) => {
         const username = typeof data === 'string' ? data : data.username;
         const visitorId = typeof data === 'object' ? data.visitorId : 'anonymous';
-
         // ISOLATION: Join a specific room for this visitor session
         const roomName = `${username}:${visitorId}`;
-
         socket.join(roomName);
-
         // Initialize empty session messages (fresh conversation each page load)
         sessionMessages.set(roomName, []);
-
         console.log(`User joined PRIVATE profile room: ${roomName} (Fresh session started)`);
     });
-
-    socket.on('send-message', async (data: any) => {
+    socket.on('send-message', async (data) => {
         console.log("📩 Messaging Event Triggered");
         // console.log("📦 Data:", JSON.stringify(data, null, 2));
-
         const { profileId, message, senderIsUser, inputType, visitorId } = data;
         const roomName = `${profileId}:${visitorId}`; // The unique room
-
         // 1. Save message to DB
         const hostUser = await db.findUserByUsername(profileId);
-
         if (!hostUser) {
             console.error(`❌ Host user NOT FOUND for username: ${profileId}`);
             io.to(roomName).emit('receive-message', {
@@ -183,21 +152,18 @@ io.on('connection', (socket) => {
                 isUser: false
             });
             return; // Stop processing
-        } else {
+        }
+        else {
             console.log(`✅ Host user found: ${hostUser.username} (${hostUser.id})`);
         }
-
         const hostId = hostUser.id;
-
         // Check for duplicate/similar questions BEFORE saving
         const sessionKey = roomName;
         const sessionHistory = sessionMessages.get(sessionKey) || [];
-
         const isDuplicateQuestion = hasSimilarQuestionBeenAsked(message, sessionHistory);
         if (isDuplicateQuestion && senderIsUser) {
             console.log("⚠️ Similar question detected in this session, continuing anyway...");
         }
-
         const savedMsg = await db.createMessage({
             content: message,
             isUser: senderIsUser,
@@ -205,29 +171,24 @@ io.on('connection', (socket) => {
             senderId: visitorId, // Track who sent it
             visitorId: visitorId // DB Isolation field
         });
-
         // Add to current session messages (for AI context only from this session)
         sessionHistory.push({
             content: message,
             isUser: senderIsUser
         });
         sessionMessages.set(sessionKey, sessionHistory);
-
         // 2. Broadcast to PRIVATE room
         io.to(roomName).emit('receive-message', {
             id: savedMsg.id,
             text: message,
             isUser: senderIsUser
         });
-
         // 3. AI Response (Real or Simulated)
         if (senderIsUser && hostUser) {
             const isSimulated = process.env.SIMULATED_AI === 'true';
-
             if (isSimulated) {
                 console.log("⚡ SIMULATED AI MODE: Generating mock stream...");
                 socket.emit('bot-typing', true);
-
                 const mockResponses = [
                     "I hear you loud and clear! This is my simulated brain talking.",
                     "Hello! My OpenAI connection is currently offline, so I am running on backup power.",
@@ -235,11 +196,9 @@ io.on('connection', (socket) => {
                     "Voice interaction confirmed. Text delivery verified. Simulation complete."
                 ];
                 const responseText = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-
                 // Simulate streaming
                 const tokens = responseText.split(' ');
                 let fullSimResponse = "";
-
                 (async () => {
                     for (const token of tokens) {
                         await new Promise(r => setTimeout(r, 150));
@@ -247,31 +206,26 @@ io.on('connection', (socket) => {
                         fullSimResponse += t;
                         socket.emit('ai-token', { text: t });
                     }
-
                     socket.emit('bot-typing', false);
-
                     const aiMsg = await db.createMessage({
                         content: fullSimResponse.trim(),
                         isUser: false,
                         hostId: hostId,
                         senderId: "ai",
-                        visitorId: visitorId  // Add visitor isolation
+                        visitorId: visitorId // Add visitor isolation
                     });
-
                     io.to(roomName).emit('receive-message', {
                         id: aiMsg.id,
                         text: fullSimResponse.trim(),
                         isUser: false,
                         completed: true
                     });
-
                     if (inputType === 'voice') {
                         io.to(roomName).emit('bot-speak', { text: fullSimResponse.trim() });
                     }
                 })();
                 return;
             }
-
             // Fetch profile for AI context
             const profile = await db.findProfileByUserId(hostUser.id);
             try {
@@ -279,42 +233,35 @@ io.on('connection', (socket) => {
                 // This ensures each new page load is a fresh conversation
                 const sessionKey = roomName;
                 const sessionHistory = sessionMessages.get(sessionKey) || [];
-
                 const history = sessionHistory
                     .map(m => `${m.isUser ? 'User' : 'You'}: ${m.content}`)
                     .join("\n");
-
                 // Default context if training is empty
                 let aiBrain = profile?.aiContext || `You are ${hostUser.firstName}. You are a helpful digital assistant.`;
-
                 // Add learned facts from visitor interactions
-                let learnedFacts: string[] = [];
+                let learnedFacts = [];
                 try {
                     learnedFacts = profile?.learnedFacts ? JSON.parse(profile.learnedFacts) : [];
-                } catch (e) {
+                }
+                catch (e) {
                     console.error("Error parsing learnedFacts:", e);
                     learnedFacts = [];
                 }
-
                 if (learnedFacts.length > 0) {
-                    aiBrain += `\n\nFACTS I'VE LEARNED FROM VISITOR CONVERSATIONS:\n${learnedFacts.map((fact: string) => `• ${fact}`).join('\n')}`;
+                    aiBrain += `\n\nFACTS I'VE LEARNED FROM VISITOR CONVERSATIONS:\n${learnedFacts.map((fact) => `• ${fact}`).join('\n')}`;
                 }
-
                 // --- TRAINING MODE: HANDLE "START" COMMAND ---
                 if (data.isTrainingMode && profile && /^(start|go|begin|ready)$/i.test(message.trim())) {
                     const pendingQuestions = await db.getMemories(profile.id);
-                    const nextQuestion = pendingQuestions.find((m: any) => m.type === 'GUEST_QUESTION');
-
+                    const nextQuestion = pendingQuestions.find((m) => m.type === 'GUEST_QUESTION');
                     if (nextQuestion) {
                         const trainingResponse = `Great, let's get to work. \n\n**Visitor Question:** "${nextQuestion.prompt}"\n\nHow should I answer this?`;
-
                         io.to(roomName).emit('receive-message', {
                             id: "training-" + Date.now(),
                             text: trainingResponse,
                             isUser: false,
                             completed: true
                         });
-
                         // Save AI response to DB
                         await db.createMessage({
                             content: trainingResponse,
@@ -323,16 +270,13 @@ io.on('connection', (socket) => {
                             senderId: "ai",
                             visitorId: visitorId
                         });
-
                         return; // Stop standard Gemini generation
                     }
                 }
-
                 // Add writing style instruction if available
                 if (profile?.writingStyle) {
                     aiBrain += `\n\nIMPORTANT: Write exactly like this sample. Copy the tone, style, and personality:\n"${profile.writingStyle}"`;
                 }
-
                 // Add instruction for "still learning" responses
                 aiBrain += `\n\nGUIDELINES FOR ANSWERS:
                 1. **GENERAL KNOWLEDGE**: If the user asks about general topics (science, history, math), answer directly.
@@ -341,23 +285,16 @@ io.on('connection', (socket) => {
                    - Respond with a natural, cool vibe. Examples: "That's a great question! He hasn't told me that yet.", "I'm actually not sure, he kept that a secret from me!", "Good one. I'll have to ask him about that."
                    - CRITICAL: You MUST include the phrase "didn't tell me" OR "hasn't told me" OR "hasn't shared" so I can track this.
                    - Do NOT make up facts.`;
-
                 // Emit typing status to PRIVATE room
                 io.to(roomName).emit('bot-typing', true);
-
                 console.log("🤖 Asking Gemini (Streaming)...");
-
                 // Get the Gemini model (gemini-pro is stable in v1 API)
                 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
                 // Create the prompt with AI context AND History
                 const prompt = `${aiBrain}\n\n[CONVERSATION HISTORY]\n${history}\n\n[CURRENT INTERACTION]\nUser: ${message}\nAssistant:`;
-
                 // Stream the response
                 const result = await model.generateContentStream(prompt);
-
                 let fullResponse = "";
-
                 for await (const chunk of result.stream) {
                     const chunkText = chunk.text();
                     if (chunkText) {
@@ -365,28 +302,22 @@ io.on('connection', (socket) => {
                         // For simplicity, we just stream everything, then hide it in frontend?
                         // Or better: We strip it from the stream.
                         fullResponse += chunkText;
-
                         // Simple hiding strategy: Don't emit tokens that look like command parts if possible.
                         // But commands are usually at the end. 
                         io.to(roomName).emit('ai-token', { text: chunkText });
                     }
                 }
-
                 console.log("✅ Gemini Stream Complete. Length:", fullResponse.length);
-
                 // --- CHECK FOR TRAINING COMMANDS (Hidden from User) ---
                 let finalVisibleResponse = fullResponse;
-
                 if (data.isTrainingMode) {
                     const commandRegex = /\[(RESOLVED_QUESTION|RESOLVED_FACT|DELETE_MEMORY):([^\]]+)\]/g;
                     let match;
                     while ((match = commandRegex.exec(fullResponse)) !== null) {
                         const [fullCmd, action, params] = match;
                         console.log(`🛠️ Executing Training Command: ${action} -> ${params}`);
-
                         // Remove command from visible text
                         finalVisibleResponse = finalVisibleResponse.replace(fullCmd, '').trim();
-
                         try {
                             if (action === 'RESOLVED_QUESTION') {
                                 // Format: ID:Answer
@@ -399,21 +330,25 @@ io.on('connection', (socket) => {
                                         data: { type: 'QUESTION', content: answer }
                                     });
                                     // Refresh context
-                                    if (profile) await db.refreshAiContext(profile.id);
+                                    if (profile)
+                                        await db.refreshAiContext(profile.id);
                                 }
-                            } else if (action === 'RESOLVED_FACT') {
+                            }
+                            else if (action === 'RESOLVED_FACT') {
                                 const id = params;
                                 await prisma.memory.update({
                                     where: { id },
                                     data: { type: 'BIOGRAPHY' }
                                 });
-                                if (profile) await db.refreshAiContext(profile.id);
+                                if (profile)
+                                    await db.refreshAiContext(profile.id);
                                 io.to(roomName).emit('receive-message', {
                                     id: "sys-conf-" + Date.now(),
                                     text: `✅ [SYSTEM] Fact Confirmed!`,
                                     isUser: false
                                 });
-                            } else if (action === 'DELETE_MEMORY') {
+                            }
+                            else if (action === 'DELETE_MEMORY') {
                                 const id = params;
                                 await db.deleteMemory(id);
                                 io.to(roomName).emit('receive-message', {
@@ -422,14 +357,13 @@ io.on('connection', (socket) => {
                                     isUser: false
                                 });
                             }
-                        } catch (err) {
+                        }
+                        catch (err) {
                             console.error("❌ Failed to execute training command:", err);
                         }
                     }
                 }
-
                 io.to(roomName).emit('bot-typing', false);
-
                 const aiMsg = await db.createMessage({
                     content: finalVisibleResponse, // Save only visible part
                     isUser: false,
@@ -437,7 +371,6 @@ io.on('connection', (socket) => {
                     senderId: "ai",
                     visitorId: visitorId
                 });
-
                 // Add AI response to session history
                 const sessionHistory2 = sessionMessages.get(roomName) || [];
                 sessionHistory2.push({
@@ -445,37 +378,30 @@ io.on('connection', (socket) => {
                     isUser: false
                 });
                 sessionMessages.set(roomName, sessionHistory2);
-
                 io.to(roomName).emit('receive-message', {
                     id: aiMsg.id,
                     text: fullResponse,
                     isUser: false,
                     completed: true
                 });
-
                 if (inputType === 'voice') {
                     io.to(roomName).emit('bot-speak', { text: fullResponse });
                 }
-
                 // --- 3.2 DETECT UNKNOWN QUESTIONS (Fallback Trigger) ---
                 // If AI used the fallback phrase, we capture the user's question as a GUEST_QUESTION
                 // Updated phrases to match "Cool" responses
                 const fallbackPhrases = ["didn't tell me", "hasn't told me", "hasn't shared", "still learning", "kept that a secret", "have to ask him"];
                 const contentLower = fullResponse.toLowerCase();
-
                 if (fallbackPhrases.some(phrase => contentLower.includes(phrase))) {
                     console.log("🤔 AI used fallback. Capturing question for Host...");
-
                     (async () => {
                         try {
-                            if (!profile) return; // Fix: Ensure profile exists
-
+                            if (!profile)
+                                return; // Fix: Ensure profile exists
                             const pendingQuestions = await db.getMemories(profile.id);
-                            const existing = pendingQuestions.find((m: any) =>
-                                m.type === 'GUEST_QUESTION' &&
+                            const existing = pendingQuestions.find((m) => m.type === 'GUEST_QUESTION' &&
                                 m.prompt === message // Exact match on question
                             );
-
                             if (!existing) {
                                 await db.createMemory({
                                     profileId: profile.id,
@@ -484,7 +410,6 @@ io.on('connection', (socket) => {
                                     content: '' // No answer yet
                                 });
                                 console.log(`📝 Captured GUEST_QUESTION: "${message}"`);
-
                                 if (data.isTrainingMode || senderIsUser) {
                                     io.to(roomName).emit('receive-message', {
                                         id: "sys-q-" + Date.now(),
@@ -492,15 +417,16 @@ io.on('connection', (socket) => {
                                         isUser: false
                                     });
                                 }
-                            } else {
+                            }
+                            else {
                                 console.log(`⏩ Skipped duplicate question: "${message}"`);
                             }
-                        } catch (err) {
+                        }
+                        catch (err) {
                             console.error("Failed to capture question:", err);
                         }
                     })();
                 }
-
                 // --- 4. FACT EXTRACTION FROM VISITOR MESSAGE ---
                 (async () => {
                     try {
@@ -509,9 +435,7 @@ io.on('connection', (socket) => {
                             console.error("❌ [Fact Probe] Profile is missing!");
                             return;
                         }
-
                         const learningModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
                         // Extract facts about the HOST from what the visitor said
                         const factPrompt = `
                             Analyze this message sent to a digital avatar of "${hostUser.firstName}".
@@ -528,42 +452,32 @@ io.on('connection', (socket) => {
                             Output ONLY the fact statement (one per line).
                             If NO facts, output "NONE".
                         `;
-
                         console.log("🔍 [Fact Probe] Sending prompt to Gemini...");
                         const factResult = await learningModel.generateContent(factPrompt);
                         const factText = factResult.response.text().trim();
                         console.log(`🔍 [Fact Probe] Raw Output: "${factText}"`);
-
                         if (factText && !factText.includes("NONE") && factText.length > 5) {
                             const facts = factText.split('\n').filter(f => f.trim().length > 5);
                             console.log(`🔍 [Fact Probe] Candidates found: ${facts.length}`);
-
                             const existingMemories = await db.getMemories(profile.id);
-                            const knownContent = existingMemories.map((m: any) => m.content.toLowerCase());
-
+                            const knownContent = existingMemories.map((m) => m.content.toLowerCase());
                             for (const fact of facts) {
                                 const cleanFact = fact.trim();
                                 const lowerFact = cleanFact.toLowerCase();
-
                                 // Relaxed check: Only skip if EXACT match or very high overlap
-                                const alreadyKnown = knownContent.some((k: string) => k === lowerFact);
-
+                                const alreadyKnown = knownContent.some((k) => k === lowerFact);
                                 if (alreadyKnown) {
                                     console.log(`🧠 SKIPPED (Exact Match): "${cleanFact}"`);
                                     continue;
                                 }
-
                                 console.log(`💡 PENDING FACT FOR APPROVAL: "${cleanFact}"`);
-
                                 await db.createMemory({
                                     profileId: profile.id,
                                     type: 'LEARNED_FROM_GUEST',
                                     prompt: 'Fact extracted from conversation',
                                     content: cleanFact
                                 });
-
                                 console.log(`✅ Pending fact saved to DB: "${cleanFact}"`);
-
                                 // NEW: Notify Host immediately if in Training Mode or just for debugging feedback
                                 // We check if the sender is the User (Host) or if we want to confirm to Visitor?
                                 // Actually, only show this if senderIsUser (Trainer) or if we want to debug.
@@ -577,27 +491,27 @@ io.on('connection', (socket) => {
                                     });
                                 }
                             }
-                        } else {
+                        }
+                        else {
                             console.log("🧠 [Fact Probe] No meaningful facts found in output.");
                         }
-
-                    } catch (err) {
+                    }
+                    catch (err) {
                         console.error("⚠️ [Fact Probe] Failed:", err);
                     }
                 })();
-
-            } catch (error) {
+            }
+            catch (error) {
                 console.error("Gemini Error:", error);
-
                 const errString = String(error);
                 let userMsg = "(System Error)";
-
-                if (errString.includes("401")) userMsg = "Error: Invalid API Key.";
-                if (errString.includes("429")) userMsg = "Error: Rate Limit Exceeded.";
-                if (errString.includes("API_KEY")) userMsg = "Error: Gemini API Key not configured.";
-
+                if (errString.includes("401"))
+                    userMsg = "Error: Invalid API Key.";
+                if (errString.includes("429"))
+                    userMsg = "Error: Rate Limit Exceeded.";
+                if (errString.includes("API_KEY"))
+                    userMsg = "Error: Gemini API Key not configured.";
                 socket.emit('bot-typing', false);
-
                 io.to(roomName).emit('receive-message', {
                     id: "error-" + Date.now(),
                     text: userMsg,
@@ -606,36 +520,30 @@ io.on('connection', (socket) => {
             }
         }
     });
-
-
-
     /**
      * Start Training Session (Proactive Greeting)
      */
-    socket.on('start-training', async (data: any) => {
+    socket.on('start-training', async (data) => {
         console.log("🎓 Training Session Start Requested");
         const { username, visitorId } = data;
         const roomName = `${username}:${visitorId}`;
-
         const hostUser = await db.findUserByUsername(username);
-        if (!hostUser) return;
-
+        if (!hostUser)
+            return;
         const profile = await db.findProfileByUserId(hostUser.id);
-        if (!profile) return;
-
+        if (!profile)
+            return;
         // Check pending items
         const allMemories = await db.getMemories(profile.id);
-        const pendingQuestions = allMemories.filter((m: any) => m.type === 'GUEST_QUESTION').length;
-        const pendingFacts = allMemories.filter((m: any) => m.type === 'LEARNED_FROM_GUEST').length;
-
+        const pendingQuestions = allMemories.filter((m) => m.type === 'GUEST_QUESTION').length;
+        const pendingFacts = allMemories.filter((m) => m.type === 'LEARNED_FROM_GUEST').length;
         let greeting = "";
-
         if (pendingQuestions > 0 || pendingFacts > 0) {
             greeting = `Hello! I'm ready to learn. I have ${pendingQuestions} new questions and ${pendingFacts} facts to discuss. Shall we start?`;
-        } else {
+        }
+        else {
             greeting = `Hello! My memory is fully up to date. We can discuss random topics or you can teach me something new!`;
         }
-
         // Send this as a message from AI
         await db.createMessage({
             content: greeting,
@@ -644,27 +552,22 @@ io.on('connection', (socket) => {
             senderId: "ai",
             visitorId: visitorId
         });
-
         io.to(roomName).emit('receive-message', {
             id: "greeting-" + Date.now(),
             text: greeting,
             isUser: false
         });
-
         // io.to(roomName).emit('bot-speak', { text: greeting }); // Disabled per user request
     });
-
     /**
      * Start Live Voice Session
      * Uses Web Speech API + Gemini 2.0 Flash + Natural TTS
      */
-    socket.on('start-voice-session', async (data: any) => {
+    socket.on('start-voice-session', async (data) => {
         const { username, visitorId } = data;
         const sessionKey = `${username}:${visitorId}`;
         const roomName = sessionKey;
-
         console.log(`🎙️ Starting voice session: ${sessionKey}`);
-
         try {
             // Get host user
             const hostUser = await db.findUserByUsername(username);
@@ -672,92 +575,79 @@ io.on('connection', (socket) => {
                 socket.emit('voice-error', { error: 'Host user not found' });
                 return;
             }
-
             // Create new live session
             const liveSession = new GeminiLiveSession({
                 hostId: hostUser.id.toString(),
                 visitorId,
                 username,
-                onTextResponse: (text: string) => {
+                onTextResponse: (text) => {
                     // Stream text chunks for display
                     io.to(roomName).emit('voice-text-chunk', { text });
                 },
-                onAudioResponse: (audioData: Buffer) => {
+                onAudioResponse: (audioData) => {
                     // Send complete text for TTS
                     io.to(roomName).emit('voice-audio-response', {
                         audioData: audioData.toString('base64')
                     });
                 },
-                onError: (error: Error) => {
+                onError: (error) => {
                     console.error('❌ Voice session error:', error);
                     io.to(roomName).emit('voice-error', { error: error.message });
                 }
             });
-
             await liveSession.initialize();
             liveSessions.set(sessionKey, liveSession);
-
             socket.emit('voice-session-ready');
             console.log(`✅ Voice session ready: ${sessionKey}`);
-
-        } catch (error) {
+        }
+        catch (error) {
             console.error('❌ Failed to start voice session:', error);
             socket.emit('voice-error', { error: 'Failed to initialize voice session' });
         }
     });
-
     /**
      * Process Voice Text Input (from Web Speech API)
      */
-
-
     /**
      * Process Voice Text Input (hybrid mode)
      * User can type while in voice mode
      */
-    socket.on('voice-text-input', async (data: any) => {
+    socket.on('voice-text-input', async (data) => {
         const { username, visitorId, message } = data;
         const sessionKey = `${username}:${visitorId}`;
         const roomName = sessionKey;
-
         const session = liveSessions.get(sessionKey);
         if (!session) {
             socket.emit('voice-error', { error: 'No active voice session' });
             return;
         }
-
         try {
             // Emit user message to room
             io.to(roomName).emit('voice-user-message', { text: message });
-
             // Process through Gemini Live
             await session.processText(message);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('❌ Error processing voice text:', error);
             socket.emit('voice-error', { error: 'Failed to process text' });
         }
     });
-
     /**
      * End Voice Session
      */
-    socket.on('end-voice-session', async (data: any) => {
+    socket.on('end-voice-session', async (data) => {
         const { username, visitorId } = data;
         const sessionKey = `${username}:${visitorId}`;
-
         const session = liveSessions.get(sessionKey);
         if (session) {
             await session.end();
             liveSessions.delete(sessionKey);
             console.log(`👋 Ended voice session: ${sessionKey}`);
         }
-
         socket.emit('voice-session-ended');
     });
-
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
-
         // Cleanup any active voice sessions for this socket
         // Note: In production, you'd want to track socket.id -> sessionKey mapping
         liveSessions.forEach(async (session, key) => {
@@ -768,20 +658,7 @@ io.on('connection', (socket) => {
         });
     });
 });
-
-console.log(`🔍 Server attempting to start on port: ${PORT} (Type: ${typeof PORT})`);
-
-try {
-    server.listen(Number(PORT), "0.0.0.0", () => {
-        console.log(`🚀 Voxterna Backend running on port ${PORT}`);
-        console.log(`👉 Health Check: http://0.0.0.0:${PORT}/api/health`);
-    }).on('error', (err) => {
-        console.error("❌ Server Listen Error:", err);
-        process.exit(1);
-    });
-} catch (err) {
-    console.error("❌ Critical Startup Error:", err);
-    process.exit(1);
-}
-
+server.listen(Number(PORT), "0.0.0.0", () => {
+    console.log(`🚀 Voxterna Backend running on port ${PORT}`);
+});
 export { app, io };
