@@ -331,6 +331,8 @@ io.on('connection', (socket) => {
 
                     (async () => {
                         try {
+                            if (!profile) return; // Fix: Ensure profile exists
+
                             const pendingQuestions = await db.getMemories(profile.id);
                             const existing = pendingQuestions.find((m: any) =>
                                 m.type === 'GUEST_QUESTION' &&
