@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+console.log("🚀 [STARTUP] server/index.ts is executing...");
 import 'dotenv/config';
 import express from 'express';
 import http from 'http';
