@@ -252,7 +252,7 @@ io.on('connection', (socket) => {
                 }
 
                 // Add instruction for "still learning" responses
-                aiBrain += `\n\nWhen a visitor asks about something you don't know about the person you represent, respond warmly like: "I'm still learning more about that! ${hostUser.firstName} hasn't shared those details with me yet, but once they do, I'll let you know!"`;
+                aiBrain += `\n\nWhen a visitor asks about something you don't know about the person you represent, YOU MUST use the exact phrase: "I'm still learning more about that!" followed by "I'll ask them about it". Don't make up facts.`;
 
                 // Emit typing status to PRIVATE room
                 io.to(roomName).emit('bot-typing', true);
@@ -373,8 +373,10 @@ io.on('connection', (socket) => {
                             If NO facts found, output "NONE".
                         `;
 
+                        console.log("🧠 Fact Prompt sent to Gemini...");
                         const factResult = await learningModel.generateContent(factPrompt);
                         const factText = factResult.response.text().trim();
+                        console.log(`🧠 Raw Fact Extraction Result: "${factText}"`);
 
                         if (factText && factText !== "NONE" && factText !== "NO") {
                             // Could be multiple facts, split by newline
