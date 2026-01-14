@@ -64,7 +64,6 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
     return false;
 }
 
-// Explicit allowed origins for credentials: true
 const allowedOrigins = [
     "https://norlava.com",
     "https://www.norlava.com",
@@ -74,16 +73,11 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            console.log("🚫 Blocked CORS origin:", origin);
-            callback(null, false);
-        }
-    },
-    methods: ["GET", "POST", "OPTIONS"],
-    credentials: true
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    optionsSuccessStatus: 200
 };
 
 const app = express();
