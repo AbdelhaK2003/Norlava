@@ -60,7 +60,7 @@ const io = new Server(server, {
     cors: corsOptions
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
