@@ -36,7 +36,7 @@ const Interact = () => {
         // Get or create persistent visitorId for this profile
         const storageKey = `visitor_${username}`;
         let currentVisitorId = localStorage.getItem(storageKey);
-        
+
         if (!currentVisitorId) {
             currentVisitorId = uuidv4();
             localStorage.setItem(storageKey, currentVisitorId);
@@ -44,7 +44,7 @@ const Interact = () => {
         } else {
             console.log("♻️ Returning Visitor Session:", currentVisitorId);
         }
-        
+
         setVisitorId(currentVisitorId);
 
         // Check for logged in user to detect Training Mode
@@ -195,7 +195,8 @@ const Interact = () => {
             message: text,
             senderIsUser: true,
             visitorId,
-            inputType
+            inputType,
+            isTrainingMode // Pass training mode flag
         });
         setInputValue("");
     };
@@ -205,15 +206,15 @@ const Interact = () => {
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
-            
+
             {/* Grid Pattern */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
 
             {/* Main Container */}
             <div className="relative z-10 flex flex-col h-full">
-                
+
                 {/* Futuristic Header */}
-                <motion.div 
+                <motion.div
                     initial={{ y: -100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -221,7 +222,7 @@ const Interact = () => {
                 >
                     <div className="flex items-center gap-4">
                         {/* Direct Avatar without circular frame */}
-                        <motion.div 
+                        <motion.div
                             className="w-14 h-14 flex items-center justify-center"
                             whileHover={{ scale: 1.05 }}
                             transition={{ duration: 0.2 }}
@@ -249,7 +250,7 @@ const Interact = () => {
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-neon-cyan/20 scrollbar-track-transparent">
                     {messages.length === 0 && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 1, ease: "easeOut" }}
@@ -286,19 +287,17 @@ const Interact = () => {
                                             <Zap size={16} className="text-black" />
                                         </div>
                                     )}
-                                    <div className={`relative p-5 rounded-3xl backdrop-blur-md border transition-all duration-300 hover:scale-[1.02] ${
-                                        message.isUser
+                                    <div className={`relative p-5 rounded-3xl backdrop-blur-md border transition-all duration-300 hover:scale-[1.02] ${message.isUser
                                             ? 'bg-gradient-to-br from-neon-purple/20 to-neon-purple/5 border-neon-purple/30 text-white rounded-br-md shadow-[0_0_20px_rgba(188,19,254,0.1)]'
                                             : 'bg-white/5 border-white/10 text-gray-100 rounded-bl-md shadow-[0_0_20px_rgba(0,243,255,0.05)]'
-                                    }`}>
+                                        }`}>
                                         <p className="text-base leading-relaxed tracking-wide">{message.text}</p>
-                                        
+
                                         {/* Glow effect on hover */}
-                                        <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${
-                                            message.isUser 
+                                        <div className={`absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${message.isUser
                                                 ? 'bg-gradient-to-r from-neon-purple/0 via-neon-purple/10 to-neon-purple/0'
                                                 : 'bg-gradient-to-r from-neon-cyan/0 via-neon-cyan/10 to-neon-cyan/0'
-                                        }`}></div>
+                                            }`}></div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -363,7 +362,7 @@ const Interact = () => {
                 )}
 
                 {/* Futuristic Input */}
-                <motion.div 
+                <motion.div
                     initial={{ y: 100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
@@ -391,7 +390,7 @@ const Interact = () => {
                             </Button>
                         </div>
                     </form>
-                    
+
                     {/* Floating Join Button - Shows when CTA is dismissed but user has enough messages */}
                     {ctaDismissed && messages.length >= 7 && (
                         <motion.div
@@ -409,7 +408,7 @@ const Interact = () => {
                             </Button>
                         </motion.div>
                     )}
-                    
+
                     {/* Powered by badge */}
                     <div className="text-center mt-4">
                         <p className="text-xs text-gray-600 font-mono tracking-wider">

@@ -279,27 +279,77 @@ io.on('connection', (socket) => {
                 for await (const chunk of result.stream) {
                     const chunkText = chunk.text();
                     if (chunkText) {
+                        // Filter out commands from user view if streaming? 
+                        // For simplicity, we just stream everything, then hide it in frontend?
+                        // Or better: We strip it from the stream.
                         fullResponse += chunkText;
+
+                        // Simple hiding strategy: Don't emit tokens that look like command parts if possible.
+                        // But commands are usually at the end. 
                         io.to(roomName).emit('ai-token', { text: chunkText });
                     }
                 }
 
                 console.log("✅ Gemini Stream Complete. Length:", fullResponse.length);
 
+                // --- CHECK FOR TRAINING COMMANDS (Hidden from User) ---
+                let finalVisibleResponse = fullResponse;
+
+                if (data.isTrainingMode) {
+                    const commandRegex = /\[(RESOLVED_QUESTION|RESOLVED_FACT|DELETE_MEMORY):([^\]]+)\]/g;
+                    let match;
+                    while ((match = commandRegex.exec(fullResponse)) !== null) {
+                        const [fullCmd, action, params] = match;
+                        console.log(`🛠️ Executing Training Command: ${action} -> ${params}`);
+
+                        // Remove command from visible text
+                        finalVisibleResponse = finalVisibleResponse.replace(fullCmd, '').trim();
+
+                        try {
+                            if (action === 'RESOLVED_QUESTION') {
+                                // Format: ID:Answer
+                                const firstColon = params.indexOf(':');
+                                if (firstColon > -1) {
+                                    const id = params.substring(0, firstColon);
+                                    const answer = params.substring(firstColon + 1);
+                                    await prisma.memory.update({
+                                        where: { id },
+                                        data: { type: 'QUESTION', content: answer }
+                                    });
+                                    // Refresh context
+                                    await db.refreshAiContext(profile.id);
+                                }
+                            } else if (action === 'RESOLVED_FACT') {
+                                const id = params;
+                                await prisma.memory.update({
+                                    where: { id },
+                                    data: { type: 'BIOGRAPHY' }
+                                });
+                                await db.refreshAiContext(profile.id);
+                            } else if (action === 'DELETE_MEMORY') {
+                                const id = params;
+                                await db.deleteMemory(id);
+                            }
+                        } catch (err) {
+                            console.error("❌ Failed to execute training command:", err);
+                        }
+                    }
+                }
+
                 io.to(roomName).emit('bot-typing', false);
 
                 const aiMsg = await db.createMessage({
-                    content: fullResponse,
+                    content: finalVisibleResponse, // Save only visible part
                     isUser: false,
                     hostId: hostId,
                     senderId: "ai",
-                    visitorId: visitorId // Associate AI reply with this visitor
+                    visitorId: visitorId
                 });
 
                 // Add AI response to session history
                 const sessionHistory2 = sessionMessages.get(roomName) || [];
                 sessionHistory2.push({
-                    content: fullResponse,
+                    content: finalVisibleResponse,
                     isUser: false
                 });
                 sessionMessages.set(roomName, sessionHistory2);
