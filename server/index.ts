@@ -241,9 +241,44 @@ io.on('connection', (socket) => {
                 let aiBrain = profile?.aiContext || `You are ${hostUser.firstName}. You are a helpful digital assistant.`;
 
                 // Add learned facts from visitor interactions
-                const learnedFacts = profile?.learnedFacts ? JSON.parse(profile.learnedFacts) : [];
+                let learnedFacts: string[] = [];
+                try {
+                    learnedFacts = profile?.learnedFacts ? JSON.parse(profile.learnedFacts) : [];
+                } catch (e) {
+                    console.error("Error parsing learnedFacts:", e);
+                    learnedFacts = [];
+                }
+
                 if (learnedFacts.length > 0) {
                     aiBrain += `\n\nFACTS I'VE LEARNED FROM VISITOR CONVERSATIONS:\n${learnedFacts.map((fact: string) => `• ${fact}`).join('\n')}`;
+                }
+
+                // --- TRAINING MODE: HANDLE "START" COMMAND ---
+                if (data.isTrainingMode && /^(start|go|begin|ready)$/i.test(message.trim())) {
+                    const pendingQuestions = await db.getMemories(profile.id);
+                    const nextQuestion = pendingQuestions.find((m: any) => m.type === 'GUEST_QUESTION');
+
+                    if (nextQuestion) {
+                        const trainingResponse = `Great, let's get to work. \n\n**Visitor Question:** "${nextQuestion.prompt}"\n\nHow should I answer this?`;
+
+                        io.to(roomName).emit('receive-message', {
+                            id: "training-" + Date.now(),
+                            text: trainingResponse,
+                            isUser: false,
+                            completed: true
+                        });
+
+                        // Save AI response to DB
+                        await db.createMessage({
+                            content: trainingResponse,
+                            isUser: false,
+                            hostId: hostId,
+                            senderId: "ai",
+                            visitorId: visitorId
+                        });
+
+                        return; // Stop standard Gemini generation
+                    }
                 }
 
                 // Add writing style instruction if available
@@ -569,7 +604,7 @@ io.on('connection', (socket) => {
             isUser: false
         });
 
-        io.to(roomName).emit('bot-speak', { text: greeting });
+        // io.to(roomName).emit('bot-speak', { text: greeting }); // Disabled per user request
     });
 
     /**
