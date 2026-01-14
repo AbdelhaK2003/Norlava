@@ -81,6 +81,12 @@ app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 
 app.use(express.json());
 
+// Request Logger
+app.use((req, res, next) => {
+    console.log(`📡 [${req.method}] ${req.path}`);
+    next();
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
