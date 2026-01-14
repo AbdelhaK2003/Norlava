@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 export const SECRET_KEY = process.env.JWT_SECRET || 'voxterna-secret-key';
 
