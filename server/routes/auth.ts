@@ -10,6 +10,7 @@ const jwtVerify = jwt.verify || (jwt.default && jwt.default.verify) || jwt;
 
 import { db } from '../db';
 import { sendEmail } from '../email';
+import { SECRET_KEY } from '../middleware/auth';
 
 const router = Router();
 
