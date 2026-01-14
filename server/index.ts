@@ -352,76 +352,62 @@ io.on('connection', (socket) => {
                 }
 
                 // --- 4. FACT EXTRACTION FROM VISITOR MESSAGE ---
-                // Extract facts from what the visitor said, but DON'T apply them to AI yet
-                // The user must approve facts before they affect the AI
                 (async () => {
                     try {
-                        if (!profile) return;
+                        console.log("🔍 [Fact Probe] Starting extraction check...");
+                        if (!profile) {
+                            console.error("❌ [Fact Probe] Profile is missing!");
+                            return;
+                        }
 
                         const learningModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                         // Extract facts about the HOST from what the visitor said
-                        console.log("🧠 Analyzing visitor message for learnable facts...");
                         const factPrompt = `
                             Analyze this message sent to a digital avatar of "${hostUser.firstName}".
-                            Extract any facts about ${hostUser.firstName} that the visitor revealed or mentioned.
+                            Extract ANY meaningful information, claims, or relationship details about ${hostUser.firstName} that the visitor is sharing.
                             
                             Message: "${message}"
                             
                             Rules:
-                            1. EXTRACT facts about ${hostUser.firstName} ONLY (their traits, preferences, history, goals)
-                            2. INCLUDE both explicit facts ("I go to Harvard") and soft facts ("You're really chill")
-                            3. Convert 2nd person to 1st person (e.g., "You are creative" → "I am creative")
-                            4. IGNORE temporary states, greetings, and compliments
-                            5. IGNORE facts about the VISITOR themselves
+                            1. Extract facts about ${hostUser.firstName} OR the relationship (e.g., "I am his brother" -> "Visitor is brother").
+                            2. Convert to 1st person perspective from the Avatar's view (e.g. "Visitor says you like pizza" -> "I like pizza").
+                            3. Be generous! If the visitor says "You are nice", extract "I am nice".
+                            4. IGNORE pure greetings ("Hello") or questions.
                             
-                            Output ONLY the fact statement (one per line if multiple facts).
-                            If NO facts found, output "NONE".
+                            Output ONLY the fact statement (one per line).
+                            If NO facts, output "NONE".
                         `;
 
-                        console.log("🧠 Fact Prompt sent to Gemini...");
+                        console.log("🔍 [Fact Probe] Sending prompt to Gemini...");
                         const factResult = await learningModel.generateContent(factPrompt);
                         const factText = factResult.response.text().trim();
-                        console.log(`🧠 Raw Fact Extraction Result: "${factText}"`);
+                        console.log(`🔍 [Fact Probe] Raw Output: "${factText}"`);
 
-                        if (factText && factText !== "NONE" && factText !== "NO") {
-                            // Could be multiple facts, split by newline
-                            const facts = factText.split('\n').filter(f => f.trim().length > 10);
+                        if (factText && !factText.includes("NONE") && factText.length > 5) {
+                            const facts = factText.split('\n').filter(f => f.trim().length > 5);
+                            console.log(`🔍 [Fact Probe] Candidates found: ${facts.length}`);
 
-                            // Load existing memories (approved facts/questions) to avoid adding what we already know
                             const existingMemories = await db.getMemories(profile.id);
                             const knownContent = existingMemories.map((m: any) => m.content.toLowerCase());
-                            const knownPrompts = existingMemories.map((m: any) => m.prompt?.toLowerCase());
 
                             for (const fact of facts) {
                                 const cleanFact = fact.trim();
                                 const lowerFact = cleanFact.toLowerCase();
 
-                                // 1. CHECK IF WE ALREADY KNOW THIS (Approved Memory)
-                                // Fuzzy check: if any existing memory contains 80% of the words or vice versa
-                                const alreadyKnown = knownContent.some((k: string) => k.includes(lowerFact) || lowerFact.includes(k));
-                                const alreadyAsked = knownPrompts.some((p: string) => p && (p.includes(lowerFact) || lowerFact.includes(p)));
+                                // Relaxed check: Only skip if EXACT match or very high overlap
+                                const alreadyKnown = knownContent.some((k: string) => k === lowerFact);
 
-                                if (alreadyKnown || alreadyAsked) {
-                                    console.log(`🧠 SKIPPED (Already Known): "${cleanFact}"`);
+                                if (alreadyKnown) {
+                                    console.log(`🧠 SKIPPED (Exact Match): "${cleanFact}"`);
                                     continue;
                                 }
 
                                 console.log(`💡 PENDING FACT FOR APPROVAL: "${cleanFact}"`);
 
-                                // 2. CHECK PENDING LIST (Deduplication against DB)
-                                // We check if this specific fact is already in the 'LEARNED_FROM_GUEST' memories
-                                // We already loaded 'existingMemories' above, which includes 'LEARNED_FROM_GUEST'
-                                // So we just need to check if we are adding it twice in this same loop (rare but possible)
-
-                                // Actually, 'existingMemories' in line 343 gets ALL memories.
-                                // We already checked 'alreadyKnown' (lines 351-354).
-                                // So if we reached here, it's NEW to the database.
-
-                                // Save directly to Memory Table
                                 await db.createMemory({
                                     profileId: profile.id,
-                                    type: 'LEARNED_FROM_GUEST', // This makes it show up in Pending list
+                                    type: 'LEARNED_FROM_GUEST',
                                     prompt: 'Fact extracted from conversation',
                                     content: cleanFact
                                 });
@@ -429,11 +415,11 @@ io.on('connection', (socket) => {
                                 console.log(`✅ Pending fact saved to DB: "${cleanFact}"`);
                             }
                         } else {
-                            console.log("🧠 No new facts extracted from this message.");
+                            console.log("🧠 [Fact Probe] No meaningful facts found in output.");
                         }
 
                     } catch (err) {
-                        console.error("⚠️ Fact extraction failed:", err);
+                        console.error("⚠️ [Fact Probe] Failed:", err);
                     }
                 })();
 
