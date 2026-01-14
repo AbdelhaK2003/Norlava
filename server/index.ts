@@ -253,11 +253,12 @@ io.on('connection', (socket) => {
 
                 // Add instruction for "still learning" responses
                 aiBrain += `\n\nGUIDELINES FOR ANSWERS:
-                1. **GENERAL KNOWLEDGE**: If the user asks about general topics (science, history, math, weather, definitions), answer them directly and helpfully. DO NOT say you are "still learning" about these.
-                2. **PERSONAL QUESTIONS**: If the user asks about "${hostUser.firstName}" (preferences, history, private life) and you DO NOT see the answer in your Context or Facts:
-                   - YOU MUST use the exact phrase: "I'm still learning more about that!"
-                   - Followed by "I'll ask them about it".
-                   - Do NOT make up facts about ${hostUser.firstName}.`;
+                1. **GENERAL KNOWLEDGE**: If the user asks about general topics (science, history, math), answer directly.
+                2. **FACT ASSERTION**: If the user TELLS you something about ${hostUser.firstName} (e.g., "I know he likes sushi"), accept it tentatively. Say: "Oh, I didn't know that! I'll make a note of it." DO NOT say "I'm still learning".
+                3. **PERSONAL QUESTIONS**: If the user ASKS about ${hostUser.firstName} and you don't know the answer:
+                   - Respond with a natural, cool vibe. Examples: "That's a great question! He hasn't told me that yet.", "I'm actually not sure, he kept that a secret from me!", "Good one. I'll have to ask him about that."
+                   - CRITICAL: You MUST include the phrase "didn't tell me" OR "hasn't told me" OR "hasn't shared" so I can track this.
+                   - Do NOT make up facts.`;
 
                 // Emit typing status to PRIVATE room
                 io.to(roomName).emit('bot-typing', true);
@@ -316,8 +317,8 @@ io.on('connection', (socket) => {
 
                 // --- 3.2 DETECT UNKNOWN QUESTIONS (Fallback Trigger) ---
                 // If AI used the fallback phrase, we capture the user's question as a GUEST_QUESTION
-                // Fallback phrases: "I'm still learning", "hasn't shared those details", "I'll ask them"
-                const fallbackPhrases = ["still learning", "hasn't shared", "ask them about that"];
+                // Updated phrases to match "Cool" responses
+                const fallbackPhrases = ["didn't tell me", "hasn't told me", "hasn't shared", "still learning", "kept that a secret", "have to ask him"];
                 const contentLower = fullResponse.toLowerCase();
 
                 if (fallbackPhrases.some(phrase => contentLower.includes(phrase))) {
