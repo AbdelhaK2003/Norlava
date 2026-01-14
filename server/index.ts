@@ -13,7 +13,14 @@ import { db, prisma } from './db';
 import { GeminiLiveSession } from './services/gemini-live';
 
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Google Gemini AI (SDK automatically uses appropriate API version)
+// Wrap in try-catch or ensure key exists to prevent startup crash
+let genAI: GoogleGenerativeAI;
+try {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'MISSING_KEY');
+} catch (e) {
+    console.error("❌ Failed to initialize Gemini SDK:", e);
+}
 
 // Global Error Handlers for debugging in production
 // Must be as high as possible to catch early failures
@@ -121,6 +128,11 @@ app.get('/', (req, res) => {
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Voxterna Backend is running' });
+});
+
+// Catch-all for API 404s (Must come after all API routes)
+app.use('/api/*', (req, res) => {
+    res.status(404).json({ error: 'API Endpoint Not Found' });
 });
 
 // Database health check
