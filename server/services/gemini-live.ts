@@ -26,6 +26,12 @@ export class GeminiLiveSession {
 
     constructor(config: LiveSessionConfig) {
         this.config = config;
+
+        const apiKey = process.env.GEMINI_API_KEY || '';
+        if (!apiKey) console.error("❌ MISSING GEMINI_API_KEY for Live Session");
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+
         this.model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash-exp',
             generationConfig: {
