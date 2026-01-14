@@ -23,6 +23,7 @@ export class GeminiLiveSession {
     private chat: any;
     private config: LiveSessionConfig;
     private isActive: boolean = false;
+    private genAI: GoogleGenerativeAI;
 
     constructor(config: LiveSessionConfig) {
         this.config = config;
@@ -30,9 +31,9 @@ export class GeminiLiveSession {
         const apiKey = process.env.GEMINI_API_KEY || '';
         if (!apiKey) console.error("❌ MISSING GEMINI_API_KEY for Live Session");
 
-        const genAI = new GoogleGenerativeAI(apiKey);
+        this.genAI = new GoogleGenerativeAI(apiKey);
 
-        this.model = genAI.getGenerativeModel({
+        this.model = this.genAI.getGenerativeModel({
             model: 'gemini-2.0-flash-exp',
             generationConfig: {
                 temperature: 0.9,
