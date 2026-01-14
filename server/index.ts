@@ -15,6 +15,17 @@ import { GeminiLiveSession } from './services/gemini-live';
 // Initialize Google Gemini AI (SDK automatically uses appropriate API version)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// Global Error Handlers for debugging in production
+// Must be as high as possible to catch early failures
+process.on('uncaughtException', (err) => {
+    console.error('❌ UNCAUGHT EXCEPTION:', err);
+    // Don't exit immediately, let logs flush
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ UNHANDLED REJECTION:', reason);
+});
+
 // Store active live voice sessions
 const liveSessions = new Map<string, GeminiLiveSession>();
 
@@ -60,14 +71,7 @@ const io = new Server(server, {
     }
 });
 
-// Global Error Handlers for debugging in production
-process.on('uncaughtException', (err) => {
-    console.error('❌ UNCAUGHT EXCEPTION:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('❌ UNHANDLED REJECTION:', reason);
-});
+// (Moved to top)
 
 const PORT = process.env.PORT || 3000;
 
