@@ -252,7 +252,12 @@ io.on('connection', (socket) => {
                 }
 
                 // Add instruction for "still learning" responses
-                aiBrain += `\n\nWhen a visitor asks about something you don't know about the person you represent, YOU MUST use the exact phrase: "I'm still learning more about that!" followed by "I'll ask them about it". Don't make up facts.`;
+                aiBrain += `\n\nGUIDELINES FOR ANSWERS:
+                1. **GENERAL KNOWLEDGE**: If the user asks about general topics (science, history, math, weather, definitions), answer them directly and helpfully. DO NOT say you are "still learning" about these.
+                2. **PERSONAL QUESTIONS**: If the user asks about "${hostUser.firstName}" (preferences, history, private life) and you DO NOT see the answer in your Context or Facts:
+                   - YOU MUST use the exact phrase: "I'm still learning more about that!"
+                   - Followed by "I'll ask them about it".
+                   - Do NOT make up facts about ${hostUser.firstName}.`;
 
                 // Emit typing status to PRIVATE room
                 io.to(roomName).emit('bot-typing', true);
