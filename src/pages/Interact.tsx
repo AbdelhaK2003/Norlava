@@ -323,8 +323,8 @@ const Interact = () => {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* CTA Banner - Show after 7-8 messages */}
-                {showCreatePrompt && !ctaDismissed && messages.length >= 7 && (
+                {/* CTA Banner - Show after 7-8 messages (Hidden in Training Mode) */}
+                {showCreatePrompt && !ctaDismissed && messages.length >= 7 && !isTrainingMode && (
                     <motion.div
                         initial={{ y: 100, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -393,8 +393,8 @@ const Interact = () => {
                         </div>
                     </form>
 
-                    {/* Floating Join Button - Shows when CTA is dismissed but user has enough messages */}
-                    {ctaDismissed && messages.length >= 7 && (
+                    {/* Floating Join Button - Hidden in Training Mode */}
+                    {ctaDismissed && messages.length >= 7 && !isTrainingMode && (
                         <motion.div
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
