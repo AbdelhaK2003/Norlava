@@ -45,22 +45,19 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
     return false;
 }
 
+const corsOptions = {
+    origin: function (origin: any, callback: any) {
+        // Allow all in dev/production for debugging 500s easily
+        // In strict prod, you'd verify against the list, but for now we want to see the error.
+        callback(null, true);
+    },
+    credentials: true
+};
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: process.env.NODE_ENV === 'production'
-            ? [
-                "https://norlava.com",
-                "https://www.norlava.com",
-                "https://norlava.vercel.app",
-                "https://abdelhak-zvmu.norlava.com",
-                process.env.FRONTEND_URL || "https://norlava.com"
-            ]
-            : ["http://localhost:5173", "http://localhost:8080"],
-        methods: ["GET", "POST"],
-        credentials: true
-    }
+    cors: corsOptions
 });
 
 const PORT = 3000;
@@ -69,18 +66,10 @@ console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
 
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? [
-            "https://norlava.com",
-            "https://www.norlava.com",
-            "https://norlava.vercel.app",
-            "https://abdelhak-zvmu.norlava.com",
-            process.env.FRONTEND_URL || "https://norlava.com"
-        ]
-        : ["http://localhost:5173", "http://localhost:8080"],
-    credentials: true
-}));
+// Apply CORS middleware explicitly
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+
 app.use(express.json());
 
 // Routes
