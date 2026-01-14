@@ -47,6 +47,7 @@ model Profile {
   // New: Free-text bio and writing style
   bio         String? // Free-text biography - what the user wants to share
   writingStyle String? // Sample of user's writing style (for AI to mimic)
+  philosophy  String? // User's philosophy / brain dump
   
   // Single-parameter AI Context (The "Brain")
   // This aggregates all user info into one prompt-ready string/JSON for the LLM

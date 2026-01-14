@@ -99,7 +99,6 @@ class Database {
                 aiContext: profile.aiContext,
                 bio: profile.bio,
                 writingStyle: profile.writingStyle,
-                // @ts-ignore: Dynamic field until schema update
                 philosophy: profile.philosophy
             }
         });
