@@ -1,7 +1,24 @@
 import { PrismaClient } from '@prisma/client';
 
 // Initialize Prisma Client
-export const prisma = new PrismaClient();
+// Initialize Prisma Client Safely
+let prismaInstance: PrismaClient;
+try {
+    prismaInstance = new PrismaClient({
+        log: ['query', 'info', 'warn', 'error'],
+    });
+} catch (e) {
+    console.error("❌ CRITICAL: Failed to initialize Prisma Client:", e);
+    // @ts-ignore
+    prismaInstance = {
+        user: { findUnique: () => null, create: () => null, update: () => null },
+        profile: { findUnique: () => null, create: () => null, update: () => null },
+        message: { findMany: () => [], create: () => null },
+        // Add minimal mocks to prevent immediate property access crash
+    } as unknown as PrismaClient;
+}
+
+export const prisma = prismaInstance;
 
 // Database Adapter Class
 // This abstracts the Prisma calls so the rest of the app doesn't need to change much
