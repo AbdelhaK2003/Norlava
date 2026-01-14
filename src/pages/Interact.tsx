@@ -167,7 +167,6 @@ const Interact = () => {
             socket.off('bot-speak');
             socket.disconnect();
         };
-        socket.disconnect();
     };
 }, [username, visitorId, isTrainingMode]);
 
