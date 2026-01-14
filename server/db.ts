@@ -224,8 +224,7 @@ class Database {
         // 1. Total Messages (both user and AI)
         const totalMessages = await prisma.message.count({
             where: {
-                hostId,
-                isUser: true // Only count messages FROM visitors
+                hostId
             }
         });
 

@@ -360,22 +360,24 @@ io.on('connection', (socket) => {
 
                                 console.log(`💡 PENDING FACT FOR APPROVAL: "${cleanFact}"`);
 
-                                // 2. CHECK PENDING LIST (Deduplication)
-                                const pending = profile.pendingFacts ? JSON.parse(profile.pendingFacts) : [];
+                                // 2. CHECK PENDING LIST (Deduplication against DB)
+                                // We check if this specific fact is already in the 'LEARNED_FROM_GUEST' memories
+                                // We already loaded 'existingMemories' above, which includes 'LEARNED_FROM_GUEST'
+                                // So we just need to check if we are adding it twice in this same loop (rare but possible)
 
-                                // Avoid duplicates in pending list
-                                if (!pending.some((p: string) => p.toLowerCase() === lowerFact)) {
-                                    pending.push(cleanFact);
+                                // Actually, 'existingMemories' in line 343 gets ALL memories.
+                                // We already checked 'alreadyKnown' (lines 351-354).
+                                // So if we reached here, it's NEW to the database.
 
-                                    // Save to database using userId
-                                    await db.updateProfile(hostUser.id, {
-                                        pendingFacts: JSON.stringify(pending)
-                                    });
+                                // Save directly to Memory Table
+                                await db.createMemory({
+                                    profileId: profile.id,
+                                    type: 'LEARNED_FROM_GUEST', // This makes it show up in Pending list
+                                    prompt: 'Fact extracted from conversation',
+                                    content: cleanFact
+                                });
 
-                                    console.log(`✅ Pending fact saved: "${cleanFact}"`);
-                                } else {
-                                    console.log(`🧠 SKIPPED (Already Pending): "${cleanFact}"`);
-                                }
+                                console.log(`✅ Pending fact saved to DB: "${cleanFact}"`);
                             }
                         } else {
                             console.log("🧠 No new facts extracted from this message.");
