@@ -19,7 +19,9 @@ import {
     LogOut,
     Check,
     Zap,
-    ExternalLink
+    ExternalLink,
+    Brain,
+    Save
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +35,10 @@ const Dashboard = () => {
     const [factIndex, setFactIndex] = useState(0);
     const [questionIndex, setQuestionIndex] = useState(0);
     const [copied, setCopied] = useState(false);
+
+    // Knowledge Base State
+    const [knowledgeBase, setKnowledgeBase] = useState("");
+    const [isUpdatingKnowledge, setIsUpdatingKnowledge] = useState(false);
 
     const fetchMemories = async () => {
         try {
@@ -66,7 +72,17 @@ const Dashboard = () => {
                         localStorage.setItem('dashboardStats', JSON.stringify(data));
                     })
                     .catch(err => console.error("Failed to load stats", err));
+
                 fetchMemories();
+
+                // Fetch current knowledge
+                api.get('/user/me')
+                    .then(res => {
+                        if (res.data?.profile?.bio) {
+                            setKnowledgeBase(res.data.profile.bio);
+                        }
+                    })
+                    .catch(console.error);
             };
 
             loadData(); // Initial Fetch
@@ -75,6 +91,21 @@ const Dashboard = () => {
             return () => clearInterval(interval);
         }
     }, []);
+
+    const handleQuickUpdateKnowledge = async () => {
+        setIsUpdatingKnowledge(true);
+        try {
+            await api.put('/user/profile', { bio: knowledgeBase });
+            toast.success("Ty for helping now improving your character knowledge", {
+                icon: <Brain className="text-neon-purple" size={18} />,
+                style: { background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(188,19,254,0.3)', color: 'white' }
+            });
+        } catch (error) {
+            toast.error("Failed to update knowledge");
+        } finally {
+            setIsUpdatingKnowledge(false);
+        }
+    };
 
     const handleApproveFact = async (id: string) => {
         // Optimistic Update
