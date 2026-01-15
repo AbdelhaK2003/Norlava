@@ -249,8 +249,8 @@ const Interact = () => {
                     </div>
 
                     {isTrainingMode && (
-                        <div className="px-4 py-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
-                            <span className="text-xs font-mono text-yellow-400 tracking-wider">🛠️ TRAINING MODE</span>
+                        <div className="px-4 py-2 bg-neon-cyan/10 border border-neon-cyan/30 rounded-full">
+                            <span className="text-xs font-mono text-neon-cyan tracking-wider">🧪 TEST YOUR TWIN</span>
                         </div>
                     )}
                 </motion.div>

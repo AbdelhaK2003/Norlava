@@ -55,8 +55,58 @@ If a visitor asks about something you don't know about the person you represent,
         res.status(500).json({ error: 'Failed to save profile' });
     }
 });
+});
 
-// Save Avatar Config
+// Update Profile (Bio & Knowledge)
+router.put('/profile', authenticateToken, async (req: AuthRequest, res) => {
+    try {
+        const userId = req.user!.id;
+        const { bio, philosophy } = req.body;
+
+        const currentProfile = await db.findProfileByUserId(userId);
+        if (!currentProfile) {
+            return res.status(404).json({ error: 'Profile not found' });
+        }
+
+        // Parse existing personality to preserve traits
+        let pData: any = {};
+        try {
+            pData = JSON.parse(currentProfile.personality || "{}");
+        } catch (e) { }
+
+        // Reconstruct AI Context with NEW Bio/Philosophy
+        const aiContext = `
+You are ${pData.nickname || "an AI assistant"}. ${pData.tagline ? `Your tagline is: "${pData.tagline}".` : ""}
+
+About you:
+${bio ? `Bio: ${bio}` : ""}
+${philosophy ? `Your Philosophy/Brain Dump: "${philosophy}"` : ""}
+
+Your personality traits:
+- Formality: ${pData.formalityLevel || "Casual"}
+- Humor: ${pData.humorStyle || "Witty"}
+- Response Length: ${pData.responseLength || "Standard"}
+
+Your Expertise: ${currentProfile.interests || ""}
+Your Hobbies: ${currentProfile.funFacts || ""}
+
+Instructions:
+Respond to visitors using this persona. Stay in character.
+If a visitor asks about something you don't know about the person you represent, respond with something like: "I'm still learning more about that! The ${pData.nickname || "host"} I represent hasn't shared those details with me yet, but once they do, I'll let you know!"
+`.trim();
+
+        const updated = await db.updateProfile(userId, {
+            bio,
+            philosophy,
+            aiContext
+        });
+
+        res.json(updated);
+    } catch (error) {
+        console.error("Profile update error:", error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
 router.post('/avatar', authenticateToken, async (req: AuthRequest, res) => {
     try {
         const { gender, baseColor, eyeColor } = req.body;

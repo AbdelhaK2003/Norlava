@@ -29,6 +29,18 @@ const Settings = () => {
         confirmPassword: ""
     });
 
+    // Knowledge state
+    const [knowledge, setKnowledge] = useState("");
+
+    // Load initial data
+    useState(() => {
+        api.get('/user/me').then(res => {
+            if (res.data?.profile?.bio) {
+                setKnowledge(res.data.profile.bio);
+            }
+        }).catch(console.error);
+    });
+
     const handlePasswordChange = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -68,6 +80,21 @@ const Settings = () => {
         }
     };
 
+    const handleUpdateKnowledge = async () => {
+        setIsLoading(true);
+        try {
+            await api.put('/user/profile', {
+                bio: knowledge
+            });
+            toast.success("Knowledge base updated successfully!");
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update knowledge base");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-grid p-4 md:p-8">
             <div className="max-w-4xl mx-auto">
@@ -89,7 +116,7 @@ const Settings = () => {
                         </TabsTrigger>
                         <TabsTrigger value="ai" className="data-[state=active]:bg-neon-purple/20 data-[state=active]:text-neon-purple">
                             <Bot size={16} className="mr-2" />
-                            AI Persona
+                            Knowledge Base
                         </TabsTrigger>
                     </TabsList>
 
@@ -153,32 +180,50 @@ const Settings = () => {
                         </GlassCard>
                     </TabsContent>
 
-                    {/* AI PERSONA TAB */}
+                    {/* KNOWLEDGE BASE TAB */}
                     <TabsContent value="ai">
                         <GlassCard className="p-6 md:p-8">
                             <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h2 className="text-xl font-semibold flex items-center gap-2">
                                         <Bot size={20} className="text-neon-purple" />
-                                        AI Persona Configuration
+                                        Update AI Knowledge
                                     </h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        Retrain your AI's personality, interests, and behavior.
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Add information about yourself, your ideas, or your history. This is your Digital Twin's "Brain".
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="bg-white/5 p-6 rounded-lg border border-white/10 text-center space-y-4">
-                                <div className="w-16 h-16 bg-neon-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Bot size={32} className="text-neon-purple" />
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-white/80">
+                                        My Bio & Knowledge Dump
+                                    </label>
+                                    <textarea
+                                        className="w-full min-h-[300px] p-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-neon-purple/50 resize-y font-mono text-sm leading-relaxed"
+                                        placeholder="I was born in... My favorite philosophy is... I believe that..."
+                                        value={knowledge}
+                                        onChange={(e) => setKnowledge(e.target.value)}
+                                    />
+                                    <p className="text-xs text-white/40">
+                                        Tip: Write in the first person ("I am...") or naturally. The AI will internalize this as its own memory.
+                                    </p>
                                 </div>
-                                <h3 className="font-semibold text-lg">Edit Your Digital Twin</h3>
-                                <p className="text-muted-foreground max-w-sm mx-auto">
-                                    Want to change how your AI speaks or what it knows? You can restart the onboarding process to update its core personality.
-                                </p>
-                                <Button onClick={() => navigate('/onboarding')} size="lg" className="bg-neon-purple hover:bg-neon-purple/80 text-white border-0">
-                                    Reconfigure AI Persona
-                                </Button>
+
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={handleUpdateKnowledge}
+                                        className="bg-neon-purple hover:bg-neon-purple/80 text-white min-w-[150px]"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? "Saving..." : (
+                                            <>
+                                                <Save size={18} className="mr-2" /> Save Knowledge
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </GlassCard>
                     </TabsContent>
