@@ -162,11 +162,13 @@ const Dashboard = () => {
     const currentQuestion = memories.questions[questionIndex];
 
     return (
-        <div className="min-h-screen w-full relative font-outfit overflow-x-hidden text-white">
-            {/* Global Background (Exact match to Interact.tsx) */}
-            <div className="absolute inset-0 bg-black">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none z-0"></div>
-            </div>
+        <div className="min-h-screen w-full relative font-outfit overflow-x-hidden text-white bg-black">
+            {/* Animated Background */}
+            <div className="fixed inset-0 bg-gradient-to-br from-black via-gray-900 to-black z-0"></div>
+            <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none z-0"></div>
+
+            {/* Grid Pattern */}
+            <div className="fixed inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
 
             {/* Header */}
             <div className="relative z-20 p-6 flex items-center justify-between backdrop-blur-sm border-b border-white/5">
