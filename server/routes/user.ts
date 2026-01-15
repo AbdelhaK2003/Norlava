@@ -55,7 +55,7 @@ If a visitor asks about something you don't know about the person you represent,
         res.status(500).json({ error: 'Failed to save profile' });
     }
 });
-});
+
 
 // Update Profile (Bio & Knowledge)
 router.put('/profile', authenticateToken, async (req: AuthRequest, res) => {
