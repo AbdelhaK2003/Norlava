@@ -274,18 +274,51 @@ const Dashboard = () => {
                             <Button size="icon" variant="secondary" onClick={copyLink} className="shrink-0 bg-white/10 hover:bg-white/20 text-white">
                                 {copied ? <Check size={16} /> : <Copy size={16} />}
                             </Button>
-                            <Button
-                                size="icon"
-                                className="shrink-0 bg-neon-cyan text-black hover:bg-neon-cyan/80"
-                                asChild
-                            >
-                                <a href={profileUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink size={16} />
-                                </a>
-                            </Button>
                         </div>
                     </GlassCard>
                 </div>
+
+                {/* Quick Knowledge Update */}
+                <GlassCard className="p-0 overflow-hidden border-white/10 relative group hover:shadow-[0_0_30px_rgba(188,19,254,0.1)] transition-all duration-500">
+                    <div className="absolute inset-0 bg-gradient-to-r from-neon-purple/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-neon-purple/20 rounded-lg">
+                                <Brain size={18} className="text-neon-purple" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Teach Your Twin</h3>
+                                <p className="text-xs text-white/40">Update your bio, philosophy, or facts directly.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <textarea
+                            className="w-full min-h-[120px] p-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-neon-purple/50 resize-y font-mono text-sm leading-relaxed transition-all focus:bg-black/60 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+                            placeholder="e.g., I just started learning guitar..."
+                            value={knowledgeBase}
+                            onChange={(e) => setKnowledgeBase(e.target.value)}
+                        />
+                        <div className="flex justify-end">
+                            <Button
+                                onClick={handleQuickUpdateKnowledge}
+                                className="bg-neon-purple/20 text-neon-purple hover:bg-neon-purple hover:text-white transition-all gap-2 shadow-[0_0_15px_rgba(188,19,254,0.1)] hover:shadow-[0_0_25px_rgba(188,19,254,0.4)]"
+                                disabled={isUpdatingKnowledge}
+                            >
+                                {isUpdatingKnowledge ? (
+                                    <>
+                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save size={16} /> Update Knowledge
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </GlassCard>
 
 
 
