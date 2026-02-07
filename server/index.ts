@@ -66,13 +66,27 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
 
 
 
-const corsOptions = {
-    origin: true, // Reflects the request origin, effectively allowing all
+const allowedOrigins = [
+    "https://norlava.com",
+    "http://localhost:5173",   // dev (Vite)
+    "http://localhost:3000"    // dev alt
+];
+
+const corsOptions: cors.CorsOptions = {
+    origin: function (origin, callback) {
+        if (!origin) return callback(null, true); // allow non-browser tools
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     optionsSuccessStatus: 200
 };
+
 
 const app = express();
 
@@ -85,11 +99,12 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*", // Allow all for Socket.io
+        origin: ["https://norlava.com"],
         methods: ["GET", "POST"],
         credentials: true
     }
 });
+
 
 const PORT = process.env.PORT || 3000;
 
