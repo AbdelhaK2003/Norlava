@@ -61,20 +61,38 @@ router.post('/register', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
+    console.log("🔐 [LOGIN] Endpoint hit!");
+    console.log("🔐 [LOGIN] Origin:", req.headers.origin);
+    console.log("🔐 [LOGIN] Headers:", JSON.stringify(req.headers));
+    console.log("🔐 [LOGIN] Body:", JSON.stringify(req.body));
+
     try {
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            console.log("🔐 [LOGIN] Missing email or password");
+            return res.status(400).json({ error: 'Email and password required' });
+        }
+
+        console.log("🔐 [LOGIN] Looking up user:", email);
         const user = await db.findUserByEmail(email);
 
         if (!user) {
+            console.log("🔐 [LOGIN] User not found:", email);
             return res.status(400).json({ error: 'User not found' });
         }
 
+        console.log("🔐 [LOGIN] User found, verifying password");
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
+            console.log("🔐 [LOGIN] Invalid password for:", email);
             return res.status(400).json({ error: 'Invalid password' });
         }
 
+        console.log("🔐 [LOGIN] Password valid, generating token");
         const token = jwtSign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: '7d' });
+
+        console.log("🔐 [LOGIN] Success! Returning response");
         res.json({
             token,
             user: {
@@ -86,7 +104,8 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Login failed' });
+        console.error("🔐 [LOGIN] ERROR:", error);
+        res.status(500).json({ error: 'Login failed', details: String(error) });
     }
 });
 
