@@ -66,21 +66,12 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
 
 
 
-const allowedOrigins = [
-    "https://norlava.com",
-    "http://localhost:5173",   // dev (Vite)
-    "http://localhost:3000"    // dev alt
-];
-
 const corsOptions: cors.CorsOptions = {
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true); // allow non-browser tools
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
+    origin: [
+        "https://norlava.com",
+        "http://localhost:5173",   // dev (Vite)
+        "http://localhost:3000"    // dev alt
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
