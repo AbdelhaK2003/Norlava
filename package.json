@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run build:server",
     "build:dev": "vite build --mode development",
     "build:server": "npx esbuild server/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist-server/index.cjs --external:bcryptjs --external:prisma --external:@prisma/client",
     "lint": "eslint .",
@@ -71,6 +71,7 @@
     "lucide-react": "^0.462.0",
     "multer": "^2.0.2",
     "next-themes": "^0.3.0",
+    "node-fetch": "^3.3.2",
     "openai": "^6.15.0",
     "prisma": "^5.22.0",
     "react": "^18.3.1",
