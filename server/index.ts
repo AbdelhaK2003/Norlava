@@ -82,6 +82,20 @@ const corsOptions: cors.CorsOptions = {
 
 const app = express();
 
+// SUPER EARLY REQUEST LOGGER - BEFORE EVERYTHING
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`\n========== INCOMING REQUEST ==========`);
+    console.log(`⏰ Time: ${timestamp}`);
+    console.log(`📡 Method: ${req.method}`);
+    console.log(`🌐 Path: ${req.path}`);
+    console.log(`🔗 Full URL: ${req.url}`);
+    console.log(`📍 Origin: ${req.headers.origin || 'NO ORIGIN'}`);
+    console.log(`🔑 Headers:`, JSON.stringify(req.headers, null, 2));
+    console.log(`======================================\n`);
+    next();
+});
+
 // Apply CORS middleware FIRST (before any other middleware)
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
