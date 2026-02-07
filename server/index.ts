@@ -64,16 +64,10 @@ function hasSimilarQuestionBeenAsked(newMessage: string, sessionHistory: any[], 
     return false;
 }
 
-const allowedOrigins = [
-    "https://norlava.com",
-    "https://www.norlava.com",
-    "http://localhost:5173",
-    "http://localhost:4173",
-    "https://norlava-production.up.railway.app"
-];
+
 
 const corsOptions = {
-    origin: allowedOrigins,
+    origin: true, // Reflects the request origin, effectively allowing all
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     credentials: true,
@@ -91,7 +85,7 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: "*", // Allow all for Socket.io
         methods: ["GET", "POST"],
         credentials: true
     }
