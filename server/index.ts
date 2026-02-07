@@ -121,13 +121,22 @@ app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/facts', factsRoutes);
 
-// Basic health check
+// Basic health check (Railway uses this)
 app.get('/', (req, res) => {
-    res.send('Voxterna Backend is Running 🚀');
+    console.log("🏥 Root health check called");
+    res.status(200).send('Voxterna Backend is Running 🚀');
 });
 
+// API health check
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Voxterna Backend is running' });
+    console.log("🏥 API health check called");
+    res.status(200).json({ status: 'ok', message: 'Voxterna Backend is running', timestamp: Date.now() });
+});
+
+// Explicit health check for Railway
+app.get('/health', (req, res) => {
+    console.log("🏥 /health endpoint called");
+    res.status(200).json({ status: 'ok' });
 });
 
 // CORS test endpoint
