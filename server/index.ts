@@ -73,17 +73,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            console.error(`❌ CORS Blocked: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     credentials: true,
@@ -91,6 +81,13 @@ const corsOptions = {
 };
 
 const app = express();
+
+// Request Logger (MUST be before CORS to debug blocked requests)
+app.use((req, res, next) => {
+    console.log(`📡 [${req.method}] ${req.path} | Origin: ${req.headers.origin || 'Unknown'}`);
+    next();
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -99,8 +96,6 @@ const io = new Server(server, {
         credentials: true
     }
 });
-
-// (Moved to top)
 
 const PORT = process.env.PORT || 3000;
 
@@ -114,11 +109,8 @@ app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
 
 app.use(express.json());
 
-// Request Logger
-app.use((req, res, next) => {
-    console.log(`📡 [${req.method}] ${req.path}`);
-    next();
-});
+// Request Logger moved to top
+
 
 // Routes
 app.use('/api/auth', authRoutes);
