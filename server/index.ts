@@ -141,6 +141,18 @@ app.get('/api/cors-test', (req, res) => {
     });
 });
 
+// Debug endpoint to check environment
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT,
+        hasJwtSecret: !!process.env.JWT_SECRET,
+        hasDatabaseUrl: !!process.env.DATABASE_URL,
+        hasGeminiKey: !!process.env.GEMINI_API_KEY,
+        cwd: process.cwd()
+    });
+});
+
 // Catch-all for API 404s (Must come after all API routes)
 app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'API Endpoint Not Found' });
