@@ -130,6 +130,17 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Voxterna Backend is running' });
 });
 
+// CORS test endpoint
+app.get('/api/cors-test', (req, res) => {
+    console.log("🧪 CORS Test - Origin:", req.headers.origin);
+    res.json({
+        status: 'ok',
+        message: 'CORS is working',
+        origin: req.headers.origin,
+        corsEnabled: true
+    });
+});
+
 // Catch-all for API 404s (Must come after all API routes)
 app.use('/api/*', (req, res) => {
     res.status(404).json({ error: 'API Endpoint Not Found' });
