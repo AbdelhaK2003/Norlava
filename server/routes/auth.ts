@@ -14,6 +14,32 @@ import { SECRET_KEY } from '../middleware/auth';
 
 const router = Router();
 
+// Explicit OPTIONS handlers for CORS preflight requests
+router.options('/register', (req, res) => {
+    console.log("✅ OPTIONS /register received");
+    res.sendStatus(200);
+});
+
+router.options('/login', (req, res) => {
+    console.log("✅ OPTIONS /login received");
+    res.sendStatus(200);
+});
+
+router.options('/forgot-password', (req, res) => {
+    console.log("✅ OPTIONS /forgot-password received");
+    res.sendStatus(200);
+});
+
+router.options('/reset-password', (req, res) => {
+    console.log("✅ OPTIONS /reset-password received");
+    res.sendStatus(200);
+});
+
+router.options('/change-password', (req, res) => {
+    console.log("✅ OPTIONS /change-password received");
+    res.sendStatus(200);
+});
+
 // Register
 router.post('/register', async (req, res) => {
     console.log("👉 Register endpoint hit!");
