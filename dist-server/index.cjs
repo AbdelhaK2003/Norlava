@@ -50618,25 +50618,24 @@ function hasSimilarQuestionBeenAsked(newMessage, sessionHistory, threshold = 0.7
   }
   return false;
 }
-var allowedOrigins = [
-  "https://norlava.com",
-  "https://www.norlava.com",
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "https://norlava-production.up.railway.app"
-];
 var corsOptions = {
-  origin: allowedOrigins,
+  origin: true,
+  // Reflects the request origin, effectively allowing all
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
   optionsSuccessStatus: 200
 };
 var app = (0, import_express5.default)();
+app.use((req, res, next) => {
+  console.log(`\u{1F4E1} [${req.method}] ${req.path} | Origin: ${req.headers.origin || "Unknown"}`);
+  next();
+});
 var server = import_http.default.createServer(app);
 var io2 = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: "*",
+    // Allow all for Socket.io
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -50648,10 +50647,6 @@ console.log("\u{1F517} DATABASE_URL:", process.env.DATABASE_URL);
 app.use((0, import_cors.default)(corsOptions));
 app.options("*", (0, import_cors.default)(corsOptions));
 app.use(import_express5.default.json());
-app.use((req, res, next) => {
-  console.log(`\u{1F4E1} [${req.method}] ${req.path}`);
-  next();
-});
 app.use("/api/auth", auth_default);
 app.use("/api/user", user_default);
 app.use("/api/training", training_default);

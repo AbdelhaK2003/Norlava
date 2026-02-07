@@ -88,19 +88,14 @@ const corsOptions: cors.CorsOptions = {
 };
 
 
-const app = express();
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "https://norlava.com");
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(200);
-    }
-    next();
-});
-// Request Logger (MUST be before CORS to debug blocked requests)
+const app = express();
+
+// Apply CORS middleware FIRST (before any other middleware)
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+
+// Request Logger (after CORS to avoid blocking preflight requests)
 app.use((req, res, next) => {
     console.log(`📡 [${req.method}] ${req.path} | Origin: ${req.headers.origin || 'Unknown'}`);
     next();
@@ -122,13 +117,7 @@ console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
 
-// Apply CORS middleware explicitly
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
-
 app.use(express.json());
-
-// Request Logger moved to top
 
 
 // Routes
