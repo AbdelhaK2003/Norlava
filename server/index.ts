@@ -82,6 +82,26 @@ const corsOptions: cors.CorsOptions = {
 
 const app = express();
 
+// IMMEDIATE OPTIONS HANDLER - MUST BE FIRST
+// This bypasses all other middleware to respond to OPTIONS requests instantly
+app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+        console.log(`🚨 EMERGENCY OPTIONS HANDLER - Path: ${req.path}`);
+        console.log(`🚨 Origin: ${req.headers.origin}`);
+
+        // Set CORS headers immediately
+        res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+        res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.header('Access-Control-Max-Age', '86400'); // 24 hours
+
+        console.log(`🚨 Sending 204 response`);
+        return res.status(204).end();
+    }
+    next();
+});
+
 // SUPER EARLY REQUEST LOGGER - BEFORE EVERYTHING
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
