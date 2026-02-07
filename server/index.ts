@@ -82,6 +82,14 @@ const corsOptions: cors.CorsOptions = {
 
 const app = express();
 
+// CRITICAL: Trust Railway's reverse proxy
+app.set('trust proxy', 1);
+
+// Disable x-powered-by header
+app.disable('x-powered-by');
+
+console.log("🔧 Express app created, trust proxy enabled");
+
 // IMMEDIATE OPTIONS HANDLER - MUST BE FIRST
 // This bypasses all other middleware to respond to OPTIONS requests instantly
 app.use((req, res, next) => {
