@@ -107,9 +107,13 @@ const PORT = process.env.PORT || 3000;
 console.log("🔍 Server Starting...");
 console.log("📂 Current Working Directory:", process.cwd());
 console.log("🔗 DATABASE_URL:", process.env.DATABASE_URL);
+console.log("🔗 JWT_SECRET:", process.env.JWT_SECRET ? "SET" : "NOT SET");
 
+// Apply middleware
+console.log("📦 Applying middleware...");
 app.use(express.json());
 
+console.log("✅ Middleware applied successfully");
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -145,6 +149,15 @@ app.get('/api/health-db', async (req, res) => {
             details: error?.message || String(error)
         });
     }
+});
+
+// Global error handler (MUST be after all routes)
+app.use((err: any, req: any, res: any, next: any) => {
+    console.error("❌ UNHANDLED ERROR:", err);
+    if (res.headersSent) {
+        return next(err);
+    }
+    res.status(500).json({ error: "Internal server error", details: String(err) });
 });
 
 // Socket.io Connection
