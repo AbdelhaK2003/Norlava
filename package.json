@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "npx tsx watch server/index.ts",
-    "start": "node dist-server/index.cjs",
+    "start": "npx tsx server/index.ts",
     "postinstall": "npx prisma generate --schema=server/prisma/schema.prisma"
   },
   "engines": {
