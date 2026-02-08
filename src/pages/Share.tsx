@@ -16,6 +16,41 @@ import {
   Link2
 } from "lucide-react";
 
+// Extracted Card Component for consistent rendering
+const ShareCard = ({ user, username, profileLink }: { user: any, username: string, profileLink: string }) => {
+  return (
+    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-10 px-6 shadow-2xl overflow-hidden rounded-[32px]">
+      {/* Decorative BG in Capture */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/20 blur-[50px] rounded-full"></div>
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-neon-cyan/20 blur-[50px] rounded-full"></div>
+
+      <div className="relative z-10 flex flex-col items-center gap-4 w-full">
+        <Avatar3D size="lg" />
+        <div className="text-center">
+          <h2 className="text-2xl font-bold">{user.firstName}</h2>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">AI Digital Twin</p>
+        </div>
+      </div>
+
+      <div className="relative z-10 text-center space-y-4">
+        <h3 className="text-2xl font-bold leading-tight gradient-text">
+          Chat with {user.firstName}'s<br />AI Twin
+        </h3>
+        <p className="text-sm text-muted-foreground px-4">
+          Ask me anything! I am fully trained and ready to chat.
+        </p>
+      </div>
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-center gap-2 text-xs font-mono text-neon-cyan opacity-80">
+          <div className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
+          <span>voxterna.ai</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Share = () => {
   const [copied, setCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -26,7 +61,8 @@ const Share = () => {
   // The actual link to chat
   const profileLink = `${window.location.origin}/interact/${username}`;
 
-  const cardRef = useRef<HTMLDivElement>(null);
+  // Ref for the HIDDEN export card
+  const exportCardRef = useRef<HTMLDivElement>(null);
 
   const copyLink = () => {
     navigator.clipboard.writeText(profileLink);
@@ -36,15 +72,17 @@ const Share = () => {
   };
 
   const generateImageValues = async () => {
-    if (!cardRef.current) return null;
+    if (!exportCardRef.current) return null;
     try {
       // Small delay to ensure rendering
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const canvas = await html2canvas(cardRef.current, {
+      const canvas = await html2canvas(exportCardRef.current, {
         useCORS: true,
         backgroundColor: null,
-        scale: 2,
+        scale: 2, // High quality export
+        width: 400, // Enforce capture width
+        height: 700, // Enforce capture height
       });
       return canvas;
     } catch (err) {
@@ -83,17 +121,12 @@ const Share = () => {
           title: `Chat with ${user.firstName}'s AI Twin`,
           text: `Talk to my custom AI Digital Twin on Voxterna! \n\n${profileLink}`,
           files: [file],
-          // url: profileLink // Some apps ignore 'text' if 'url' is present, mixing varies by OS
         };
 
-        // Check if system supports sharing files
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share(shareData);
           toast.success("Shared successfully!");
         } else {
-          // Fallback for desktop or unsupported browsers
-          // Just copy link and download image?
-          // Or try text-only share
           if (navigator.share) {
             await navigator.share({
               title: shareData.title,
@@ -108,11 +141,10 @@ const Share = () => {
 
     } catch (err) {
       console.error("Share failed:", err);
-      // Fallback: Open a modal or just do nothing (user might have cancelled)
       if (String(err).includes("not supported")) {
         toast.info("Sharing not supported on this device. Copied link instead.");
         copyLink();
-        handleDownload(); // Auto download image as backup
+        handleDownload();
       }
     } finally {
       setIsSharing(false);
@@ -137,7 +169,14 @@ const Share = () => {
         />
       </div>
 
-      <div className="max-w-xl mx-auto pt-8 relative z-10">
+      {/* HIDDEN EXPORT CARD - Fixed Dimensions for Perfect Image */}
+      <div style={{ position: "fixed", top: "-9999px", left: "-9999px" }}>
+        <div ref={exportCardRef} style={{ width: "400px", height: "700px" }}>
+          <ShareCard user={user} username={username} profileLink={profileLink} />
+        </div>
+      </div>
+
+      <div className="max-w-xl mx-auto pt-8 relative z-10 w-full">
         {/* Header */}
         <motion.div
           className="flex items-center justify-between mb-6"
@@ -167,39 +206,10 @@ const Share = () => {
             </p>
           </div>
 
-          {/* CAPTURE AREA */}
-          <div className="relative p-4 rounded-3xl border border-white/5 bg-black/20">
-            <div
-              ref={cardRef}
-              className="relative w-[280px] h-[500px] rounded-2xl overflow-hidden bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-10 px-6 shadow-2xl"
-            >
-              {/* Decorative BG in Capture */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/20 blur-[50px] rounded-full"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-neon-cyan/20 blur-[50px] rounded-full"></div>
-
-              <div className="relative z-10 flex flex-col items-center gap-4 w-full">
-                <Avatar3D size="lg" />
-                <div className="text-center">
-                  <h2 className="text-xl font-bold">{user.firstName}</h2>
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">AI Digital Twin</p>
-                </div>
-              </div>
-
-              <div className="relative z-10 text-center space-y-4">
-                <h3 className="text-2xl font-bold leading-tight gradient-text">
-                  Chat with {user.firstName}'s<br />AI Twin
-                </h3>
-                <p className="text-xs text-muted-foreground px-4">
-                  Ask me anything! I am fully trained and ready to chat.
-                </p>
-              </div>
-
-              <div className="relative z-10">
-                <div className="flex items-center justify-center gap-2 text-xs font-mono text-neon-cyan opacity-80">
-                  <div className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
-                  <span>voxterna.ai</span>
-                </div>
-              </div>
+          {/* VISIBLE PREVIEW CARD (Responsive) */}
+          <div className="relative p-4 rounded-3xl border border-white/5 bg-black/20 w-full flex justify-center">
+            <div className="w-full max-w-[320px] aspect-[9/16]">
+              <ShareCard user={user} username={username} profileLink={profileLink} />
             </div>
           </div>
 
