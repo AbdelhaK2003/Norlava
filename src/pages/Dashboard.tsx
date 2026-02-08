@@ -215,7 +215,7 @@ const Dashboard = () => {
             <div className="fixed inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0"></div>
 
             {/* Header */}
-            <div className="relative z-20 p-6 flex items-center justify-between backdrop-blur-sm border-b border-white/5">
+            <div className="relative z-20 p-4 md:p-6 flex items-center justify-between backdrop-blur-sm border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <Logo size="md" />
                     <div className="h-4 w-[1px] bg-white/10 mx-2"></div>
@@ -231,7 +231,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+            <div className="relative z-10 max-w-6xl mx-auto p-4 md:p-8 space-y-6 md:space-y-8">
 
                 {/* Welcome & Stats Row */}
                 <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -246,7 +246,7 @@ const Dashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Quick Stats */}
                     <div className="grid grid-cols-2 gap-4">
-                        <GlassCard className="p-6 flex items-center gap-4 hover:bg-white/5 transition-colors">
+                        <GlassCard className="p-4 md:p-6 flex items-center gap-3 md:gap-4 hover:bg-white/5 transition-colors">
                             <div className="p-3 bg-blue-500/20 rounded-xl text-blue-400">
                                 <Users size={24} />
                             </div>
@@ -255,7 +255,7 @@ const Dashboard = () => {
                                 <div className="text-xs text-white/40 uppercase tracking-wider">Total Visitors</div>
                             </div>
                         </GlassCard>
-                        <GlassCard className="p-6 flex items-center gap-4 hover:bg-white/5 transition-colors">
+                        <GlassCard className="p-4 md:p-6 flex items-center gap-3 md:gap-4 hover:bg-white/5 transition-colors">
                             <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400">
                                 <MessageSquare size={24} />
                             </div>
@@ -267,7 +267,7 @@ const Dashboard = () => {
                     </div>
 
                     {/* Deployment Hub */}
-                    <GlassCard className="p-6 flex flex-col justify-center gap-4">
+                    <GlassCard className="p-4 md:p-6 flex flex-col justify-center gap-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
@@ -279,7 +279,7 @@ const Dashboard = () => {
                         </div>
 
                         <div className="flex gap-2">
-                            <div className="flex-1 bg-black/40 rounded-lg px-3 py-2 border border-white/5 flex items-center">
+                            <div className="flex-1 bg-black/40 rounded-lg px-3 py-2 border border-white/5 flex items-center min-w-0">
                                 <code className="flex-1 text-sm text-neon-cyan truncate font-mono bg-transparent">
                                     {profileUrl || "Generating..."}
                                 </code>
@@ -339,7 +339,7 @@ const Dashboard = () => {
                         {/* Visitor Questions Carousel */}
                         {memories.questions.length > 0 && currentQuestion && (
                             <GlassCard className="p-0 overflow-hidden border-white/10">
-                                <div className="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                                <div className="p-4 md:p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="p-2 bg-neon-purple/20 rounded-lg">
                                             <MessageSquare size={18} className="text-neon-purple" />
