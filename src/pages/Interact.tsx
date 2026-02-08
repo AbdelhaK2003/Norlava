@@ -210,7 +210,7 @@ const Interact = () => {
     };
 
     return (
-        <div className="h-[100dvh] w-screen overflow-hidden relative font-outfit bg-black">
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden font-outfit bg-black">
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
@@ -219,7 +219,7 @@ const Interact = () => {
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,243,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,243,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
 
             {/* Main Container */}
-            <div className="relative z-10 flex flex-col h-full">
+            <div className="relative z-10 flex flex-col h-full min-h-0">
 
                 {/* Futuristic Header */}
                 <motion.div
@@ -256,7 +256,7 @@ const Interact = () => {
                 </motion.div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-3 md:p-8 space-y-4 md:space-y-6 scrollbar-thin scrollbar-thumb-neon-cyan/20 scrollbar-track-transparent">
+                <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-8 space-y-4 md:space-y-6 scrollbar-thin scrollbar-thumb-neon-cyan/20 scrollbar-track-transparent">
                     {messages.length === 0 && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -370,11 +370,8 @@ const Interact = () => {
                 )}
 
                 {/* Futuristic Input */}
-                <motion.div
-                    initial={{ y: 100, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="p-3 md:p-6 pb-4 md:pb-8 backdrop-blur-xl bg-black/40 border-t border-neon-cyan/10"
+                <div
+                    className="flex-shrink-0 p-3 md:p-6 pb-4 md:pb-8 backdrop-blur-xl bg-black/40 border-t border-neon-cyan/10"
                 >
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue, 'text'); }}
@@ -423,7 +420,7 @@ const Interact = () => {
                             POWERED BY <span className="text-neon-cyan">NORLAVA</span>
                         </p>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     );
