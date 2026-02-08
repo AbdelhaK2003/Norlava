@@ -702,17 +702,8 @@ io.on('connection', (socket) => {
         if (!profile) return;
 
         // Check pending items
-        const allMemories = await db.getMemories(profile.id);
-        const pendingQuestions = allMemories.filter((m: any) => m.type === 'GUEST_QUESTION').length;
-        const pendingFacts = allMemories.filter((m: any) => m.type === 'LEARNED_FROM_GUEST').length;
-
-        let greeting = "";
-
-        if (pendingQuestions > 0 || pendingFacts > 0) {
-            greeting = `Hello! I'm ready to learn. I have ${pendingQuestions} new questions and ${pendingFacts} facts to discuss. Shall we start?`;
-        } else {
-            greeting = `Hello! My memory is fully up to date. We can discuss random topics or you can teach me something new!`;
-        }
+        // Simplified greeting per user request
+        const greeting = `Hey how are you ${hostUser.firstName}, now you are trying me as your AI twin.`;
 
         // Send this as a message from AI
         await db.createMessage({
