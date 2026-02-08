@@ -14,7 +14,7 @@ const AvatarCreation = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const username = user.username || "johndoe";
-  const profileLink = `${window.location.host}/u/${username}`;
+  const profileLink = `${window.location.host}/interact/${username}`;
 
   useEffect(() => {
     if (isCreating) {
@@ -94,7 +94,7 @@ const AvatarCreation = () => {
   }
 
   return (
-    <div className="min-h-screen p-4 bg-grid relative overflow-hidden">
+    <div className="min-h-screen p-4 bg-grid relative overflow-hidden flex items-center justify-center">
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
           className="absolute w-96 h-96 bg-neon-cyan/10 rounded-full blur-3xl"
@@ -106,7 +106,7 @@ const AvatarCreation = () => {
         />
       </div>
 
-      <div className="max-w-2xl mx-auto pt-8 relative z-10">
+      <div className="max-w-2xl w-full relative z-10">
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: -20 }}
@@ -157,7 +157,7 @@ const AvatarCreation = () => {
 
           {/* Profile Link */}
           <motion.div
-            className="glass-card p-4 flex items-center justify-between mb-6"
+            className="glass-card p-4 flex flex-col md:flex-row items-center justify-between mb-6 gap-4 md:gap-0"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
@@ -166,7 +166,7 @@ const AvatarCreation = () => {
               <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                 <ExternalLink size={18} className="text-primary" />
               </div>
-              <span className="text-sm font-medium">{profileLink}</span>
+              <span className="text-sm font-medium break-all">{profileLink}</span>
             </div>
             <Button
               variant="outline"

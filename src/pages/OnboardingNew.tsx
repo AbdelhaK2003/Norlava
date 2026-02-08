@@ -194,16 +194,16 @@ const OnboardingNew = () => {
                   {/* Formality */}
                   <div className="mb-8">
                     <label className="block text-sm font-medium mb-4">Tone</label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <label className="block text-sm font-medium mb-4">Tone</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {styleOptions.formality.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => updateField("formalityLevel", opt.value)}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${
-                            formData.formalityLevel === opt.value
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${formData.formalityLevel === opt.value
                               ? "border-neon-cyan bg-neon-cyan/10"
                               : "border-white/10 hover:border-white/20"
-                          }`}
+                            }`}
                         >
                           <div className="font-medium text-sm">{opt.label}</div>
                           <div className="text-xs text-muted-foreground">{opt.desc}</div>
@@ -215,16 +215,16 @@ const OnboardingNew = () => {
                   {/* Humor */}
                   <div className="mb-8">
                     <label className="block text-sm font-medium mb-4">Humor Style</label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <label className="block text-sm font-medium mb-4">Humor Style</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {styleOptions.humor.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => updateField("humorStyle", opt.value)}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${
-                            formData.humorStyle === opt.value
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${formData.humorStyle === opt.value
                               ? "border-neon-cyan bg-neon-cyan/10"
                               : "border-white/10 hover:border-white/20"
-                          }`}
+                            }`}
                         >
                           <div className="font-medium text-sm">{opt.label}</div>
                           <div className="text-xs text-muted-foreground">{opt.desc}</div>
@@ -236,16 +236,16 @@ const OnboardingNew = () => {
                   {/* Response Length */}
                   <div>
                     <label className="block text-sm font-medium mb-4">Response Length</label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <label className="block text-sm font-medium mb-4">Response Length</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       {styleOptions.length.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => updateField("responseLength", opt.value)}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${
-                            formData.responseLength === opt.value
+                          className={`p-4 rounded-lg border-2 transition-all text-left ${formData.responseLength === opt.value
                               ? "border-neon-cyan bg-neon-cyan/10"
                               : "border-white/10 hover:border-white/20"
-                          }`}
+                            }`}
                         >
                           <div className="font-medium text-sm">{opt.label}</div>
                           <div className="text-xs text-muted-foreground">{opt.desc}</div>
@@ -305,16 +305,15 @@ const OnboardingNew = () => {
                   <h2 className="text-2xl font-bold">Choose Your Avatar</h2>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   {["male", "female", "neutral"].map((g) => (
                     <button
                       key={g}
                       onClick={() => updateField("gender", g as any)}
-                      className={`p-6 rounded-lg border-2 transition-all ${
-                        formData.gender === g
+                      className={`p-6 rounded-lg border-2 transition-all ${formData.gender === g
                           ? "border-neon-cyan bg-neon-cyan/10"
                           : "border-white/10 hover:border-white/20"
-                      }`}
+                        }`}
                     >
                       <Avatar3D gender={g as "male" | "female" | "neutral"} />
                       <div className="text-sm font-medium mt-2 capitalize">{g}</div>
