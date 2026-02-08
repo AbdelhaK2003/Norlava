@@ -210,7 +210,7 @@ const Interact = () => {
     };
 
     return (
-        <div className="h-screen w-screen overflow-hidden relative font-outfit bg-black">
+        <div className="h-[100dvh] w-screen overflow-hidden relative font-outfit bg-black">
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
@@ -226,7 +226,7 @@ const Interact = () => {
                     initial={{ y: -100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="p-6 border-b border-neon-cyan/10 flex items-center justify-between backdrop-blur-xl bg-black/40"
+                    className="p-3 md:p-6 border-b border-neon-cyan/10 flex items-center justify-between backdrop-blur-xl bg-black/40"
                 >
                     <div className="flex items-center gap-4">
                         {/* Direct Avatar without circular frame */}
@@ -256,7 +256,7 @@ const Interact = () => {
                 </motion.div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-neon-cyan/20 scrollbar-track-transparent">
+                <div className="flex-1 overflow-y-auto p-3 md:p-8 space-y-4 md:space-y-6 scrollbar-thin scrollbar-thumb-neon-cyan/20 scrollbar-track-transparent">
                     {messages.length === 0 && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
@@ -295,7 +295,7 @@ const Interact = () => {
                                             <Zap size={16} className="text-black" />
                                         </div>
                                     )}
-                                    <div className={`relative p-5 rounded-3xl backdrop-blur-md border transition-all duration-300 hover:scale-[1.02] ${message.isUser
+                                    <div className={`relative p-3 md:p-5 rounded-3xl backdrop-blur-md border transition-all duration-300 hover:scale-[1.02] ${message.isUser
                                         ? 'bg-gradient-to-br from-neon-purple/20 to-neon-purple/5 border-neon-purple/30 text-white rounded-br-md shadow-[0_0_20px_rgba(188,19,254,0.1)]'
                                         : 'bg-white/5 border-white/10 text-gray-100 rounded-bl-md shadow-[0_0_20px_rgba(0,243,255,0.05)]'
                                         }`}>
@@ -374,7 +374,7 @@ const Interact = () => {
                     initial={{ y: 100, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
-                    className="p-6 pb-8 backdrop-blur-xl bg-black/40 border-t border-neon-cyan/10"
+                    className="p-3 md:p-6 pb-4 md:pb-8 backdrop-blur-xl bg-black/40 border-t border-neon-cyan/10"
                 >
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue, 'text'); }}
@@ -386,15 +386,16 @@ const Interact = () => {
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 placeholder="Type your message..."
-                                className="bg-white/5 border-white/10 focus-visible:ring-2 focus-visible:ring-neon-cyan/50 text-base pl-6 pr-16 h-16 rounded-full shadow-2xl backdrop-blur-xl transition-all hover:bg-white/10 hover:border-neon-cyan/30 text-white placeholder:text-gray-500"
+                                placeholder="Type your message..."
+                                className="bg-white/5 border-white/10 focus-visible:ring-2 focus-visible:ring-neon-cyan/50 text-sm md:text-base pl-4 md:pl-6 pr-12 md:pr-16 h-12 md:h-16 rounded-full shadow-2xl backdrop-blur-xl transition-all hover:bg-white/10 hover:border-neon-cyan/30 text-white placeholder:text-gray-500"
                             />
                             <Button
                                 type="submit"
                                 size="icon"
                                 disabled={!inputValue.trim()}
-                                className="absolute right-2 top-2 h-12 w-12 bg-gradient-to-r from-neon-cyan to-neon-purple text-black hover:shadow-[0_0_25px_rgba(0,243,255,0.6)] transition-all rounded-full disabled:opacity-30"
+                                className="absolute right-1 top-1 md:right-2 md:top-2 h-10 w-10 md:h-12 md:w-12 bg-gradient-to-r from-neon-cyan to-neon-purple text-black hover:shadow-[0_0_25px_rgba(0,243,255,0.6)] transition-all rounded-full disabled:opacity-30"
                             >
-                                <Send size={20} />
+                                <Send size={18} className="md:w-5 md:h-5" />
                             </Button>
                         </div>
                     </form>
