@@ -420,12 +420,7 @@ const Interact = () => {
                         </motion.div>
                     )}
 
-                    {/* Powered by badge */}
-                    <div className="text-center mt-4">
-                        <p className="text-xs text-gray-600 font-mono tracking-wider">
-                            POWERED BY <span className="text-neon-cyan">NORLAVA</span>
-                        </p>
-                    </div>
+
                 </div>
             </div>
         </div>
