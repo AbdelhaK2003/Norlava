@@ -210,7 +210,7 @@ const Interact = () => {
     };
 
     return (
-        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden font-outfit bg-black">
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden font-outfit bg-black pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             {/* Animated Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
@@ -371,7 +371,7 @@ const Interact = () => {
 
                 {/* Futuristic Input */}
                 <div
-                    className="flex-shrink-0 p-3 md:p-6 pb-4 md:pb-8 backdrop-blur-xl bg-black/40 border-t border-neon-cyan/10"
+                    className="flex-shrink-0 p-3 md:p-6 pb-6 md:pb-8 backdrop-blur-xl bg-black/40 border-t border-neon-cyan/10"
                 >
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSendMessage(inputValue, 'text'); }}
