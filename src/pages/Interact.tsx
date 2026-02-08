@@ -73,6 +73,7 @@ const Interact = () => {
     const navigate = useNavigate();
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
     const [isTyping, setIsTyping] = useState(false);
     const [showCreatePrompt, setShowCreatePrompt] = useState(true);
     const [ctaDismissed, setCtaDismissed] = useState(false);
@@ -207,6 +208,10 @@ const Interact = () => {
             isTrainingMode // Pass training mode flag
         });
         setInputValue("");
+        // Dismiss keyboard on mobile by blurring input
+        if (window.matchMedia("(max-width: 768px)").matches) {
+            inputRef.current?.blur();
+        }
     };
 
     return (
@@ -380,10 +385,11 @@ const Interact = () => {
                         <div className="absolute inset-0 bg-gradient-to-r from-neon-cyan/20 to-neon-purple/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         <div className="relative">
                             <Input
+                                ref={inputRef}
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 placeholder="Type your message..."
-                                className="bg-white/5 border-white/10 focus-visible:ring-2 focus-visible:ring-neon-cyan/50 text-sm md:text-base pl-4 md:pl-6 pr-12 md:pr-16 h-12 md:h-16 rounded-full shadow-2xl backdrop-blur-xl transition-all hover:bg-white/10 hover:border-neon-cyan/30 text-white placeholder:text-gray-500"
+                                className="bg-white/5 border-white/10 focus-visible:ring-2 focus-visible:ring-neon-cyan/50 text-base pl-4 md:pl-6 pr-12 md:pr-16 h-12 md:h-16 rounded-full shadow-2xl backdrop-blur-xl transition-all hover:bg-white/10 hover:border-neon-cyan/30 text-white placeholder:text-gray-500"
                             />
                             <Button
                                 type="submit"
