@@ -79,8 +79,14 @@ router.post('/register', async (req, res) => {
                 username: user.username
             }
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("🔥 Error in register route:", error);
+
+        // Handle Prisma Unique Constraint Violation
+        if (error.code === 'P2002') {
+            return res.status(409).json({ error: 'Email already exists' });
+        }
+
         res.status(500).json({ error: 'Registration failed' });
     }
 });

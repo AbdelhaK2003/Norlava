@@ -14,6 +14,7 @@ const Register = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -44,6 +45,8 @@ const Register = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       // Call Backend API
       const { data } = await api.post('/auth/register', formData);
@@ -60,6 +63,7 @@ const Register = () => {
       // Navigate
       navigate("/onboarding");
     } catch (error: any) {
+      setIsSubmitting(false);
       console.error(error);
       const errorMessage = error.response?.data?.error || "Registration failed";
 
@@ -202,10 +206,16 @@ const Register = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" variant="neon" size="lg">
-              <Sparkles size={18} />
-              {t('auth.createAvatar')}
-              <ArrowRight size={18} />
+            <Button type="submit" className="w-full" variant="neon" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">Generating...</span>
+              ) : (
+                <>
+                  <Sparkles size={18} />
+                  {t('auth.createAvatar')}
+                  <ArrowRight size={18} />
+                </>
+              )}
             </Button>
           </form>
 
