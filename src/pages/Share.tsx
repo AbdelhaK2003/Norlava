@@ -37,14 +37,14 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
           Chat with {user.firstName}'s<br />AI Twin
         </h3>
         <p className="text-sm text-muted-foreground px-4">
-          Ask me anything! I am fully trained and ready to chat.
+          Let's talk like you're talking to {user.firstName}
         </p>
       </div>
 
       <div className="relative z-10">
         <div className="flex items-center justify-center gap-2 text-xs font-mono text-neon-cyan opacity-80">
           <div className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
-          <span>voxterna.ai</span>
+          <span>Norlava</span>
         </div>
       </div>
     </div>
