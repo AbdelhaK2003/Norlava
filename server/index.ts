@@ -573,13 +573,8 @@ io.on('connection', (socket) => {
                                 });
                                 console.log(`📝 Captured GUEST_QUESTION: "${message}"`);
 
-                                if (data.isTrainingMode || senderIsUser) {
-                                    io.to(roomName).emit('receive-message', {
-                                        id: "sys-q-" + Date.now(),
-                                        text: `❓ [SYSTEM] New Question Captured: "${message}"`,
-                                        isUser: false
-                                    });
-                                }
+                                // Notification REMOVED per user request
+                                // was: io.to(roomName).emit('receive-message', { text: `❓ [SYSTEM] New Question Captured: "${message}"` ... })
                             } else {
                                 console.log(`⏩ Skipped duplicate question: "${message}"`);
                             }
@@ -657,13 +652,8 @@ io.on('connection', (socket) => {
                                 // Actually, only show this if senderIsUser (Trainer) or if we want to debug.
                                 // For now, let's emit a special 'debug-event' or just a system message?
                                 // A system message is safest.
-                                if (data.isTrainingMode || senderIsUser) {
-                                    io.to(roomName).emit('receive-message', {
-                                        id: "sys-" + Date.now(),
-                                        text: `📝 [SYSTEM] Extracted Fact: "${cleanFact}"`,
-                                        isUser: false
-                                    });
-                                }
+                                // Notification REMOVED per user request
+                                // was: io.to(roomName).emit('receive-message', { text: `📝 [SYSTEM] Extracted Fact: "${cleanFact}"` ... })
                             }
                         } else {
                             console.log("🧠 [Fact Probe] No meaningful facts found in output.");
