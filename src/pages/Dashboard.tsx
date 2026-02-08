@@ -37,7 +37,8 @@ const Dashboard = () => {
     const [copied, setCopied] = useState(false);
 
     // Knowledge Base State
-    const [knowledgeBase, setKnowledgeBase] = useState("");
+    const [knowledgeInput, setKnowledgeInput] = useState("");
+    const [currentBio, setCurrentBio] = useState("");
     const [isUpdatingKnowledge, setIsUpdatingKnowledge] = useState(false);
 
     const fetchMemories = async () => {
@@ -79,7 +80,7 @@ const Dashboard = () => {
                 api.get('/user/me')
                     .then(res => {
                         if (res.data?.profile?.bio) {
-                            setKnowledgeBase(res.data.profile.bio);
+                            setCurrentBio(res.data.profile.bio);
                         }
                     })
                     .catch(console.error);
@@ -93,9 +94,21 @@ const Dashboard = () => {
     }, []);
 
     const handleQuickUpdateKnowledge = async () => {
+        if (!knowledgeInput.trim()) return;
+
         setIsUpdatingKnowledge(true);
         try {
-            await api.put('/user/profile', { bio: knowledgeBase });
+            // Append new knowledge to existing bio
+            const updatedBio = currentBio
+                ? `${currentBio}\n\n${knowledgeInput}`
+                : knowledgeInput;
+
+            await api.put('/user/profile', { bio: updatedBio });
+
+            // Update local state
+            setCurrentBio(updatedBio);
+            setKnowledgeInput(""); // Clear input
+
             toast.success("Ty for helping now improving your character knowledge", {
                 icon: <Brain className="text-neon-purple" size={18} />,
                 style: { background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(188,19,254,0.3)', color: 'white' }
@@ -383,9 +396,9 @@ const Dashboard = () => {
                     <div className="p-6 space-y-4">
                         <textarea
                             className="w-full min-h-[120px] p-4 rounded-xl bg-black/40 border border-white/10 text-white placeholder:text-white/20 focus:outline-none focus:border-neon-purple/50 resize-y font-mono text-sm leading-relaxed transition-all focus:bg-black/60 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
-                            placeholder="e.g., I just started learning guitar..."
-                            value={knowledgeBase}
-                            onChange={(e) => setKnowledgeBase(e.target.value)}
+                            placeholder="Add new facts about yourself (e.g., I just started learning guitar...)"
+                            value={knowledgeInput}
+                            onChange={(e) => setKnowledgeInput(e.target.value)}
                         />
                         <div className="flex justify-end">
                             <Button
