@@ -49867,6 +49867,26 @@ var authenticateToken = (req, res, next) => {
 var jwtSign = import_jsonwebtoken2.default.sign || import_jsonwebtoken2.default.default && import_jsonwebtoken2.default.default.sign || import_jsonwebtoken2.default;
 var jwtVerify2 = import_jsonwebtoken2.default.verify || import_jsonwebtoken2.default.default && import_jsonwebtoken2.default.default.verify || import_jsonwebtoken2.default;
 var router = (0, import_express.Router)();
+router.options("/register", (req, res) => {
+  console.log("\u2705 OPTIONS /register received");
+  res.sendStatus(200);
+});
+router.options("/login", (req, res) => {
+  console.log("\u2705 OPTIONS /login received");
+  res.sendStatus(200);
+});
+router.options("/forgot-password", (req, res) => {
+  console.log("\u2705 OPTIONS /forgot-password received");
+  res.sendStatus(200);
+});
+router.options("/reset-password", (req, res) => {
+  console.log("\u2705 OPTIONS /reset-password received");
+  res.sendStatus(200);
+});
+router.options("/change-password", (req, res) => {
+  console.log("\u2705 OPTIONS /change-password received");
+  res.sendStatus(200);
+});
 router.post("/register", async (req, res) => {
   console.log("\u{1F449} Register endpoint hit!");
   console.log("Received body:", req.body);
@@ -49903,21 +49923,38 @@ router.post("/register", async (req, res) => {
     });
   } catch (error) {
     console.error("\u{1F525} Error in register route:", error);
+    if (error.code === "P2002") {
+      return res.status(409).json({ error: "Email already exists" });
+    }
     res.status(500).json({ error: "Registration failed" });
   }
 });
 router.post("/login", async (req, res) => {
+  console.log("\u{1F510} [LOGIN] Endpoint hit!");
+  console.log("\u{1F510} [LOGIN] Origin:", req.headers.origin);
+  console.log("\u{1F510} [LOGIN] Headers:", JSON.stringify(req.headers));
+  console.log("\u{1F510} [LOGIN] Body:", JSON.stringify(req.body));
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      console.log("\u{1F510} [LOGIN] Missing email or password");
+      return res.status(400).json({ error: "Email and password required" });
+    }
+    console.log("\u{1F510} [LOGIN] Looking up user:", email);
     const user = await db.findUserByEmail(email);
     if (!user) {
+      console.log("\u{1F510} [LOGIN] User not found:", email);
       return res.status(400).json({ error: "User not found" });
     }
+    console.log("\u{1F510} [LOGIN] User found, verifying password");
     const validPassword = await import_bcryptjs.default.compare(password, user.password);
     if (!validPassword) {
+      console.log("\u{1F510} [LOGIN] Invalid password for:", email);
       return res.status(400).json({ error: "Invalid password" });
     }
+    console.log("\u{1F510} [LOGIN] Password valid, generating token");
     const token = jwtSign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn: "7d" });
+    console.log("\u{1F510} [LOGIN] Success! Returning response");
     res.json({
       token,
       user: {
@@ -49929,7 +49966,8 @@ router.post("/login", async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+    console.error("\u{1F510} [LOGIN] ERROR:", error);
+    res.status(500).json({ error: "Login failed", details: String(error) });
   }
 });
 router.post("/forgot-password", async (req, res) => {
@@ -50619,14 +50657,52 @@ function hasSimilarQuestionBeenAsked(newMessage, sessionHistory, threshold = 0.7
   return false;
 }
 var corsOptions = {
-  origin: true,
-  // Reflects the request origin, effectively allowing all
+  origin: [
+    "https://norlava.com",
+    "http://localhost:5173",
+    // dev (Vite)
+    "http://localhost:3000"
+    // dev alt
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   optionsSuccessStatus: 200
 };
 var app = (0, import_express5.default)();
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+console.log("\u{1F527} Express app created, trust proxy enabled");
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    console.log(`\u{1F6A8} EMERGENCY OPTIONS HANDLER - Path: ${req.path}`);
+    console.log(`\u{1F6A8} Origin: ${req.headers.origin}`);
+    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Max-Age", "86400");
+    console.log(`\u{1F6A8} Sending 204 response`);
+    return res.status(204).end();
+  }
+  next();
+});
+app.use((req, res, next) => {
+  const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+  console.log(`
+========== INCOMING REQUEST ==========`);
+  console.log(`\u23F0 Time: ${timestamp}`);
+  console.log(`\u{1F4E1} Method: ${req.method}`);
+  console.log(`\u{1F310} Path: ${req.path}`);
+  console.log(`\u{1F517} Full URL: ${req.url}`);
+  console.log(`\u{1F4CD} Origin: ${req.headers.origin || "NO ORIGIN"}`);
+  console.log(`\u{1F511} Headers:`, JSON.stringify(req.headers, null, 2));
+  console.log(`======================================
+`);
+  next();
+});
+app.use((0, import_cors.default)(corsOptions));
+app.options("*", (0, import_cors.default)(corsOptions));
 app.use((req, res, next) => {
   console.log(`\u{1F4E1} [${req.method}] ${req.path} | Origin: ${req.headers.origin || "Unknown"}`);
   next();
@@ -50634,8 +50710,7 @@ app.use((req, res, next) => {
 var server = import_http.default.createServer(app);
 var io2 = new Server(server, {
   cors: {
-    origin: "*",
-    // Allow all for Socket.io
+    origin: ["https://norlava.com"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -50644,18 +50719,44 @@ var PORT = process.env.PORT || 3e3;
 console.log("\u{1F50D} Server Starting...");
 console.log("\u{1F4C2} Current Working Directory:", process.cwd());
 console.log("\u{1F517} DATABASE_URL:", process.env.DATABASE_URL);
-app.use((0, import_cors.default)(corsOptions));
-app.options("*", (0, import_cors.default)(corsOptions));
+console.log("\u{1F517} JWT_SECRET:", process.env.JWT_SECRET ? "SET" : "NOT SET");
+console.log("\u{1F4E6} Applying middleware...");
 app.use(import_express5.default.json());
+console.log("\u2705 Middleware applied successfully");
 app.use("/api/auth", auth_default);
 app.use("/api/user", user_default);
 app.use("/api/training", training_default);
 app.use("/api/facts", facts_default);
 app.get("/", (req, res) => {
-  res.send("Voxterna Backend is Running \u{1F680}");
+  console.log("\u{1F3E5} Root health check called");
+  res.status(200).send("Voxterna Backend is Running \u{1F680}");
 });
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "Voxterna Backend is running" });
+  console.log("\u{1F3E5} API health check called");
+  res.status(200).json({ status: "ok", message: "Voxterna Backend is running", timestamp: Date.now() });
+});
+app.get("/health", (req, res) => {
+  console.log("\u{1F3E5} /health endpoint called");
+  res.status(200).json({ status: "ok" });
+});
+app.get("/api/cors-test", (req, res) => {
+  console.log("\u{1F9EA} CORS Test - Origin:", req.headers.origin);
+  res.json({
+    status: "ok",
+    message: "CORS is working",
+    origin: req.headers.origin,
+    corsEnabled: true
+  });
+});
+app.get("/api/debug-env", (req, res) => {
+  res.json({
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    hasDatabaseUrl: !!process.env.DATABASE_URL,
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    cwd: process.cwd()
+  });
 });
 app.use("/api/*", (req, res) => {
   res.status(404).json({ error: "API Endpoint Not Found" });
@@ -50672,6 +50773,13 @@ app.get("/api/health-db", async (req, res) => {
       details: error?.message || String(error)
     });
   }
+});
+app.use((err, req, res, next) => {
+  console.error("\u274C UNHANDLED ERROR:", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).json({ error: "Internal server error", details: String(err) });
 });
 io2.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
@@ -50939,13 +51047,6 @@ Assistant:`;
                   // No answer yet
                 });
                 console.log(`\u{1F4DD} Captured GUEST_QUESTION: "${message}"`);
-                if (data.isTrainingMode || senderIsUser) {
-                  io2.to(roomName).emit("receive-message", {
-                    id: "sys-q-" + Date.now(),
-                    text: `\u2753 [SYSTEM] New Question Captured: "${message}"`,
-                    isUser: false
-                  });
-                }
               } else {
                 console.log(`\u23E9 Skipped duplicate question: "${message}"`);
               }
@@ -51002,13 +51103,6 @@ Assistant:`;
                   content: cleanFact
                 });
                 console.log(`\u2705 Pending fact saved to DB: "${cleanFact}"`);
-                if (data.isTrainingMode || senderIsUser) {
-                  io2.to(roomName).emit("receive-message", {
-                    id: "sys-" + Date.now(),
-                    text: `\u{1F4DD} [SYSTEM] Extracted Fact: "${cleanFact}"`,
-                    isUser: false
-                  });
-                }
               }
             } else {
               console.log("\u{1F9E0} [Fact Probe] No meaningful facts found in output.");
@@ -51041,15 +51135,7 @@ Assistant:`;
     if (!hostUser) return;
     const profile = await db.findProfileByUserId(hostUser.id);
     if (!profile) return;
-    const allMemories = await db.getMemories(profile.id);
-    const pendingQuestions = allMemories.filter((m) => m.type === "GUEST_QUESTION").length;
-    const pendingFacts = allMemories.filter((m) => m.type === "LEARNED_FROM_GUEST").length;
-    let greeting = "";
-    if (pendingQuestions > 0 || pendingFacts > 0) {
-      greeting = `Hello! I'm ready to learn. I have ${pendingQuestions} new questions and ${pendingFacts} facts to discuss. Shall we start?`;
-    } else {
-      greeting = `Hello! My memory is fully up to date. We can discuss random topics or you can teach me something new!`;
-    }
+    const greeting = `Hey how are you ${hostUser.firstName}, now you are trying me as your AI twin.`;
     await db.createMessage({
       content: greeting,
       isUser: false,

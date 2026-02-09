@@ -20,8 +20,16 @@ import {
   ChevronDown,
   Check,
   Star,
+  Menu, // Added Menu icon
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Index = () => {
   const { t } = useTranslation();
@@ -183,35 +191,85 @@ const Index = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-20 p-6 border-b border-glass-border/50 backdrop-blur-sm">
+      {/* Navigation */}
+      <nav className="relative z-20 p-4 md:p-6 border-b border-glass-border/50 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Logo size="lg" />
+
+          {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
             <a href="#use-cases" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Use Cases</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </div>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-3 md:gap-4">
             {isLoggedIn ? (
               <>
-                <Button variant="ghost" onClick={handleLogout} className="hidden sm:flex">
+                <Button variant="ghost" onClick={handleLogout} className="hidden md:flex">
                   Sign Out
                 </Button>
-                <Button variant="neon" onClick={() => navigate("/dashboard")}>
+                <Button variant="neon" onClick={() => navigate("/dashboard")} className="hidden md:flex">
                   Dashboard
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden sm:flex">
+                <Button variant="ghost" onClick={() => navigate("/login")} className="hidden md:flex">
                   Sign In
                 </Button>
-                <Button variant="outline" onClick={() => navigate("/register")}>
+                <Button variant="outline" onClick={() => navigate("/register")} className="hidden md:flex">
                   Get Started
                 </Button>
               </>
             )}
+
+            {/* Mobile Menu */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="w-6 h-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] border-l border-glass-border bg-black/95 backdrop-blur-xl">
+                <SheetHeader>
+                  <SheetTitle className="text-left"><Logo size="md" /></SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-6 mt-8">
+                  <div className="flex flex-col gap-4">
+                    <a href="#how-it-works" className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors">How It Works</a>
+                    <a href="#features" className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors">Features</a>
+                    <a href="#use-cases" className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors">Use Cases</a>
+                    <a href="#faq" className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors">FAQ</a>
+                  </div>
+
+                  <div className="h-px bg-glass-border w-full my-2" />
+
+                  <div className="flex flex-col gap-3">
+                    {isLoggedIn ? (
+                      <>
+                        <Button variant="neon" onClick={() => navigate("/dashboard")} className="w-full">
+                          Dashboard
+                        </Button>
+                        <Button variant="ghost" onClick={handleLogout} className="w-full justify-start px-0">
+                          Sign Out
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button variant="outline" onClick={() => navigate("/register")} className="w-full">
+                          Get Started
+                        </Button>
+                        <Button variant="ghost" onClick={() => navigate("/login")} className="w-full justify-start px-0">
+                          Sign In
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>
@@ -234,11 +292,11 @@ const Index = () => {
               {t('landing.heroBadge')}
             </motion.div>
 
-            <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight">
               {t('landing.heroTitle')} <span className="gradient-text">{t('landing.heroTitleHighlight')}</span> {t('landing.heroTitleSuffix')}
             </h1>
 
-            <p className="text-xl text-muted-foreground mb-8 max-w-lg">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-lg">
               {t('landing.heroDesc')}
             </p>
 
@@ -246,21 +304,13 @@ const Index = () => {
               <Button
                 variant="hero"
                 onClick={() => navigate(isLoggedIn ? "/dashboard" : "/register")}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto justify-center"
               >
                 <Sparkles size={20} />
                 {isLoggedIn ? "Go to Dashboard" : t('landing.cta')}
                 <ArrowRight size={20} />
               </Button>
-              <Button
-                variant="glass"
-                size="xl"
-                onClick={() => navigate("/interact/demo")}
-                className="gap-2"
-              >
-                <Play size={18} />
-                {t('landing.seeDemo')}
-              </Button>
+              {/* Demo button removed as requested */}
             </div>
 
             {/* Mini stats */}
@@ -659,9 +709,9 @@ const Index = () => {
             </div>
           </div>
           <div className="border-t border-glass-border pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               <p>© 2026 Norlava. Your digital legacy starts here.</p>
-            </p>
+            </div>
             <div className="flex items-center gap-4">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
