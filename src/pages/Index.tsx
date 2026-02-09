@@ -153,7 +153,7 @@ const Index = () => {
     },
     {
       question: "Can I try it before signing up?",
-      answer: "Yes! Click 'See Demo' to interact with a sample avatar. You'll get a feel for how natural the conversations can be.",
+      answer: "We recommend creating a free account to get the full experience! You can customize your own avatar in minutes without any credit card.",
     },
     {
       question: "Does it support voice conversations?",
@@ -281,6 +281,7 @@ const Index = () => {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
+            className="text-center lg:text-left flex flex-col items-center lg:items-start"
           >
             <motion.div
               className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6"
@@ -300,21 +301,20 @@ const Index = () => {
               {t('landing.heroDesc')}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start">
               <Button
                 variant="hero"
                 onClick={() => navigate(isLoggedIn ? "/dashboard" : "/register")}
-                className="gap-2 w-full sm:w-auto justify-center"
+                className="gap-2 w-full sm:w-auto"
               >
                 <Sparkles size={20} />
                 {isLoggedIn ? "Go to Dashboard" : t('landing.cta')}
                 <ArrowRight size={20} />
               </Button>
-              {/* Demo button removed as requested */}
             </div>
 
             {/* Mini stats */}
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground justify-center lg:justify-start">
               <div className="flex items-center gap-2">
                 <Check size={16} className="text-green-500" />
                 {t('landing.freeToStart')}
@@ -336,14 +336,14 @@ const Index = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            {/* Decorative rings */}
+            {/* Decorative rings - scaled down for mobile */}
             <motion.div
-              className="absolute w-80 h-80 border border-primary/20 rounded-full"
+              className="absolute w-64 h-64 sm:w-80 sm:h-80 border border-primary/20 rounded-full"
               animate={{ rotate: 360 }}
               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
             />
             <motion.div
-              className="absolute w-96 h-96 border border-secondary/10 rounded-full"
+              className="absolute w-72 h-72 sm:w-96 sm:h-96 border border-secondary/10 rounded-full"
               animate={{ rotate: -360 }}
               transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
             />
@@ -352,9 +352,9 @@ const Index = () => {
             <div className="relative">
               <Avatar3D size="xl" />
 
-              {/* Floating elements */}
+              {/* Floating elements - adjusted for mobile safety */}
               <motion.div
-                className="absolute -top-4 -right-8 glass-card px-3 py-2 text-xs font-medium"
+                className="absolute -top-4 -right-4 sm:-right-8 glass-card px-3 py-2 text-xs font-medium"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
@@ -362,7 +362,7 @@ const Index = () => {
               </motion.div>
 
               <motion.div
-                className="absolute -bottom-4 -left-8 glass-card px-3 py-2 text-xs font-medium"
+                className="absolute -bottom-4 -left-4 sm:-left-8 glass-card px-3 py-2 text-xs font-medium"
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, delay: 1 }}
               >
@@ -370,7 +370,7 @@ const Index = () => {
               </motion.div>
 
               <motion.div
-                className="absolute top-1/2 -right-16 glass-card px-3 py-2 text-xs font-medium"
+                className="absolute top-1/2 -right-12 sm:-right-16 glass-card px-3 py-2 text-xs font-medium hidden sm:block"
                 animate={{ x: [0, 5, 0] }}
                 transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
               >
