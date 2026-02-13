@@ -24,7 +24,7 @@ import { api } from "@/lib/api";
 const OnboardingNew = () => {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
-  const totalSteps = 4;
+  const totalSteps = 3;
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -193,20 +193,19 @@ const OnboardingNew = () => {
 
                   {/* Formality */}
                   <div className="mb-8">
-                    <label className="block text-sm font-medium mb-4">Tone</label>
-                    <label className="block text-sm font-medium mb-4">Tone</label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label className="block text-sm font-medium mb-4 text-foreground/80">Tone</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {styleOptions.formality.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => updateField("formalityLevel", opt.value)}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${formData.formalityLevel === opt.value
-                              ? "border-neon-cyan bg-neon-cyan/10"
-                              : "border-white/10 hover:border-white/20"
+                          className={`p-6 rounded-xl border-2 transition-all text-left flex flex-col gap-2 h-full ${formData.formalityLevel === opt.value
+                            ? "border-neon-cyan bg-neon-cyan/10 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                            : "border-white/10 hover:border-white/20 hover:bg-white/5"
                             }`}
                         >
-                          <div className="font-medium text-sm">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                          <div className="font-semibold text-lg">{opt.label}</div>
+                          <div className="text-sm text-muted-foreground leading-relaxed">{opt.desc}</div>
                         </button>
                       ))}
                     </div>
@@ -214,20 +213,19 @@ const OnboardingNew = () => {
 
                   {/* Humor */}
                   <div className="mb-8">
-                    <label className="block text-sm font-medium mb-4">Humor Style</label>
-                    <label className="block text-sm font-medium mb-4">Humor Style</label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label className="block text-sm font-medium mb-4 text-foreground/80">Humor Style</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {styleOptions.humor.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => updateField("humorStyle", opt.value)}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${formData.humorStyle === opt.value
-                              ? "border-neon-cyan bg-neon-cyan/10"
-                              : "border-white/10 hover:border-white/20"
+                          className={`p-6 rounded-xl border-2 transition-all text-left flex flex-col gap-2 h-full ${formData.humorStyle === opt.value
+                            ? "border-neon-cyan bg-neon-cyan/10 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                            : "border-white/10 hover:border-white/20 hover:bg-white/5"
                             }`}
                         >
-                          <div className="font-medium text-sm">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                          <div className="font-semibold text-lg">{opt.label}</div>
+                          <div className="text-sm text-muted-foreground leading-relaxed">{opt.desc}</div>
                         </button>
                       ))}
                     </div>
@@ -235,20 +233,19 @@ const OnboardingNew = () => {
 
                   {/* Response Length */}
                   <div>
-                    <label className="block text-sm font-medium mb-4">Response Length</label>
-                    <label className="block text-sm font-medium mb-4">Response Length</label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label className="block text-sm font-medium mb-4 text-foreground/80">Response Length</label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {styleOptions.length.map((opt) => (
                         <button
                           key={opt.value}
                           onClick={() => updateField("responseLength", opt.value)}
-                          className={`p-4 rounded-lg border-2 transition-all text-left ${formData.responseLength === opt.value
-                              ? "border-neon-cyan bg-neon-cyan/10"
-                              : "border-white/10 hover:border-white/20"
+                          className={`p-6 rounded-xl border-2 transition-all text-left flex flex-col gap-2 h-full ${formData.responseLength === opt.value
+                            ? "border-neon-cyan bg-neon-cyan/10 shadow-[0_0_15px_rgba(34,211,238,0.2)]"
+                            : "border-white/10 hover:border-white/20 hover:bg-white/5"
                             }`}
                         >
-                          <div className="font-medium text-sm">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                          <div className="font-semibold text-lg">{opt.label}</div>
+                          <div className="text-sm text-muted-foreground leading-relaxed">{opt.desc}</div>
                         </button>
                       ))}
                     </div>
@@ -295,34 +292,6 @@ const OnboardingNew = () => {
                   </div>
                 </GlassCard>
               </div>
-            )}
-
-            {/* STEP 4: Avatar */}
-            {step === 4 && (
-              <GlassCard className="p-8 mb-8">
-                <div className="flex items-center gap-3 mb-6">
-                  <Smile className="text-neon-cyan" />
-                  <h2 className="text-2xl font-bold">Choose Your Avatar</h2>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  {["male", "female", "neutral"].map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => updateField("gender", g as any)}
-                      className={`p-6 rounded-lg border-2 transition-all ${formData.gender === g
-                          ? "border-neon-cyan bg-neon-cyan/10"
-                          : "border-white/10 hover:border-white/20"
-                        }`}
-                    >
-                      <Avatar3D gender={g as "male" | "female" | "neutral"} />
-                      <div className="text-sm font-medium mt-2 capitalize">{g}</div>
-                    </button>
-                  ))}
-                </div>
-
-                <p className="text-sm text-muted-foreground">You can change this anytime in settings!</p>
-              </GlassCard>
             )}
           </motion.div>
         </AnimatePresence>
