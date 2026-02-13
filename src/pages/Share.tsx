@@ -56,34 +56,34 @@ const StaticAvatar = ({ size = "lg", gender = "neutral" }: { size?: string, gend
 // Extracted Card Component for consistent rendering
 const ShareCard = ({ user, username, profileLink }: { user: any, username: string, profileLink: string }) => {
   return (
-    <div className="relative w-full h-full bg-[#0a0a0a] border border-gray-800 flex flex-col items-center justify-between py-12 px-8 shadow-2xl overflow-hidden rounded-[32px] text-white font-sans">
-      {/* Decorative BG in Capture - Static Gradients */}
-      <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/20 blur-[60px] rounded-full"></div>
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/20 blur-[60px] rounded-full"></div>
+    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-10 px-6 shadow-2xl overflow-hidden rounded-[32px]">
+      {/* Decorative BG in Capture */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/20 blur-[50px] rounded-full"></div>
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-neon-cyan/20 blur-[50px] rounded-full"></div>
 
-      <div className="relative z-10 flex flex-col items-center gap-6 w-full mt-4">
+      <div className="relative z-10 flex flex-col items-center gap-4 w-full">
+        {/* Use StaticAvatar to prevent rendering issues */}
         <StaticAvatar size="lg" />
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight mb-2">{user.firstName}</h2>
-          <p className="text-sm text-gray-400 uppercase tracking-widest font-mono">AI Digital Twin</p>
+          <h2 className="text-2xl font-bold">{user.firstName}</h2>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">AI Digital Twin</p>
         </div>
       </div>
 
-      <div className="relative z-10 text-center space-y-6 mb-8">
-        <h3 className="text-3xl font-bold leading-tight">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-            Chat with {user.firstName}'s<br />AI Twin
-          </span>
+      <div className="relative z-10 text-center space-y-4">
+        {/* Removed 'gradient-text' class to prevent "blue rectangle" artifact in html2canvas */}
+        <h3 className="text-2xl font-bold leading-tight text-neon-cyan">
+          Chat with {user.firstName}'s<br />AI Twin
         </h3>
-        <p className="text-base text-gray-400 px-6 leading-relaxed">
-          Scan the QR or click the link to start a conversation with my digital clone.
+        <p className="text-sm text-muted-foreground px-4">
+          Let's talk like you're talking to {user.firstName}
         </p>
       </div>
 
-      <div className="relative z-10 mb-4">
-        <div className="flex items-center justify-center gap-2 text-sm font-mono text-cyan-400 opacity-90">
-          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-          <span>Powered by Norlava</span>
+      <div className="relative z-10">
+        <div className="flex items-center justify-center gap-2 text-xs font-mono text-neon-cyan opacity-80">
+          <div className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
+          <span>Norlava</span>
         </div>
       </div>
     </div>
