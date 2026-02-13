@@ -64,7 +64,7 @@ const AvatarCreation = () => {
 
         <div className="text-center relative z-10">
           <motion.div
-            className="mb-8 mx-auto"
+            className="mb-8 flex justify-center"
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
