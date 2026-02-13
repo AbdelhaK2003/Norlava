@@ -58,7 +58,7 @@ import QRCode from "react-qr-code";
 
 const ShareCard = ({ user, username, profileLink }: { user: any, username: string, profileLink: string }) => {
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-8 px-6 shadow-2xl overflow-hidden rounded-[32px]">
+    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-8 px-6 shadow-2xl">
       {/* Decorative BG in Capture - Radial Gradients for better html2canvas support */}
       <div
         className="absolute -top-10 -right-10 w-64 h-64 opacity-30 pointer-events-none"
