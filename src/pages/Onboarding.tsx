@@ -167,17 +167,22 @@ const Onboarding = () => {
         </motion.div>
 
         {/* Progress bar */}
-        <div className="flex justify-center gap-2 mb-8">
-          {Array.from({ length: totalSteps }).map((_, i) => (
-            <motion.div
-              key={i}
-              className={`h-2 rounded-full transition-all duration-300 ${i + 1 <= step ? "bg-primary w-12" : "bg-muted w-8"
-                }`}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-            />
-          ))}
+        <div className="flex flex-col items-center mb-8">
+          <div className="flex justify-center gap-2 mb-2">
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <motion.div
+                key={i}
+                className={`h-2 rounded-full transition-all duration-300 ${i + 1 <= step ? "bg-primary w-12" : "bg-muted w-8"
+                  }`}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: i * 0.1 }}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">
+            Step {step} of {totalSteps}
+          </p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -313,63 +318,69 @@ const Onboarding = () => {
 
                 <div className="space-y-8">
                   {/* Formality */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">{t('onboarding.formality')}</label>
-                    <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-foreground/80">{t('onboarding.formality')}</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {styleOptions.formality.map((opt) => (
                         <motion.button
                           key={opt.value}
                           type="button"
-                          className={`glass-card p-3 text-center transition-all ${formData.formalityLevel === opt.value ? "border-primary neon-glow" : "hover:border-primary/50"
+                          className={`glass-card p-6 text-center transition-all duration-200 flex flex-col items-center justify-center gap-2 h-full ${formData.formalityLevel === opt.value
+                            ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"
+                            : "hover:border-primary/50 hover:bg-white/5"
                             }`}
                           onClick={() => updateField("formalityLevel", opt.value)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <div className="text-lg mb-1">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                          <div className="text-xl font-semibold text-foreground">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground leading-snug">{opt.desc}</div>
                         </motion.button>
                       ))}
                     </div>
                   </div>
 
                   {/* Humor */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">{t('onboarding.humor')}</label>
-                    <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-foreground/80">{t('onboarding.humor')}</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {styleOptions.humor.map((opt) => (
                         <motion.button
                           key={opt.value}
                           type="button"
-                          className={`glass-card p-3 text-center transition-all ${formData.humorStyle === opt.value ? "border-primary neon-glow" : "hover:border-primary/50"
+                          className={`glass-card p-6 text-center transition-all duration-200 flex flex-col items-center justify-center gap-2 h-full ${formData.humorStyle === opt.value
+                            ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"
+                            : "hover:border-primary/50 hover:bg-white/5"
                             }`}
                           onClick={() => updateField("humorStyle", opt.value)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <div className="text-lg mb-1">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                          <div className="text-xl font-semibold text-foreground">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground leading-snug">{opt.desc}</div>
                         </motion.button>
                       ))}
                     </div>
                   </div>
 
                   {/* Response Length */}
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">{t('onboarding.responseLength')}</label>
-                    <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-foreground/80">{t('onboarding.responseLength')}</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {styleOptions.length.map((opt) => (
                         <motion.button
                           key={opt.value}
                           type="button"
-                          className={`glass-card p-3 text-center transition-all ${formData.responseLength === opt.value ? "border-primary neon-glow" : "hover:border-primary/50"
+                          className={`glass-card p-6 text-center transition-all duration-200 flex flex-col items-center justify-center gap-2 h-full ${formData.responseLength === opt.value
+                            ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"
+                            : "hover:border-primary/50 hover:bg-white/5"
                             }`}
                           onClick={() => updateField("responseLength", opt.value)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <div className="text-lg mb-1">{opt.label}</div>
-                          <div className="text-xs text-muted-foreground">{opt.desc}</div>
+                          <div className="text-xl font-semibold text-foreground">{opt.label}</div>
+                          <div className="text-xs text-muted-foreground leading-snug">{opt.desc}</div>
                         </motion.button>
                       ))}
                     </div>
