@@ -57,7 +57,7 @@ const Register = () => {
 
       toast({
         title: t('auth.accountCreated'),
-        description: t('auth.welcomeToVoxterna'),
+        description: "Welcome to Norlava! Let's build your digital twin.",
       });
 
       // Navigate

@@ -33,6 +33,11 @@ const Onboarding = () => {
   const [step, setStep] = useState(1);
   const totalSteps = 5; // Reduced step count
 
+  // Safety: Ensure step doesn't exceed totalSteps due to persisted state
+  if (step > totalSteps) {
+    setStep(totalSteps);
+  }
+
   const [formData, setFormData] = useState({
     // Step 1: Basic Identity
     nickname: "",
