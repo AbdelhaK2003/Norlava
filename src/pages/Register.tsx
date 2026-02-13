@@ -84,13 +84,13 @@ const Register = () => {
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute w-96 h-96 bg-neon-purple/10 rounded-full blur-3xl"
+          className="absolute w-64 h-64 sm:w-96 sm:h-96 bg-neon-purple/10 rounded-full blur-3xl"
           animate={{ x: [0, -50, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity }}
           style={{ top: "5%", right: "10%" }}
         />
         <motion.div
-          className="absolute w-80 h-80 bg-neon-cyan/10 rounded-full blur-3xl"
+          className="absolute w-64 h-64 sm:w-80 sm:h-80 bg-neon-cyan/10 rounded-full blur-3xl"
           animate={{ x: [0, 30, 0], y: [0, -50, 0] }}
           transition={{ duration: 8, repeat: Infinity }}
           style={{ bottom: "5%", left: "10%" }}
@@ -112,11 +112,11 @@ const Register = () => {
           </p>
         </motion.div>
 
-        <GlassCard className="p-8" glow>
+        <GlassCard className="p-6 sm:p-8" glow>
           {/* Email Register Only */}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
                   {t('auth.firstName')}
@@ -154,7 +154,7 @@ const Register = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">

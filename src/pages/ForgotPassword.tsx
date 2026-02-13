@@ -65,7 +65,7 @@ const ForgotPassword = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md bg-background/60 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-xl"
+                className="w-full max-w-md bg-background/60 backdrop-blur-xl border border-white/10 p-6 sm:p-8 rounded-2xl shadow-xl"
             >
                 <div className="flex items-center mb-6">
                     <Button variant="ghost" size="icon" onClick={() => step > 1 ? setStep(step - 1) : navigate("/login")}>

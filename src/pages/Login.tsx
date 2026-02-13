@@ -58,13 +58,13 @@ const Login = () => {
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <motion.div
-          className="absolute w-96 h-96 bg-neon-cyan/10 rounded-full blur-3xl"
+          className="absolute w-64 h-64 sm:w-96 sm:h-96 bg-neon-cyan/10 rounded-full blur-3xl"
           animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
           transition={{ duration: 10, repeat: Infinity }}
           style={{ top: "10%", left: "10%" }}
         />
         <motion.div
-          className="absolute w-80 h-80 bg-neon-purple/10 rounded-full blur-3xl"
+          className="absolute w-64 h-64 sm:w-80 sm:h-80 bg-neon-purple/10 rounded-full blur-3xl"
           animate={{ x: [0, -30, 0], y: [0, 50, 0] }}
           transition={{ duration: 8, repeat: Infinity }}
           style={{ bottom: "10%", right: "10%" }}
@@ -86,7 +86,7 @@ const Login = () => {
           </p>
         </motion.div>
 
-        <GlassCard className="p-8" glow>
+        <GlassCard className="p-6 sm:p-8" glow>
           {/* Email Sign In only */}
 
           <form onSubmit={handleSubmit} className="space-y-6">

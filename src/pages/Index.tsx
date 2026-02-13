@@ -275,129 +275,100 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-12 pb-24">
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-24 md:pt-32 md:pb-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-center lg:text-left flex flex-col items-center lg:items-start"
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6"
-              initial={{ opacity: 0, y: 20 }}
+              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold mb-6 tracking-wide uppercase"
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <Sparkles size={16} />
-              {t('landing.heroBadge')}
+              <Sparkles size={14} />
+              {t('landing.heroBadge', 'Digital Identity Reimagined')}
             </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight">
-              {t('landing.heroTitle')} <span className="gradient-text">{t('landing.heroTitleHighlight')}</span> {t('landing.heroTitleSuffix')}
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tighter text-foreground">
+              {t('landing.heroTitle', 'Create Your')} <span className="gradient-text">{t('landing.heroTitleHighlight', 'AI Twin')}</span> {t('landing.heroTitleSuffix', '')}
             </h1>
 
-            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-lg">
-              {t('landing.heroDesc')}
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-lg leading-relaxed">
+              {t('landing.heroDesc', 'Preserve your personality, knowledge, and style in an intelligent AI avatar. Allow others to interact with you, anytime, anywhere.')}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-8 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row gap-4 mb-10 justify-center lg:justify-start w-full sm:w-auto">
               <Button
                 variant="hero"
                 onClick={() => navigate(isLoggedIn ? "/dashboard" : "/register")}
-                className="gap-2 w-full sm:w-auto"
+                className="gap-2 w-full sm:w-auto h-12 px-8 text-base shadow-neon-glow hover:shadow-neon-strong transition-all duration-300"
               >
-                <Sparkles size={20} />
-                {isLoggedIn ? "Go to Dashboard" : t('landing.cta')}
-                <ArrowRight size={20} />
+                {isLoggedIn ? "Go to Dashboard" : t('landing.cta', 'Start Creating')}
+                <ArrowRight size={18} />
               </Button>
             </div>
 
-            {/* Mini stats */}
-            <div className="flex items-center gap-6 text-sm text-muted-foreground justify-center lg:justify-start">
+            {/* Mini stats / Trust indicators */}
+            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground justify-center lg:justify-start">
               <div className="flex items-center gap-2">
-                <Check size={16} className="text-green-500" />
-                {t('landing.freeToStart')}
+                <Check size={16} className="text-primary" />
+                <span>Free Tier Available</span>
               </div>
               <div className="flex items-center gap-2">
-                <Check size={16} className="text-green-500" />
-                {t('landing.noCreditCard')}
-              </div>
-              <div className="flex items-center gap-2">
-                <Check size={16} className="text-green-500" />
-                {t('landing.setupTime')}
+                <Check size={16} className="text-primary" />
+                <span>No Credit Card Required</span>
               </div>
             </div>
           </motion.div>
 
           <motion.div
-            className="relative flex justify-center"
-            initial={{ opacity: 0, scale: 0.8 }}
+            className="relative flex justify-center lg:justify-end"
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            {/* Decorative rings - scaled down for mobile */}
-            <motion.div
-              className="absolute w-64 h-64 sm:w-80 sm:h-80 border border-primary/20 rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-              className="absolute w-72 h-72 sm:w-96 sm:h-96 border border-secondary/10 rounded-full"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-            />
+            {/* Main avatar display */}
+            <div className="relative w-full max-w-[400px] aspect-square">
+              {/* Abstract bg element */}
+              <div className="absolute inset-0 bg-gradient-radial from-primary/20 to-transparent blur-3xl opacity-50" />
 
-            {/* Main avatar */}
-            <div className="relative">
-              <Avatar3D size="xl" />
+              <Avatar3D size="xl" className="w-full h-full scale-125 md:scale-150" />
 
-              {/* Floating elements - adjusted for mobile safety */}
-              <motion.div
-                className="absolute -top-4 -right-4 sm:-right-8 glass-card px-3 py-2 text-xs font-medium"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <span className="text-primary">Hey! 👋</span>
-              </motion.div>
+              {/* Feature Tags - Static/Subtle animation for Pro look */}
+              <div className="absolute -top-6 right-0 glass-card px-4 py-2 text-xs font-semibold flex items-center gap-2 shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                Always On
+              </div>
 
-              <motion.div
-                className="absolute -bottom-4 -left-4 sm:-left-8 glass-card px-3 py-2 text-xs font-medium"
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-              >
-                <span className="text-secondary">Always online</span>
-              </motion.div>
+              <div className="absolute bottom-10 -left-6 glass-card px-4 py-2 text-xs font-semibold shadow-lg hidden sm:flex items-center gap-2">
+                <Brain size={14} className="text-secondary" />
+                Deep Learning
+              </div>
 
-              <motion.div
-                className="absolute top-1/2 -right-12 sm:-right-16 glass-card px-3 py-2 text-xs font-medium hidden sm:block"
-                animate={{ x: [0, 5, 0] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-              >
-                <Mic size={14} className="text-primary inline mr-1" />
-                <span>Voice enabled</span>
-              </motion.div>
+              {/* Updated Voice Badge */}
+              <div className="absolute top-1/2 -right-8 glass-card px-4 py-2 text-xs font-semibold shadow-lg flex items-center gap-2 border-primary/20">
+                <Mic size={14} className="text-muted-foreground" />
+                <span className="text-muted-foreground">Voice (Coming Soon)</span>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="relative z-10 border-y border-glass-border bg-card/30 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Stats Bar/Trust Section - Simplified */}
+      <section className="relative z-10 border-y border-glass-border bg-card/10 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div className="text-3xl md:text-4xl font-bold gradient-text mb-1">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </motion.div>
+              <div key={stat.label} className="text-center">
+                {/* Removed animation for simpler, faster load */}
+                <div className="text-3xl md:text-4xl font-bold text-foreground mb-1 tracking-tight">{stat.value}</div>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">{stat.label}</div>
+              </div>
             ))}
           </div>
         </div>
@@ -405,104 +376,66 @@ const Index = () => {
 
       {/* How It Works Section */}
       <section id="how-it-works" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-bold text-center mb-12">
-            How <span className="gradient-text">Norlava</span> Works
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold text-center mb-6 tracking-tight">
+            Seamless <span className="gradient-text">Integration</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Creating your AI avatar is simple. Follow these steps and you'll be up and running in minutes.
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            Build your digital twin in four simple steps. No coding required.
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {howItWorks.map((item, index) => (
-            <motion.div
-              key={item.step}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <GlassCard className="h-full p-6 relative overflow-hidden">
-                {/* Step number */}
-                <div className="absolute -top-2 -right-2 w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center">
-                  <span className="text-2xl font-bold text-primary">{item.step}</span>
-                </div>
-
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-4">
-                  <item.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
-              </GlassCard>
-            </motion.div>
+            <GlassCard key={item.step} className="h-full p-6 md:p-8 relative overflow-hidden group hover:border-primary/30 transition-colors duration-500">
+              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 text-primary group-hover:bg-primary group-hover:text-black transition-colors duration-300">
+                <item.icon className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+            </GlassCard>
           ))}
         </div>
       </section>
 
       {/* Features Section */}
       <section id="features" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl font-bold mb-4">
-            Powerful <span className="gradient-text">Features</span>
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
+            Engineered for <span className="gradient-text">Authenticity</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to create an AI that truly represents you.
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            Advanced features designed to capture the essence of who you are.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
           {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <GlassCard className="h-full p-8" neonBorder>
-                <feature.icon className="w-12 h-12 text-primary mb-4" />
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
-              </GlassCard>
-            </motion.div>
+            <GlassCard key={feature.title} className="h-full p-8 md:p-10" neonBorder>
+              <feature.icon className="w-10 h-10 text-primary mb-6" />
+              <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+            </GlassCard>
           ))}
         </div>
 
-        {/* Additional features grid */}
+        {/* Additional features grid - Clean list */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { icon: Mic, title: "Voice Chat", desc: "Talk, don't type" },
-            { icon: Shield, title: "Privacy First", desc: "Your data, secured" },
-            { icon: Zap, title: "Instant Setup", desc: "Ready in minutes" },
-            { icon: Globe, title: "Always Online", desc: "24/7 availability" },
+            { icon: Mic, title: "Voice Interaction", desc: "Coming Soon" },
+            { icon: Shield, title: "Privacy First", desc: "Encrypted Data" },
+            { icon: Zap, title: "Instant Training", desc: "Real-time Updates" },
+            { icon: Globe, title: "Global Access", desc: "Available 24/7" },
           ].map((item, index) => (
-            <motion.div
-              key={item.title}
-              className="glass-card p-4 flex items-center gap-3"
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <item.icon size={20} className="text-primary" />
+            <div key={item.title} className="glass-card p-4 flex items-center gap-4 hover:bg-white/5 transition-colors">
+              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+                <item.icon size={20} className="text-secondary" />
               </div>
               <div>
-                <div className="font-medium text-sm">{item.title}</div>
+                <div className="font-semibold text-sm">{item.title}</div>
                 <div className="text-xs text-muted-foreground">{item.desc}</div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </section>
