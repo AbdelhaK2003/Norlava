@@ -82,7 +82,7 @@ const Settings = () => {
                     </div>
                 </div>
 
-                <GlassCard className="p-6 md:p-8 max-w-lg">
+                <GlassCard className="p-6 md:p-8 max-w-lg mx-auto">
                     <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
                         <Lock size={20} className="text-neon-cyan" />
                         {t('settings.changePassword') || "Change Password"}
