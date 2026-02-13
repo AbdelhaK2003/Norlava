@@ -16,35 +16,74 @@ import {
   Link2
 } from "lucide-react";
 
+// Static Avatar for reliable image capture (no framer-motion)
+const StaticAvatar = ({ size = "lg", gender = "neutral" }: { size?: string, gender?: string }) => {
+  const colors = {
+    male: { primary: "from-neon-blue to-neon-cyan", accent: "bg-neon-blue" },
+    female: { primary: "from-neon-purple to-pink-500", accent: "bg-neon-purple" },
+    neutral: { primary: "from-neon-cyan to-neon-purple", accent: "bg-neon-cyan" }
+  };
+
+  // @ts-ignore
+  const selectedColor = colors[gender] || colors.neutral;
+
+  return (
+    <div className={`relative w-32 h-32`}>
+      <div className={`absolute inset-0 rounded-full bg-gradient-to-br opacity-50 blur-2xl ${selectedColor.primary}`} />
+      <div className={`relative rounded-full bg-gradient-to-br p-1 w-full h-full ${selectedColor.primary}`}>
+        <div className="w-full h-full rounded-full bg-card flex items-center justify-center overflow-hidden relative">
+          <svg viewBox="0 0 100 100" className="w-4/5 h-4/5">
+            <circle cx="50" cy="50" r="40" fill="#1a1a1a" />
+            {/* Eyes - Open and centered */}
+            <g>
+              <ellipse cx="35" cy="45" rx="6" ry="8" fill="white" />
+              <ellipse cx="65" cy="45" rx="6" ry="8" fill="white" />
+              <circle cx="37" cy="42" r="2" fill="white" opacity="0.8" />
+              <circle cx="67" cy="42" r="2" fill="white" opacity="0.8" />
+            </g>
+            {/* Blush */}
+            <circle cx="25" cy="55" r="6" fill="#bc13fe" opacity="0.3" />
+            <circle cx="75" cy="55" r="6" fill="#bc13fe" opacity="0.3" />
+            {/* Mouth - Smile */}
+            <path d="M 35 65 Q 50 80 65 65" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Extracted Card Component for consistent rendering
 const ShareCard = ({ user, username, profileLink }: { user: any, username: string, profileLink: string }) => {
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-10 px-6 shadow-2xl overflow-hidden rounded-[32px]">
-      {/* Decorative BG in Capture */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/20 blur-[50px] rounded-full"></div>
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-neon-cyan/20 blur-[50px] rounded-full"></div>
+    <div className="relative w-full h-full bg-[#0a0a0a] border border-gray-800 flex flex-col items-center justify-between py-12 px-8 shadow-2xl overflow-hidden rounded-[32px] text-white font-sans">
+      {/* Decorative BG in Capture - Static Gradients */}
+      <div className="absolute top-0 right-0 w-48 h-48 bg-purple-500/20 blur-[60px] rounded-full"></div>
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/20 blur-[60px] rounded-full"></div>
 
-      <div className="relative z-10 flex flex-col items-center gap-4 w-full">
-        <Avatar3D size="lg" />
+      <div className="relative z-10 flex flex-col items-center gap-6 w-full mt-4">
+        <StaticAvatar size="lg" />
         <div className="text-center">
-          <h2 className="text-2xl font-bold">{user.firstName}</h2>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">AI Digital Twin</p>
+          <h2 className="text-3xl font-bold tracking-tight mb-2">{user.firstName}</h2>
+          <p className="text-sm text-gray-400 uppercase tracking-widest font-mono">AI Digital Twin</p>
         </div>
       </div>
 
-      <div className="relative z-10 text-center space-y-4">
-        <h3 className="text-2xl font-bold leading-tight gradient-text">
-          Chat with {user.firstName}'s<br />AI Twin
+      <div className="relative z-10 text-center space-y-6 mb-8">
+        <h3 className="text-3xl font-bold leading-tight">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+            Chat with {user.firstName}'s<br />AI Twin
+          </span>
         </h3>
-        <p className="text-sm text-muted-foreground px-4">
-          Let's talk like you're talking to {user.firstName}
+        <p className="text-base text-gray-400 px-6 leading-relaxed">
+          Scan the QR or click the link to start a conversation with my digital clone.
         </p>
       </div>
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-center gap-2 text-xs font-mono text-neon-cyan opacity-80">
-          <div className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
-          <span>Norlava</span>
+      <div className="relative z-10 mb-4">
+        <div className="flex items-center justify-center gap-2 text-sm font-mono text-cyan-400 opacity-90">
+          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+          <span>Powered by Norlava</span>
         </div>
       </div>
     </div>
