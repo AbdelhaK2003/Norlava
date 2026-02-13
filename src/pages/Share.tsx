@@ -285,15 +285,10 @@ const Share = () => {
               )}
             </Button>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={handleDownload} disabled={isSharing}>
-                <Download className="mr-2" size={16} /> Save Image
-              </Button>
-              <Button variant="outline" onClick={copyLink}>
-                {copied ? <Check size={16} className="mr-2" /> : <Link2 size={16} className="mr-2" />}
-                {copied ? "Copied" : "Copy Link"}
-              </Button>
-            </div>
+            <Button variant="outline" onClick={copyLink} className="w-full">
+              {copied ? <Check size={16} className="mr-2" /> : <Link2 size={16} className="mr-2" />}
+              {copied ? "Copied" : "Copy Link"}
+            </Button>
           </div>
 
         </GlassCard>
