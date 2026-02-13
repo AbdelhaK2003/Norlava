@@ -31,7 +31,7 @@ interface SampleQA {
 const Onboarding = () => {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
-  const totalSteps = 6; // Increased step count
+  const totalSteps = 5; // Reduced step count
 
   const [formData, setFormData] = useState({
     // Step 1: Basic Identity
@@ -53,7 +53,7 @@ const Onboarding = () => {
     // Step 5: Sample Responses
     sampleQA: [] as SampleQA[],
 
-    // Step 6: Avatar
+    // Default to neutral since selection step is removed
     gender: "neutral" as "male" | "female" | "neutral",
   });
 
@@ -560,63 +560,8 @@ const Onboarding = () => {
                     <ArrowLeft size={18} /> {t('onboarding.back')}
                   </Button>
                   <Button onClick={handleNext} className="flex-1" variant="neon" size="lg">
-                    {t('onboarding.continue')} <ArrowRight size={18} />
-                  </Button>
-                </div>
-              </GlassCard>
-            </motion.div>
-          )}
-
-          {/* Step 6: Avatar Selection */}
-          {step === 6 && (
-            <motion.div
-              key="step5"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <GlassCard className="p-8" glow>
-                <div className="text-center mb-8">
-                  <motion.div
-                    className="inline-flex items-center gap-2 bg-primary/20 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                  >
-                    <Smile size={16} />
-                    {t('onboarding.step5Title')}
-                  </motion.div>
-                  <h2 className="text-2xl font-bold mb-2">{t('onboarding.step5Heading')}</h2>
-                  <p className="text-muted-foreground">{t('onboarding.step5Desc')}</p>
-                </div>
-
-                <div className="flex justify-center mb-8">
-                  <Avatar3D gender={formData.gender} size="xl" />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-8">
-                  {(["male", "female", "neutral"] as const).map((gender) => (
-                    <motion.button
-                      key={gender}
-                      type="button"
-                      className={`glass-card p-4 text-center transition-all ${formData.gender === gender ? "border-primary neon-glow" : "hover:border-primary/50"
-                        }`}
-                      onClick={() => updateField("gender", gender)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Avatar3D gender={gender} size="sm" animated={false} />
-                      <p className="text-sm font-medium mt-2 capitalize">{t(`onboarding.gender.${gender}`)}</p>
-                    </motion.button>
-                  ))}
-                </div>
-
-                <div className="flex gap-4">
-                  <Button onClick={handleBack} variant="outline" size="lg" className="gap-2">
-                    <ArrowLeft size={18} /> {t('onboarding.back')}
-                  </Button>
-                  <Button onClick={handleNext} className="flex-1" variant="neon" size="lg">
-                    <Sparkles size={18} />
-                    {t('onboarding.createAvatar')}
+                    {/* Changed text from Continue to Create Avatar to indicate final step */}
+                    <Sparkles size={18} /> {t('onboarding.createAvatar', 'Create Avatar')}
                   </Button>
                 </div>
               </GlassCard>
