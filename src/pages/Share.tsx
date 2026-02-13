@@ -80,14 +80,14 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
         </div>
       </div>
 
-      <div className="relative z-10 text-center space-y-2">
+      <div className="relative z-10 text-center space-y-1">
         {/* Removed 'gradient-text' class to prevent "blue rectangle" artifact in html2canvas */}
         <h3 className="text-xl font-bold leading-tight text-neon-cyan">
           Chat with {user.firstName}'s<br />AI Twin
         </h3>
 
-        {/* QR Code Section */}
-        <div className="bg-white p-2 rounded-xl shadow-lg mt-6 mx-auto w-fit">
+        {/* QR Code Section - Increased margin to separate from text */}
+        <div className="bg-white p-3 rounded-xl shadow-lg mt-10 mx-auto w-fit">
           <QRCode
             value={profileLink}
             size={100}
