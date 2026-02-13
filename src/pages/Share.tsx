@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import html2canvas from "html2canvas";
@@ -111,6 +111,7 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
 const Share = () => {
   const [copied, setCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [shareBlob, setShareBlob] = useState<Blob | null>(null); // Store pre-generated blob
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const username = user.username || "johndoe";
@@ -128,10 +129,11 @@ const Share = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const generateImageValues = async () => {
+  // Helper to generate blob from canvas
+  const generateBlob = async (): Promise<Blob | null> => {
     if (!exportCardRef.current) return null;
     try {
-      // Small delay to ensure rendering
+      // Small delay to ensure rendering if called immediately
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(exportCardRef.current, {
@@ -141,22 +143,42 @@ const Share = () => {
         width: 400, // Enforce capture width
         height: 700, // Enforce capture height
       });
-      return canvas;
+
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, "image/png");
+      });
     } catch (err) {
       console.error("Capture failed", err);
       return null;
     }
   };
 
+  // Pre-generate image on mount
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      const blob = await generateBlob();
+      if (blob) {
+        setShareBlob(blob);
+        console.log("Share image pre-generated successfully");
+      }
+    }, 1500); // Wait for fonts/images to settle
+    return () => clearTimeout(timer);
+  }, [user.firstName]); // Re-run if user changes
+
   const handleDownload = async () => {
     setIsSharing(true);
-    const canvas = await generateImageValues();
-    if (canvas) {
-      const image = canvas.toDataURL("image/png");
+    // Use pre-generated or generate new
+    const blob = shareBlob || await generateBlob();
+
+    if (blob) {
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = image;
+      link.href = url;
       link.download = `norlava-${username}-share.png`;
       link.click();
+      URL.revokeObjectURL(url);
       toast.success("Image downloaded!");
     } else {
       toast.error("Failed to generate image.");
@@ -167,41 +189,43 @@ const Share = () => {
   const handleNativeShare = async () => {
     setIsSharing(true);
     try {
-      const canvas = await generateImageValues();
-      if (!canvas) throw new Error("Canvas generation failed");
+      // Use pre-generated blob if ready, otherwise wait (might fail mobile check if too slow)
+      const blob = shareBlob || await generateBlob();
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
+      if (!blob) throw new Error("Image generation failed");
 
-        const file = new File([blob], `norlava-${username}.png`, { type: "image/png" });
-        const shareData = {
-          title: `Chat with ${user.firstName}'s AI Twin`,
-          text: `Talk to my custom AI Digital Twin on Norlava! \n\n${profileLink}`,
-          files: [file],
-        };
+      const file = new File([blob], `norlava-${username}.png`, { type: "image/png" });
+      const shareData = {
+        title: `Chat with ${user.firstName}'s AI Twin`,
+        text: `Talk to my custom AI Digital Twin on Norlava! \n\n${profileLink}`,
+        files: [file],
+      };
 
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share(shareData);
-          toast.success("Shared successfully!");
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share(shareData);
+        toast.success("Shared successfully!");
+      } else {
+        // Fallback to text sharing if file sharing not supported
+        if (navigator.share) {
+          await navigator.share({
+            title: shareData.title,
+            text: shareData.text,
+            url: profileLink
+          });
         } else {
-          if (navigator.share) {
-            await navigator.share({
-              title: shareData.title,
-              text: shareData.text,
-              url: profileLink
-            });
-          } else {
-            throw new Error("Web Share API not supported");
-          }
+          throw new Error("Web Share API not supported");
         }
-      }, "image/png");
-
+      }
     } catch (err) {
       console.error("Share failed:", err);
-      if (String(err).includes("not supported")) {
-        toast.info("Sharing not supported on this device. Copied link instead.");
-        copyLink();
-        handleDownload();
+      if (typeof err === "object" && err !== null && "name" in err && (err as any).name !== "AbortError") {
+        // Only show toast if it wasn't a user cancellation
+        if (String(err).includes("not supported")) {
+          toast.info("Sharing not supported on this device. Copied link instead.");
+          copyLink();
+        } else {
+          toast.error("Could not share. Try downloading instead.");
+        }
       }
     } finally {
       setIsSharing(false);
