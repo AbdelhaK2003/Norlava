@@ -51136,6 +51136,18 @@ Assistant:`;
     const profile = await db.findProfileByUserId(hostUser.id);
     if (!profile) return;
     const greeting = `Hey how are you ${hostUser.firstName}, now you are trying me as your AI twin.`;
+    const lastMessages = await prisma.message.findMany({
+      where: {
+        hostId: hostUser.id,
+        visitorId
+      },
+      orderBy: { createdAt: "desc" },
+      take: 1
+    });
+    if (lastMessages.length > 0 && lastMessages[0].content === greeting) {
+      console.log("training-start: Greeting already sent as last message. Skipping.");
+      return;
+    }
     await db.createMessage({
       content: greeting,
       isUser: false,

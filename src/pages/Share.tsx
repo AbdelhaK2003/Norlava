@@ -54,9 +54,11 @@ const StaticAvatar = ({ size = "lg", gender = "neutral" }: { size?: string, gend
 };
 
 // Extracted Card Component for consistent rendering
+import QRCode from "react-qr-code";
+
 const ShareCard = ({ user, username, profileLink }: { user: any, username: string, profileLink: string }) => {
   return (
-    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-10 px-6 shadow-2xl overflow-hidden rounded-[32px]">
+    <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-8 px-6 shadow-2xl overflow-hidden rounded-[32px]">
       {/* Decorative BG in Capture - Radial Gradients for better html2canvas support */}
       <div
         className="absolute -top-10 -right-10 w-64 h-64 opacity-30 pointer-events-none"
@@ -67,29 +69,42 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
         style={{ background: 'radial-gradient(circle, #00f3ff 0%, transparent 70%)' }}
       ></div>
 
-      <div className="relative z-10 flex flex-col items-center gap-4 w-full">
+      <div className="relative z-10 flex flex-col items-center gap-3 w-full">
         {/* Use StaticAvatar to prevent rendering issues */}
-        <StaticAvatar size="lg" />
+        <div className="scale-90 transform-origin-top">
+          <StaticAvatar size="lg" />
+        </div>
         <div className="text-center">
           <h2 className="text-2xl font-bold">{user.firstName}</h2>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">AI Digital Twin</p>
         </div>
       </div>
 
-      <div className="relative z-10 text-center space-y-4">
+      <div className="relative z-10 text-center space-y-2">
         {/* Removed 'gradient-text' class to prevent "blue rectangle" artifact in html2canvas */}
-        <h3 className="text-2xl font-bold leading-tight text-neon-cyan">
+        <h3 className="text-xl font-bold leading-tight text-neon-cyan">
           Chat with {user.firstName}'s<br />AI Twin
         </h3>
-        <p className="text-sm text-muted-foreground px-4">
-          Let's talk like you're talking to {user.firstName}
+
+        {/* QR Code Section */}
+        <div className="bg-white p-2 rounded-xl shadow-lg mt-2 mx-auto w-fit">
+          <QRCode
+            value={profileLink}
+            size={100}
+            style={{ height: "auto", maxWidth: "100%", width: "100px" }}
+            viewBox={`0 0 256 256`}
+          />
+        </div>
+
+        <p className="text-[10px] text-muted-foreground px-4 mt-2 font-mono">
+          Scan to chat on Voxterna
         </p>
       </div>
 
       <div className="relative z-10">
-        <div className="flex items-center justify-center gap-2 text-xs font-mono text-neon-cyan opacity-80">
-          <div className="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
-          <span>Norlava</span>
+        <div className="flex items-center justify-center gap-2 text-[10px] font-mono text-neon-cyan opacity-80">
+          <div className="w-1.5 h-1.5 rounded-full bg-neon-cyan animate-pulse"></div>
+          <span>Powered by Norlava</span>
         </div>
       </div>
     </div>
