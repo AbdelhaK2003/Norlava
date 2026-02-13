@@ -78,23 +78,24 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
           <h2 className="text-2xl font-bold">{user.firstName}</h2>
           <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">AI Digital Twin</p>
         </div>
+
+        {/* Moved Text UP - Closer to Avatar/Name */}
+        <div className="text-center mt-4">
+          {/* Removed 'gradient-text' class to prevent "blue rectangle" artifact in html2canvas */}
+          <h3 className="text-xl font-bold leading-tight text-neon-cyan">
+            Chat with {user.firstName}'s<br />AI Twin
+          </h3>
+        </div>
       </div>
 
-      <div className="relative z-10 text-center space-y-1">
-        {/* Removed 'gradient-text' class to prevent "blue rectangle" artifact in html2canvas */}
-        <h3 className="text-xl font-bold leading-tight text-neon-cyan">
-          Chat with {user.firstName}'s<br />AI Twin
-        </h3>
-
-        {/* QR Code Section - Increased margin to separate from text */}
-        <div className="bg-white p-3 rounded-xl shadow-lg mt-10 mx-auto w-fit">
-          <QRCode
-            value={profileLink}
-            size={100}
-            style={{ height: "auto", maxWidth: "100%", width: "100px" }}
-            viewBox={`0 0 256 256`}
-          />
-        </div>
+      {/* QR Code Section - Pushed DOWN to the bottom */}
+      <div className="relative z-10 mt-auto mb-6 bg-white p-3 rounded-xl shadow-lg mx-auto w-fit">
+        <QRCode
+          value={profileLink}
+          size={100}
+          style={{ height: "auto", maxWidth: "100%", width: "100px" }}
+          viewBox={`0 0 256 256`}
+        />
       </div>
 
       <div className="relative z-10">
