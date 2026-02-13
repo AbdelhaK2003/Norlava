@@ -705,6 +705,22 @@ io.on('connection', (socket) => {
         // Simplified greeting per user request
         const greeting = `Hey how are you ${hostUser.firstName}, now you are trying me as your AI twin.`;
 
+        // Check if the last message in the room is already this greeting
+        // This prevents "stacking" greetings on refresh
+        const lastMessages = await prisma.message.findMany({
+            where: {
+                hostId: hostUser.id,
+                visitorId: visitorId
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1
+        });
+
+        if (lastMessages.length > 0 && lastMessages[0].content === greeting) {
+            console.log("training-start: Greeting already sent as last message. Skipping.");
+            return;
+        }
+
         // Send this as a message from AI
         await db.createMessage({
             content: greeting,
