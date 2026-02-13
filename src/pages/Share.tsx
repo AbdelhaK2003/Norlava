@@ -87,7 +87,7 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
         </h3>
 
         {/* QR Code Section */}
-        <div className="bg-white p-2 rounded-xl shadow-lg mt-2 mx-auto w-fit">
+        <div className="bg-white p-2 rounded-xl shadow-lg mt-6 mx-auto w-fit">
           <QRCode
             value={profileLink}
             size={100}
@@ -95,10 +95,6 @@ const ShareCard = ({ user, username, profileLink }: { user: any, username: strin
             viewBox={`0 0 256 256`}
           />
         </div>
-
-        <p className="text-[10px] text-muted-foreground px-4 mt-2 font-mono">
-          Scan to chat on Voxterna
-        </p>
       </div>
 
       <div className="relative z-10">
@@ -158,7 +154,7 @@ const Share = () => {
       const image = canvas.toDataURL("image/png");
       const link = document.createElement("a");
       link.href = image;
-      link.download = `voxterna-${username}-share.png`;
+      link.download = `norlava-${username}-share.png`;
       link.click();
       toast.success("Image downloaded!");
     } else {
@@ -176,10 +172,10 @@ const Share = () => {
       canvas.toBlob(async (blob) => {
         if (!blob) return;
 
-        const file = new File([blob], `voxterna-${username}.png`, { type: "image/png" });
+        const file = new File([blob], `norlava-${username}.png`, { type: "image/png" });
         const shareData = {
           title: `Chat with ${user.firstName}'s AI Twin`,
-          text: `Talk to my custom AI Digital Twin on Voxterna! \n\n${profileLink}`,
+          text: `Talk to my custom AI Digital Twin on Norlava! \n\n${profileLink}`,
           files: [file],
         };
 
