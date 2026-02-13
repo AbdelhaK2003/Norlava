@@ -57,9 +57,15 @@ const StaticAvatar = ({ size = "lg", gender = "neutral" }: { size?: string, gend
 const ShareCard = ({ user, username, profileLink }: { user: any, username: string, profileLink: string }) => {
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-card to-background border border-glass-border flex flex-col items-center justify-between py-10 px-6 shadow-2xl overflow-hidden rounded-[32px]">
-      {/* Decorative BG in Capture */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/20 blur-[50px] rounded-full"></div>
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-neon-cyan/20 blur-[50px] rounded-full"></div>
+      {/* Decorative BG in Capture - Radial Gradients for better html2canvas support */}
+      <div
+        className="absolute -top-10 -right-10 w-64 h-64 opacity-30 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #bc13fe 0%, transparent 70%)' }}
+      ></div>
+      <div
+        className="absolute -bottom-10 -left-10 w-64 h-64 opacity-30 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, #00f3ff 0%, transparent 70%)' }}
+      ></div>
 
       <div className="relative z-10 flex flex-col items-center gap-4 w-full">
         {/* Use StaticAvatar to prevent rendering issues */}
