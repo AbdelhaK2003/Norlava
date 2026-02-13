@@ -297,7 +297,7 @@ const OnboardingNew = () => {
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex justify-between gap-4 mb-8">
+        <div className="flex justify-between gap-4 mb-8 mt-8">
           <Button
             variant="glass"
             onClick={handleBack}
