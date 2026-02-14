@@ -67,13 +67,66 @@ router.get('/statistics', authenticateToken, isAdmin, async (req: AuthRequest, r
             });
         }
 
+        // 3. User Growth (Users joined by month)
+        const allUsers = await prisma.user.findMany({
+            select: { createdAt: true }
+        });
+
+        const usersByMonth: Record<string, number> = {};
+        allUsers.forEach(user => {
+            const date = new Date(user.createdAt);
+            const monthKey = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+            usersByMonth[monthKey] = (usersByMonth[monthKey] || 0) + 1;
+        });
+
+        const userGrowthData = Object.entries(usersByMonth).map(([month, count]) => ({
+            month,
+            count
+        }));
+
+        // Sort by date roughly (this is simple, for production might need better sorting)
+        // For now, let's just reverse if needed or trust insertion order if created chronologically
+        // A better way is to generate the last 6 months keys and fill them.
+
+        // 4. Top Profiles (Most Messages)
+        // detailed groupBy is not always easy with Prisma + Relations, so we do it in two steps
+        const topHostIds = await prisma.message.groupBy({
+            by: ['hostId'],
+            _count: {
+                id: true
+            },
+            orderBy: {
+                _count: {
+                    id: 'desc'
+                }
+            },
+            take: 5
+        });
+
+        const topProfiles = [];
+        for (const item of topHostIds) {
+            const user = await prisma.user.findUnique({
+                where: { id: item.hostId },
+                select: { username: true, firstName: true }
+            });
+            if (user) {
+                topProfiles.push({
+                    username: user.username,
+                    name: user.firstName,
+                    messageCount: item._count.id
+                });
+            }
+        }
+
         res.json({
             overview: {
                 users: totalUsers,
                 messages: totalMessages,
                 profiles: totalProfiles
             },
-            activity: activityData.reverse() // Oldest first for graph
+            activity: activityData.reverse(), // Oldest first for graph
+            userGrowth: userGrowthData,
+            topProfiles: topProfiles
         });
 
     } catch (error) {

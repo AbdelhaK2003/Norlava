@@ -136,10 +136,11 @@ const AdminDashboard = () => {
                     </Card>
                 </div>
 
-                {/* Charts */}
+                {/* Detailed Analysis Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                     {/* Message Activity Chart */}
-                    <Card className="bg-slate-900/50 border-slate-800 col-span-2">
+                    <Card className="bg-slate-900/50 border-slate-800">
                         <CardHeader>
                             <CardTitle className="text-white">Message Activity (Last 30 Days)</CardTitle>
                         </CardHeader>
@@ -167,6 +168,60 @@ const AdminDashboard = () => {
                                         <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* User Growth Chart */}
+                    <Card className="bg-slate-900/50 border-slate-800">
+                        <CardHeader>
+                            <CardTitle className="text-white">User Growth (Join Date)</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pl-0">
+                            <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={stats.userGrowth}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                        <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+                                        <YAxis stroke="#94a3b8" fontSize={12} />
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
+                                            itemStyle={{ color: '#34d399' }}
+                                        />
+                                        <Line type="monotone" dataKey="count" stroke="#34d399" strokeWidth={3} dot={{ r: 4, fill: '#34d399' }} activeDot={{ r: 6 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Profiles */}
+                    <Card className="bg-slate-900/50 border-slate-800 col-span-1 lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle className="text-white">Top 5 Active AI Personalities</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {stats.topProfiles && stats.topProfiles.map((profile: any, i: number) => (
+                                    <div key={profile.username} className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-300">
+                                                {i + 1}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-white">{profile.name}</p>
+                                                <p className="text-xs text-slate-400">@{profile.username}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-indigo-400">{profile.messageCount}</p>
+                                            <p className="text-xs text-slate-500 uppercase">Messages</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                {(!stats.topProfiles || stats.topProfiles.length === 0) && (
+                                    <p className="text-slate-500 text-center py-4">No active profiles yet.</p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
