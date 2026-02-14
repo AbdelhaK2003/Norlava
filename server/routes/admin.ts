@@ -8,17 +8,15 @@ const router = Router();
 const isAdmin = async (req: AuthRequest, res: any, next: any) => {
     try {
         const userEmail = (req.user?.email || '').trim().toLowerCase();
-        const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-
-        console.log(`👮 Admin Check: User [${userEmail}] vs Admin [${adminEmail}]`);
+        // Use environment variable OR hardcoded fallback for immediate access
+        const adminEmail = (process.env.ADMIN_EMAIL || 'abdelhakmahfoud2003@gmail.com').trim().toLowerCase();
 
         if (!adminEmail || userEmail !== adminEmail) {
-            console.log("❌ Admin Access Denied");
+            console.log(`❌ Admin Access Denied: ${userEmail}`);
             return res.status(403).json({
-                error: `Access Denied. Logged in: '${userEmail}'. Server expects: '${adminEmail}' (Check Railway Variable for typo/spaces)`
+                error: `Access Denied. You are logged in as: ${req.user?.email || 'Unknown'}. Expected Admin.`
             });
         }
-        console.log("✅ Admin Access Granted");
         next();
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
