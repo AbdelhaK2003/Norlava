@@ -86,7 +86,7 @@ const Login = () => {
           </p>
         </motion.div>
 
-        <GlassCard className="p-6 sm:p-8" glow>
+        <GlassCard className="p-5 sm:p-8" glow>
           {/* Email Sign In only */}
 
           <form onSubmit={handleSubmit} className="space-y-6">

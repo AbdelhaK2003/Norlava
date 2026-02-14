@@ -150,7 +150,7 @@ const OnboardingNew = () => {
           >
             {/* STEP 1: Identity */}
             {step === 1 && (
-              <GlassCard className="p-8 mb-8">
+              <GlassCard className="p-5 md:p-8 mb-8">
                 <div className="flex items-center gap-3 mb-6">
                   <User className="text-neon-cyan" />
                   <h2 className="text-2xl font-bold">Who Are You?</h2>
@@ -185,7 +185,7 @@ const OnboardingNew = () => {
             {/* STEP 2: Communication Style */}
             {step === 2 && (
               <div className="space-y-6">
-                <GlassCard className="p-8">
+                <GlassCard className="p-5 md:p-8">
                   <div className="flex items-center gap-3 mb-6">
                     <Sparkles className="text-neon-cyan" />
                     <h2 className="text-2xl font-bold">How Do You Communicate?</h2>
@@ -257,7 +257,7 @@ const OnboardingNew = () => {
             {/* STEP 3: Bio & Writing Style (NEW) */}
             {step === 3 && (
               <div className="space-y-6">
-                <GlassCard className="p-8">
+                <GlassCard className="p-5 md:p-8">
                   <div className="flex items-center gap-3 mb-6">
                     <Brain className="text-neon-cyan" />
                     <h2 className="text-2xl font-bold">Tell Me About Yourself</h2>
