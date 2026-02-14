@@ -14,7 +14,9 @@ import Interact from "./pages/Interact";
 import Dashboard from "./pages/Dashboard";
 import Training from "./pages/Training";
 import ForgotPassword from "./pages/ForgotPassword";
+
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/AdminDashboard";
 
 import Settings from "./pages/Settings";
 
@@ -39,6 +41,7 @@ const App = () => (
           <Route path="/profile/:username" element={<PublicProfile />} />
           <Route path="/share" element={<Share />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

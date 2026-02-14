@@ -10,6 +10,7 @@ import authRoutes from './routes/auth';
 import userRoutes from './routes/user';
 import trainingRoutes from './routes/training';
 import factsRoutes from './routes/facts';
+import adminRoutes from './routes/admin';
 import { db, prisma } from './db';
 import { GeminiLiveSession } from './services/gemini-live';
 
@@ -162,6 +163,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/facts', factsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic health check (Railway uses this)
 app.get('/', (req, res) => {
