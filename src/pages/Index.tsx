@@ -275,8 +275,8 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-20 pb-24 md:pt-32 md:pb-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-16 md:pt-32 md:pb-32">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -293,7 +293,7 @@ const Index = () => {
               {t('landing.heroBadge', 'Digital Identity Reimagined')}
             </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tighter text-foreground">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tighter text-foreground">
               {t('landing.heroTitle', 'Create Your')} <span className="gradient-text">{t('landing.heroTitleHighlight', 'AI Twin')}</span> {t('landing.heroTitleSuffix', '')}
             </h1>
 
@@ -332,11 +332,11 @@ const Index = () => {
             transition={{ duration: 0.8, delay: 0.3 }}
           >
             {/* Main avatar display */}
-            <div className="relative w-full max-w-[400px] aspect-square">
+            <div className="relative w-full max-w-[300px] md:max-w-[400px] aspect-square mx-auto">
               {/* Abstract bg element */}
               <div className="absolute inset-0 bg-gradient-radial from-primary/20 to-transparent blur-3xl opacity-50" />
 
-              <Avatar3D size="xl" className="w-full h-full scale-125 md:scale-150" />
+              <Avatar3D size="xl" className="w-full h-full scale-100 md:scale-150" />
 
               {/* Feature Tags - Static/Subtle animation for Pro look */}
               <div className="absolute -top-6 right-0 glass-card px-4 py-2 text-xs font-semibold flex items-center gap-2 shadow-lg">
@@ -375,7 +375,7 @@ const Index = () => {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+      <section id="how-it-works" className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold text-center mb-6 tracking-tight">
             Seamless <span className="gradient-text">Integration</span>
@@ -399,7 +399,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+      <section id="features" className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:py-24">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">
             Engineered for <span className="gradient-text">Authenticity</span>
@@ -411,7 +411,7 @@ const Index = () => {
 
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           {features.map((feature, index) => (
-            <GlassCard key={feature.title} className="h-full p-8 md:p-10" neonBorder>
+            <GlassCard key={feature.title} className="h-full p-6 md:p-10" neonBorder>
               <feature.icon className="w-10 h-10 text-primary mb-6" />
               <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
@@ -442,7 +442,7 @@ const Index = () => {
 
       {/* Use Cases Section */}
       <section id="use-cases" className="relative z-10 bg-card/30 border-y border-glass-border">
-        <div className="max-w-6xl mx-auto px-6 py-24">
+        <div className="max-w-6xl mx-auto px-6 py-16 md:py-24">
           <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
@@ -478,7 +478,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+      <section className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:py-24">
         <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 20 }}
@@ -526,7 +526,7 @@ const Index = () => {
 
       {/* FAQ Section */}
       <section id="faq" className="relative z-10 bg-card/30 border-y border-glass-border">
-        <div className="max-w-3xl mx-auto px-6 py-24">
+        <div className="max-w-3xl mx-auto px-6 py-16 md:py-24">
           <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
@@ -577,7 +577,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative z-10 max-w-4xl mx-auto px-6 py-24">
+      <section className="relative z-10 max-w-4xl mx-auto px-6 py-16 md:py-24">
         <GlassCard className="p-12 text-center" glow neonBorder>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
