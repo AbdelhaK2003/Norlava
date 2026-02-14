@@ -275,13 +275,13 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-24 pb-16 md:pt-32 md:pb-32">
+      <section className="relative z-10 max-w-6xl mx-auto px-6 pt-12 pb-16 md:pt-32 md:pb-32">
         <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-center lg:text-left flex flex-col items-center lg:items-start"
+            className="text-center lg:text-left flex flex-col items-center lg:items-start order-1 lg:order-1"
           >
             <motion.div
               className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold mb-6 tracking-wide uppercase"
@@ -326,7 +326,7 @@ const Index = () => {
           </motion.div>
 
           <motion.div
-            className="relative flex justify-center lg:justify-end"
+            className="relative flex justify-center lg:justify-end order-2 lg:order-2"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3 }}
@@ -339,7 +339,7 @@ const Index = () => {
               <Avatar3D size="xl" className="w-full h-full scale-100 md:scale-150" />
 
               {/* Feature Tags - Static/Subtle animation for Pro look */}
-              <div className="absolute -top-6 right-0 glass-card px-4 py-2 text-xs font-semibold flex items-center gap-2 shadow-lg">
+              <div className="absolute -top-6 right-0 glass-card px-4 py-2 text-xs font-semibold hidden md:flex items-center gap-2 shadow-lg">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 Always On
               </div>
@@ -350,7 +350,7 @@ const Index = () => {
               </div>
 
               {/* Updated Voice Badge */}
-              <div className="absolute top-1/2 -right-8 glass-card px-4 py-2 text-xs font-semibold shadow-lg flex items-center gap-2 border-primary/20">
+              <div className="absolute top-1/2 -right-8 glass-card px-4 py-2 text-xs font-semibold shadow-lg hidden md:flex items-center gap-2 border-primary/20">
                 <Mic size={14} className="text-muted-foreground" />
                 <span className="text-muted-foreground">Voice (Coming Soon)</span>
               </div>
