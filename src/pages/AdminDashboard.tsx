@@ -31,10 +31,17 @@ const AdminDashboard = () => {
                 const response = await api.get('/admin/statistics');
                 return response.data;
             } catch (err: any) {
-                if (err.response && err.response.status === 403) {
-                    toast.error("Access Denied: Admins Only");
-                    navigate('/dashboard');
-                    return null;
+                if (err.response) {
+                    if (err.response.status === 401) {
+                        toast.error("Please login to access admin dashboard");
+                        navigate('/login');
+                        return null;
+                    }
+                    if (err.response.status === 403) {
+                        toast.error("Access Denied: Admins Only");
+                        // Stay on page to show exact error
+                        throw err;
+                    }
                 }
                 throw err;
             }
