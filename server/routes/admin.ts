@@ -15,7 +15,7 @@ const isAdmin = async (req: AuthRequest, res: any, next: any) => {
         if (!adminEmail || userEmail !== adminEmail) {
             console.log("❌ Admin Access Denied");
             return res.status(403).json({
-                error: `Access Denied. You are logged in as: ${req.user?.email || 'Unknown'}. Expected Admin.`
+                error: `Access Denied. Logged in: '${userEmail}'. Server expects: '${adminEmail}' (Check Railway Variable for typo/spaces)`
             });
         }
         console.log("✅ Admin Access Granted");
