@@ -55,7 +55,14 @@ const AdminDashboard = () => {
             <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center space-y-4">
                 <ShieldAlert className="w-16 h-16 text-red-500" />
                 <h1 className="text-2xl font-bold">Access Restricted</h1>
-                <p className="text-slate-400">You do not have permission to view this page.</p>
+                <p className="text-slate-400 text-center max-w-md">
+                    {error instanceof Error && (error as any).response?.data?.error
+                        ? (error as any).response.data.error
+                        : "You do not have permission to view this page."}
+                </p>
+                <div className="text-xs text-slate-600 bg-slate-900 p-2 rounded border border-slate-800">
+                    <p>Tip: Ensure ADMIN_EMAIL is set in Railway Variables.</p>
+                </div>
                 <button
                     onClick={() => navigate('/dashboard')}
                     className="px-4 py-2 bg-slate-800 rounded hover:bg-slate-700 transition"

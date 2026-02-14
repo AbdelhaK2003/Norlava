@@ -7,12 +7,18 @@ const router = Router();
 // Middleware to check if user is admin
 const isAdmin = async (req: AuthRequest, res: any, next: any) => {
     try {
-        const userEmail = req.user?.email || '';
-        const adminEmail = process.env.ADMIN_EMAIL || '';
+        const userEmail = (req.user?.email || '').trim().toLowerCase();
+        const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+
+        console.log(`👮 Admin Check: User [${userEmail}] vs Admin [${adminEmail}]`);
 
         if (!adminEmail || userEmail !== adminEmail) {
-            return res.status(403).json({ error: 'Access denied. Admin only.' });
+            console.log("❌ Admin Access Denied");
+            return res.status(403).json({
+                error: `Access Denied. You are logged in as: ${req.user?.email || 'Unknown'}. Expected Admin.`
+            });
         }
+        console.log("✅ Admin Access Granted");
         next();
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
