@@ -6,7 +6,7 @@ import { Logo } from "@/components/Logo";
 import { GlassCard } from "@/components/GlassCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Sparkles, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -15,6 +15,7 @@ const Register = () => {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -206,7 +207,35 @@ const Register = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" variant="neon" size="lg" disabled={isSubmitting}>
+            {/* Terms of Service Acceptance */}
+            <div>
+              <label className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${termsAccepted
+                  ? 'border-neon-cyan/60 bg-neon-cyan/5'
+                  : 'border-white/10 hover:border-white/20'
+                }`}>
+                <input
+                  type="checkbox"
+                  className="mt-0.5 w-4 h-4 accent-cyan-400 shrink-0"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                />
+                <span className="text-sm text-muted-foreground leading-relaxed">
+                  I agree to the{" "}
+                  <Link to="/terms" className="text-neon-cyan hover:underline font-medium" target="_blank">
+                    Terms of Service
+                  </Link>
+                  . I understand that information I share may be discussed by my AI twin with visitors.
+                </span>
+              </label>
+              {!termsAccepted && (
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <ShieldCheck size={12} className="text-neon-cyan" />
+                  You must accept the terms to create an account.
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full" variant="neon" size="lg" disabled={isSubmitting || !termsAccepted}>
               {isSubmitting ? (
                 <span className="flex items-center gap-2">Generating...</span>
               ) : (
