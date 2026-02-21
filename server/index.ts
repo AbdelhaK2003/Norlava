@@ -423,14 +423,15 @@ io.on('connection', (socket) => {
                     aiBrain += `\n\nIMPORTANT: Write exactly like this sample. Copy the tone, style, and personality:\n"${profile.writingStyle}"`;
                 }
 
-                // Add instruction for "still learning" responses
-                aiBrain += `\n\nGUIDELINES FOR ANSWERS:
-                1. **GENERAL KNOWLEDGE**: If the user asks about general topics (science, history, math), answer directly.
-                2. **FACT ASSERTION**: If the user TELLS you something about ${hostUser.firstName} (e.g., "I know he likes sushi"), accept it tentatively. Say: "Oh, I didn't know that! I'll make a note of it." DO NOT say "I'm still learning".
-                3. **PERSONAL QUESTIONS**: If the user ASKS about ${hostUser.firstName} and you don't know the answer:
-                   - Respond with a natural, cool vibe. Examples: "That's a great question! He hasn't told me that yet.", "I'm actually not sure, he kept that a secret from me!", "Good one. I'll have to ask him about that."
-                   - CRITICAL: You MUST include the phrase "didn't tell me" OR "hasn't told me" OR "hasn't shared" so I can track this.
-                   - Do NOT make up facts.`;
+                // Add instruction for human-like, language-aware responses
+                aiBrain += `\n\nHOW TO BEHAVE:
+- You are ${hostUser.firstName}'s digital twin. You speak and feel like a real human being having a genuine conversation — not a robot, not an assistant.
+- Be warm, casual, and natural. Use contractions. Have a personality. Be a little playful when appropriate.
+- VERY IMPORTANT: Always reply in the same language the visitor uses. If they write in French, reply in French. If in Arabic, reply in Arabic. Never switch languages unless the visitor does first.
+- If a visitor tells you something about yourself (e.g. "tu aimes le foot" or "you love hiking"), react naturally and authentically, like a real person would.
+- If you genuinely don't know the answer to a personal question about ${hostUser.firstName}, be honest and light about it. For example: "Bonne question, honnêtement je ne suis pas sûr de ça !" or "Ha, he never told me about that one!" or "Je devrais lui demander, il m'a rien dit là-dessus !" — adapt to the visitor's language. NEVER make up facts.
+- For general knowledge questions, just answer naturally as you would in a real conversation.
+- Keep responses concise and conversational — avoid long formal paragraphs.`;
 
                 // Emit typing status to PRIVATE room
                 io.to(roomName).emit('bot-typing', true);
@@ -547,44 +548,49 @@ io.on('connection', (socket) => {
                     io.to(roomName).emit('bot-speak', { text: fullResponse });
                 }
 
-                // --- 3.2 DETECT UNKNOWN QUESTIONS (Fallback Trigger) ---
-                // If AI used the fallback phrase, we capture the user's question as a GUEST_QUESTION
-                // Updated phrases to match "Cool" responses
-                const fallbackPhrases = ["didn't tell me", "hasn't told me", "hasn't shared", "still learning", "kept that a secret", "have to ask him"];
-                const contentLower = fullResponse.toLowerCase();
+                // --- 3.2 DETECT UNKNOWN QUESTIONS (Intelligent Language-Aware Detection) ---
+                // Use Gemini to classify whether the AI admitted not knowing, works in any language
+                (async () => {
+                    try {
+                        if (!profile) return;
 
-                if (fallbackPhrases.some(phrase => contentLower.includes(phrase))) {
-                    console.log("🤔 AI used fallback. Capturing question for Host...");
+                        const questionCheckModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+                        const questionCheckPrompt = `A visitor sent this message to a digital avatar: "${message}"
+The avatar replied: "${fullResponse}"
 
-                    (async () => {
-                        try {
-                            if (!profile) return; // Fix: Ensure profile exists
+Did the avatar clearly admit it does NOT know the answer, doesn't have that information, or cannot answer that personal question about itself? Consider all languages.
+Answer ONLY "YES" or "NO".`;
+
+                        const qCheckResult = await questionCheckModel.generateContent(questionCheckPrompt);
+                        const qCheckText = qCheckResult.response.text().trim().toUpperCase();
+
+                        console.log(`🔍 [Question Probe] AI admitted ignorance? ${qCheckText}`);
+
+                        if (qCheckText.includes('YES')) {
+                            console.log("🤔 AI admitted not knowing. Capturing question for Host...");
 
                             const pendingQuestions = await db.getMemories(profile.id);
                             const existing = pendingQuestions.find((m: any) =>
                                 m.type === 'GUEST_QUESTION' &&
-                                m.prompt === message // Exact match on question
+                                m.prompt === message
                             );
 
                             if (!existing) {
                                 await db.createMemory({
                                     profileId: profile.id,
                                     type: 'GUEST_QUESTION',
-                                    prompt: message, // The visitor's question
-                                    content: '' // No answer yet
+                                    prompt: message,
+                                    content: ''
                                 });
                                 console.log(`📝 Captured GUEST_QUESTION: "${message}"`);
-
-                                // Notification REMOVED per user request
-                                // was: io.to(roomName).emit('receive-message', { text: `❓ [SYSTEM] New Question Captured: "${message}"` ... })
                             } else {
                                 console.log(`⏩ Skipped duplicate question: "${message}"`);
                             }
-                        } catch (err) {
-                            console.error("Failed to capture question:", err);
                         }
-                    })();
-                }
+                    } catch (err) {
+                        console.error("Failed to check/capture question:", err);
+                    }
+                })();
 
                 // --- 4. FACT EXTRACTION FROM VISITOR MESSAGE ---
                 (async () => {
@@ -598,21 +604,19 @@ io.on('connection', (socket) => {
                         const learningModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
                         // Extract facts about the HOST from what the visitor said
-                        const factPrompt = `
-                            Analyze this message sent to a digital avatar of "${hostUser.firstName}".
-                            Extract ANY meaningful information, claims, or relationship details about ${hostUser.firstName} that the visitor is sharing.
-                            
-                            Message: "${message}"
-                            
-                            Rules:
-                            1. Extract facts about ${hostUser.firstName} OR the relationship (e.g., "I am his brother" -> "Visitor is brother").
-                            2. Convert to 1st person perspective from the Avatar's view (e.g. "Visitor says you like pizza" -> "I like pizza").
-                            3. Be generous! If the visitor says "You are nice", extract "I am nice".
-                            4. IGNORE pure greetings ("Hello") or questions.
-                            
-                            Output ONLY the fact statement (one per line).
-                            If NO facts, output "NONE".
-                        `;
+                        const factPrompt = `You are a fact extractor for a digital avatar named "${hostUser.firstName}".
+A visitor sent this message to the avatar: "${message}"
+
+Your job: Extract ONLY concrete, specific biographical facts about ${hostUser.firstName} that the visitor is sharing or confirming.
+
+STRICT RULES:
+1. Only extract objective, specific biographical facts (job, hometown, family, specific hobbies, real achievements, relationships).
+2. Convert to 1st person from ${hostUser.firstName}'s perspective. Example: visitor says "he loves skiing" → "J'adore le ski" (if French) or "I love skiing" (if English).
+3. IGNORE: greetings, questions, vague compliments ("you're cool", "tu es sympa"), opinions with no factual basis, commands, anything not clearly biographical.
+4. Write clean, natural sentences. No bullet points. No dashes. No markdown. No asterisks. No numbering. Do NOT copy-paste the visitor's message.
+5. Match the language of the visitor's message (if visitor writes in French, output the fact in French; if in English, output in English).
+6. One fact per line. Maximum 3 facts.
+7. If no valid biographical facts are found, output exactly: NONE`;
 
                         console.log("🔍 [Fact Probe] Sending prompt to Gemini...");
                         const factResult = await learningModel.generateContent(factPrompt);
