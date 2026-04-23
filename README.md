@@ -64,7 +64,6 @@ This is the kind of project that comes from genuine curiosity, not a school assi
 ## What's next
  
 - Adding a RAG pipeline to power an intelligent search feature
-- Integrating n8n workflows for automated data processing
 - Expanding the AI layer with more LLM-powered features
 ---
  
